@@ -129,6 +129,66 @@ export class ApprovalsService {
     return approval;
   }
 
+  async findPendingForTicket(
+    context: OrganizationContext,
+    ticketId: string,
+  ): Promise<TicketApproval | null> {
+    const ticket = await this.database.ticket.findFirst({
+      where: {
+        id: ticketId,
+        organizationId: context.organizationId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!ticket) {
+      throw new NotFoundException('Ticket not found');
+    }
+
+    return this.database.ticketApproval.findFirst({
+      where: {
+        ticketId: ticket.id,
+        status: TicketApprovalStatus.PENDING,
+      },
+      orderBy: {
+        requestedAt: 'desc',
+      },
+    });
+  }
+
+  async hasPendingApproval(
+    context: OrganizationContext,
+    ticketId: string,
+  ): Promise<boolean> {
+    const ticket = await this.database.ticket.findFirst({
+      where: {
+        id: ticketId,
+        organizationId: context.organizationId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!ticket) {
+      throw new NotFoundException('Ticket not found');
+    }
+
+    const approval = await this.database.ticketApproval.findFirst({
+      where: {
+        ticketId: ticket.id,
+        status: TicketApprovalStatus.PENDING,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    return Boolean(approval);
+  }
+
   async approve(
     context: OrganizationContext,
     approvalId: string,
