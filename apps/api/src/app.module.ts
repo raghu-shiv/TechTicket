@@ -12,7 +12,9 @@ import { StorageModule } from './common/storage/storage.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { PermissionsModule } from './common/permissions/permissions.module';
 import { BullModule } from '@nestjs/bullmq';
+import { ApprovalsModule } from './modules/approvals/approvals.module';
 
 @Module({
   imports: [
@@ -26,6 +28,8 @@ import { BullModule } from '@nestjs/bullmq';
     }),
     DatabaseModule,
     AuthModule,
+    PermissionsModule,
+    ApprovalsModule,
     OrganizationContextModule,
     StorageModule,
     HealthModule,

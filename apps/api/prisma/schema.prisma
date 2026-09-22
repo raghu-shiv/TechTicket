@@ -68,6 +68,13 @@ enum TicketActivityType {
   SLA_RESOLUTION_BREACHED
 }
 
+enum TicketApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
 model User {
   id            String       @id
   name          String
@@ -86,6 +93,7 @@ model User {
   ticketComments      TicketComment[]
   uploadedAttachments TicketAttachment[]
   ticketActivities    TicketActivity[]
+  approvalRequests    TicketApproval[]
 
   @@unique([email])
   @@map("user")
@@ -237,6 +245,7 @@ model Ticket {
   comments     TicketComment[]
   attachments  TicketAttachment[]
   sla          TicketSla?
+  approvals    TicketApproval[]
 
   outgoingRelations TicketRelation[] @relation("TicketRelationFrom")
   incomingRelations TicketRelation[] @relation("TicketRelationTo")
@@ -404,4 +413,28 @@ model TicketActivity {
   @@index([organizationId, createdAt])
   @@index([actorId])
   @@index([type])
+}
+
+model TicketApproval {
+  id         String               @id @default(cuid())
+  ticketId   String
+  approverId String
+  status     TicketApprovalStatus @default(PENDING)
+
+  comment String?
+
+  requestedAt DateTime  @default(now())
+  approvedAt  DateTime?
+  rejectedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  approver User   @relation(fields: [approverId], references: [id], onDelete: Restrict)
+
+  @@index([ticketId])
+  @@index([approverId])
+  @@index([ticketId, status])
+  @@index([approverId, status])
 }
