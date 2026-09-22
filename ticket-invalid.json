@@ -1,0 +1,5 @@
+﻿{
+  "title": "Validation test",
+  "description": "Testing invalid priority",
+  "priority": "SUPER_HIGH"
+}

@@ -1,0 +1,25 @@
+{
+  "name": "Standard Support SLA",
+  "targets": [
+    {
+      "priority": "LOW",
+      "firstResponseMinutes": 60,
+      "resolutionMinutes": 480
+    },
+    {
+      "priority": "MEDIUM",
+      "firstResponseMinutes": 30,
+      "resolutionMinutes": 240
+    },
+    {
+      "priority": "HIGH",
+      "firstResponseMinutes": 15,
+      "resolutionMinutes": 120
+    },
+    {
+      "priority": "URGENT",
+      "firstResponseMinutes": 5,
+      "resolutionMinutes": 60
+    }
+  ]
+}

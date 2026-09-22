@@ -1,0 +1,6 @@
+﻿{
+  "title": "Temporary SLA escalation test",
+  "description": "Temporary ticket for verifying SLA escalation events.",
+  "priority": "HIGH",
+  "type": "INCIDENT"
+}
