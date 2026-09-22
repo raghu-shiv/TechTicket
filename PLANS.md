@@ -385,6 +385,37 @@ Results:
 
 **3-F-6.10 is fully complete and verified.**
 
+# Approval Workflow
+
+## 4-E — Approval Audit/Activity Integration
+
+**Status: COMPLETE AND VERIFIED — 2026-09-22**
+
+Approval lifecycle events are integrated with the existing ticket activity/audit history infrastructure.
+
+Implemented activity types:
+
+```text
+APPROVAL_REQUESTED
+APPROVAL_APPROVED
+APPROVAL_REJECTED
+APPROVAL_CANCELLED
+```
+
+Verification used ticket `TKT-000001` and confirmed:
+
+- Admin/requester successfully requested approval from the designated Agent (`201 Created`).
+- The approval was retrievable in `PENDING` state and included `ticketNumber: TKT-000001`.
+- The requester/Admin attempting to approve the request was rejected with `403 Forbidden`.
+- The designated Agent successfully approved the request (`201 Created`).
+- A second approval cycle was successfully rejected by the designated Agent.
+- A third approval cycle was successfully cancelled by the designated Agent.
+- Ticket activity history contained `APPROVAL_REQUESTED`, `APPROVAL_APPROVED`, `APPROVAL_REJECTED`, and `APPROVAL_CANCELLED`.
+- Activity metadata included `approvalId`, `ticketNumber`, `approverId`, `status`, and `comment`, with actor and timestamp information recorded by the activity system.
+- Approval activity reused the existing ticket activity infrastructure rather than introducing a separate audit system.
+
+> Automatic ticket-status transitions based on approval outcomes remain intentionally deferred/configurable because the SOP does not yet define those business rules.
+
 # Upcoming Roadmap
 
 ## 3-G — Search / Filtering / Pagination Expansion
@@ -921,6 +952,8 @@ SLA timers                        COMPLETE
 SLA breach detection              COMPLETE
 SLA escalation                    COMPLETE
 Ticket activity / audit history   COMPLETE
+Approval workflow                 COMPLETE
+Approval audit/activity (4-E)     COMPLETE AND VERIFIED
 Activity API                      COMPLETE
 Notifications                     COMPLETE
 Email infrastructure              COMPLETE

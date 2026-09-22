@@ -5,6 +5,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { APPROVAL_EVENTS } from './approval-events';
 import { TicketApprovalStatus, type TicketApproval } from '@prisma/client';
 
 import { DatabaseService } from '../../database/database.service';
@@ -12,7 +14,10 @@ import type { OrganizationContext } from '../../common/organization/organization
 
 @Injectable()
 export class ApprovalsService {
-  constructor(private readonly database: DatabaseService) {}
+  constructor(
+    private readonly database: DatabaseService,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
   async requestApproval(
     context: OrganizationContext,
@@ -27,6 +32,7 @@ export class ApprovalsService {
       },
       select: {
         id: true,
+        ticketNumber: true,
         requesterId: true,
       },
     });
@@ -61,7 +67,7 @@ export class ApprovalsService {
 
     const normalizedComment = comment?.trim() || null;
 
-    return this.database.ticketApproval.create({
+    const approval = await this.database.ticketApproval.create({
       data: {
         ticketId: ticket.id,
         approverId,
@@ -69,6 +75,20 @@ export class ApprovalsService {
         comment: normalizedComment,
       },
     });
+
+    this.eventEmitter.emit(APPROVAL_EVENTS.REQUESTED, {
+      approvalId: approval.id,
+      ticketId: ticket.id,
+      ticketNumber: ticket.ticketNumber,
+      organizationId: context.organizationId,
+      actorId: context.userId,
+      approverId: approval.approverId,
+      status: approval.status,
+      comment: approval.comment,
+      occurredAt: approval.requestedAt,
+    });
+
+    return approval;
   }
 
   async findForTicket(
@@ -105,7 +125,9 @@ export class ApprovalsService {
   async findOne(
     context: OrganizationContext,
     approvalId: string,
-  ): Promise<TicketApproval & { ticket: { requesterId: string } }> {
+  ): Promise<
+    TicketApproval & { ticket: { requesterId: string; ticketNumber: string } }
+  > {
     const approval = await this.database.ticketApproval.findFirst({
       where: {
         id: approvalId,
@@ -117,6 +139,7 @@ export class ApprovalsService {
         ticket: {
           select: {
             requesterId: true,
+            ticketNumber: true,
           },
         },
       },
@@ -210,7 +233,7 @@ export class ApprovalsService {
 
     const normalizedComment = comment?.trim();
 
-    return this.database.ticketApproval.update({
+    const updatedApproval = await this.database.ticketApproval.update({
       where: {
         id: approval.id,
       },
@@ -222,6 +245,20 @@ export class ApprovalsService {
         }),
       },
     });
+
+    this.eventEmitter.emit(APPROVAL_EVENTS.APPROVED, {
+      approvalId: updatedApproval.id,
+      ticketId: approval.ticketId,
+      ticketNumber: approval.ticket.ticketNumber,
+      organizationId: context.organizationId,
+      actorId: context.userId,
+      approverId: updatedApproval.approverId,
+      status: updatedApproval.status,
+      comment: updatedApproval.comment,
+      occurredAt: updatedApproval.approvedAt ?? updatedApproval.updatedAt,
+    });
+
+    return updatedApproval;
   }
 
   async reject(
@@ -245,7 +282,7 @@ export class ApprovalsService {
 
     const normalizedComment = comment?.trim();
 
-    return this.database.ticketApproval.update({
+    const updatedApproval = await this.database.ticketApproval.update({
       where: {
         id: approval.id,
       },
@@ -257,6 +294,20 @@ export class ApprovalsService {
         }),
       },
     });
+
+    this.eventEmitter.emit(APPROVAL_EVENTS.REJECTED, {
+      approvalId: updatedApproval.id,
+      ticketId: approval.ticketId,
+      ticketNumber: approval.ticket.ticketNumber,
+      organizationId: context.organizationId,
+      actorId: context.userId,
+      approverId: updatedApproval.approverId,
+      status: updatedApproval.status,
+      comment: updatedApproval.comment,
+      occurredAt: updatedApproval.rejectedAt ?? updatedApproval.updatedAt,
+    });
+
+    return updatedApproval;
   }
 
   async cancel(
@@ -273,7 +324,7 @@ export class ApprovalsService {
       );
     }
 
-    return this.database.ticketApproval.update({
+    const updatedApproval = await this.database.ticketApproval.update({
       where: {
         id: approval.id,
       },
@@ -281,6 +332,20 @@ export class ApprovalsService {
         status: TicketApprovalStatus.CANCELLED,
       },
     });
+
+    this.eventEmitter.emit(APPROVAL_EVENTS.CANCELLED, {
+      approvalId: updatedApproval.id,
+      ticketId: approval.ticketId,
+      ticketNumber: approval.ticket.ticketNumber,
+      organizationId: context.organizationId,
+      actorId: context.userId,
+      approverId: updatedApproval.approverId,
+      status: updatedApproval.status,
+      comment: updatedApproval.comment,
+      occurredAt: updatedApproval.updatedAt,
+    });
+
+    return updatedApproval;
   }
 
   private assertTransition(
