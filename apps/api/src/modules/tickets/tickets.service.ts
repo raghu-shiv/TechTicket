@@ -1519,7 +1519,10 @@ export class TicketsService {
 
     const existing = await this.database.ticket.findUnique({
       where: {
-        ticketNumber,
+        organizationId_ticketNumber: {
+          organizationId,
+          ticketNumber,
+        },
       },
       select: {
         id: true,

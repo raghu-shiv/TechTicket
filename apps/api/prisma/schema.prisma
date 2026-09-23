@@ -223,7 +223,7 @@ model TeamMember {
 
 model Ticket {
   id             String @id @default(cuid())
-  ticketNumber   String @unique
+  ticketNumber   String
   organizationId String
 
   requesterId String
@@ -256,6 +256,7 @@ model Ticket {
   slaEscalations    SlaEscalation[]
   activities        TicketActivity[]
 
+  @@unique([organizationId, ticketNumber])
   @@index([organizationId])
   @@index([organizationId, status])
   @@index([organizationId, priority])

@@ -1,6 +1,7 @@
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { randomUUID } from 'node:crypto';
+import { DatabaseService } from '../../src/database/database.service.js';
 
 interface TestUser {
   name: string;
@@ -38,4 +39,17 @@ export async function createAuthenticatedTestUser(
     user,
     agent,
   };
+}
+
+export async function deleteTestUser(
+  app: INestApplication,
+  email: string,
+): Promise<void> {
+  const database = app.get(DatabaseService);
+
+  await database.user.deleteMany({
+    where: {
+      email,
+    },
+  });
 }
