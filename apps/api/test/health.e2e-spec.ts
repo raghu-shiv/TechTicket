@@ -15,11 +15,15 @@ describe('Health API (e2e)', () => {
     await app.close();
   });
 
-  it('GET /api/v1/health should return 200', async () => {
+  it('GET /api/v1/health should return a healthy response', async () => {
     const response = await request(app.getHttpServer())
       .get('/api/v1/health')
       .expect(200);
 
-    expect(response.body).toBeDefined();
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.status).toBe('ok');
+    expect(response.body.data.service).toBe('tech-ticket-api');
+    expect(response.body.data.database).toBe('ok');
+    expect(response.body.data.timestamp).toEqual(expect.any(String));
   });
 });
