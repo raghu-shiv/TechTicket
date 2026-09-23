@@ -1,6 +1,6 @@
 import type { INestApplication } from '@nestjs/common';
 import type { Queue } from 'bullmq';
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createTestApp } from './helpers/app.helper.js';
 import {
@@ -41,25 +41,8 @@ describe('Notification Integration (e2e)', () => {
     await app.close();
   });
 
-  // beforeEach(async () => {
-  //   const jobs = await notificationQueue.getJobs([
-  //     'waiting',
-  //     'active',
-  //     'completed',
-  //     'delayed',
-  //     'failed',
-  //   ]);
-
-  //   await Promise.all(
-  //     jobs.map(async (job) => {
-  //       await job.remove();
-  //     }),
-  //   );
-  // });
-
   describe('Approval requested notification', () => {
     it('should enqueue an email notification for the assigned approver', async () => {
-      // 4-G.5.3 goes here
       const ticket = await createTestTicket(fixture, fixture.owner);
 
       const response = await fixture.owner.agent
@@ -110,12 +93,14 @@ describe('Notification Integration (e2e)', () => {
       );
 
       await fixture.admin.agent
-        .post(`/api/v1/approvals/${approval.id}/approve`)
+        .patch(
+          `/api/v1/tickets/${approval.ticketId}/approvals/${approval.id}/approve`,
+        )
         .set('x-organization-id', fixture.organization.id)
         .send({
           comment: 'Approved after review.',
         })
-        .expect(201);
+        .expect(200);
 
       const job = await waitForEmailNotificationJob(notificationQueue, {
         recipientId: fixture.owner.userId,
@@ -149,12 +134,14 @@ describe('Notification Integration (e2e)', () => {
       );
 
       await fixture.admin.agent
-        .post(`/api/v1/approvals/${approval.id}/reject`)
+        .patch(
+          `/api/v1/tickets/${approval.ticketId}/approvals/${approval.id}/reject`,
+        )
         .set('x-organization-id', fixture.organization.id)
         .send({
           comment: 'Rejected after review.',
         })
-        .expect(201);
+        .expect(200);
 
       const job = await waitForEmailNotificationJob(notificationQueue, {
         recipientId: fixture.owner.userId,
@@ -203,9 +190,11 @@ describe('Notification Integration (e2e)', () => {
       );
 
       await fixture.admin.agent
-        .post(`/api/v1/approvals/${approval.id}/cancel`)
+        .patch(
+          `/api/v1/tickets/${approval.ticketId}/approvals/${approval.id}/cancel`,
+        )
         .set('x-organization-id', fixture.organization.id)
-        .expect(201);
+        .expect(200);
 
       const job = await waitForEmailNotificationJob(notificationQueue, {
         recipientId: fixture.admin.userId,

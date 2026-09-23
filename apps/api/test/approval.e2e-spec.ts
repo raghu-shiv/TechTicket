@@ -1,6 +1,9 @@
 import { randomUUID } from 'node:crypto';
+
 import type { INestApplication } from '@nestjs/common';
+
 import request from 'supertest';
+
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createTestApp } from './helpers/app.helper.js';
@@ -24,6 +27,7 @@ describe('Approval API (e2e)', () => {
 
   beforeAll(async () => {
     app = await createTestApp();
+
     fixture = await createOrganizationTestFixture(app);
   });
 
@@ -72,7 +76,7 @@ describe('Approval API (e2e)', () => {
 
       try {
         const response = await outsiderAuth.agent
-          .get(`/api/v1/approvals/non-existent-approval`)
+          .get('/api/v1/approvals/non-existent-approval')
           .set('x-organization-id', fixture.organization.id)
           .expect(403);
 
@@ -244,7 +248,7 @@ describe('Approval API (e2e)', () => {
   });
 
   describe('Approval permissions', () => {
-    it('should allow REQUESTER to request approval', async () => {
+    it('should reject REQUESTER from requesting approval', async () => {
       const ticket = await createTestTicket(fixture, fixture.requester);
 
       const response = await fixture.requester.agent
@@ -253,11 +257,12 @@ describe('Approval API (e2e)', () => {
         .send({
           approverId: fixture.admin.userId,
         })
-        .expect(201);
+        .expect(403);
 
       expect(response.body).toMatchObject({
-        status: 'PENDING',
-        approverId: fixture.admin.userId,
+        message: 'You do not have permission to perform this action',
+        error: 'Forbidden',
+        statusCode: 403,
       });
     });
 
@@ -269,7 +274,9 @@ describe('Approval API (e2e)', () => {
       );
 
       const response = await fixture.requester.agent
-        .post(`/api/v1/approvals/${approval.id}/approve`)
+        .patch(
+          `/api/v1/tickets/${approval.ticketId}/approvals/${approval.id}/approve`,
+        )
         .set('x-organization-id', fixture.organization.id)
         .send({})
         .expect(403);
@@ -291,12 +298,14 @@ describe('Approval API (e2e)', () => {
       );
 
       const response = await fixture.admin.agent
-        .post(`/api/v1/approvals/${approval.id}/approve`)
+        .patch(
+          `/api/v1/tickets/${approval.ticketId}/approvals/${approval.id}/approve`,
+        )
         .set('x-organization-id', fixture.organization.id)
         .send({
           comment: 'Approved after review.',
         })
-        .expect(201);
+        .expect(200);
 
       expect(response.body).toMatchObject({
         id: approval.id,
@@ -315,12 +324,14 @@ describe('Approval API (e2e)', () => {
       );
 
       const response = await fixture.admin.agent
-        .post(`/api/v1/approvals/${approval.id}/reject`)
+        .patch(
+          `/api/v1/tickets/${approval.ticketId}/approvals/${approval.id}/reject`,
+        )
         .set('x-organization-id', fixture.organization.id)
         .send({
           comment: 'Rejected after review.',
         })
-        .expect(201);
+        .expect(200);
 
       expect(response.body).toMatchObject({
         id: approval.id,
@@ -339,9 +350,11 @@ describe('Approval API (e2e)', () => {
       );
 
       const response = await fixture.admin.agent
-        .post(`/api/v1/approvals/${approval.id}/cancel`)
+        .patch(
+          `/api/v1/tickets/${approval.ticketId}/approvals/${approval.id}/cancel`,
+        )
         .set('x-organization-id', fixture.organization.id)
-        .expect(201);
+        .expect(200);
 
       expect(response.body).toMatchObject({
         id: approval.id,
@@ -357,7 +370,9 @@ describe('Approval API (e2e)', () => {
       );
 
       const response = await fixture.agent.agent
-        .post(`/api/v1/approvals/${approval.id}/approve`)
+        .patch(
+          `/api/v1/tickets/${approval.ticketId}/approvals/${approval.id}/approve`,
+        )
         .set('x-organization-id', fixture.organization.id)
         .send({})
         .expect(403);
@@ -377,13 +392,17 @@ describe('Approval API (e2e)', () => {
       );
 
       await fixture.admin.agent
-        .post(`/api/v1/approvals/${approval.id}/approve`)
+        .patch(
+          `/api/v1/tickets/${approval.ticketId}/approvals/${approval.id}/approve`,
+        )
         .set('x-organization-id', fixture.organization.id)
         .send({})
-        .expect(201);
+        .expect(200);
 
       const response = await fixture.admin.agent
-        .post(`/api/v1/approvals/${approval.id}/reject`)
+        .patch(
+          `/api/v1/tickets/${approval.ticketId}/approvals/${approval.id}/reject`,
+        )
         .set('x-organization-id', fixture.organization.id)
         .send({})
         .expect(400);
@@ -403,13 +422,17 @@ describe('Approval API (e2e)', () => {
       );
 
       await fixture.admin.agent
-        .post(`/api/v1/approvals/${approval.id}/reject`)
+        .patch(
+          `/api/v1/tickets/${approval.ticketId}/approvals/${approval.id}/reject`,
+        )
         .set('x-organization-id', fixture.organization.id)
         .send({})
-        .expect(201);
+        .expect(200);
 
       const response = await fixture.admin.agent
-        .post(`/api/v1/approvals/${approval.id}/approve`)
+        .patch(
+          `/api/v1/tickets/${approval.ticketId}/approvals/${approval.id}/approve`,
+        )
         .set('x-organization-id', fixture.organization.id)
         .send({})
         .expect(400);
@@ -429,12 +452,16 @@ describe('Approval API (e2e)', () => {
       );
 
       await fixture.admin.agent
-        .post(`/api/v1/approvals/${approval.id}/cancel`)
+        .patch(
+          `/api/v1/tickets/${approval.ticketId}/approvals/${approval.id}/cancel`,
+        )
         .set('x-organization-id', fixture.organization.id)
-        .expect(201);
+        .expect(200);
 
       const response = await fixture.admin.agent
-        .post(`/api/v1/approvals/${approval.id}/approve`)
+        .patch(
+          `/api/v1/tickets/${approval.ticketId}/approvals/${approval.id}/approve`,
+        )
         .set('x-organization-id', fixture.organization.id)
         .send({})
         .expect(400);
@@ -443,6 +470,84 @@ describe('Approval API (e2e)', () => {
         message: 'Approval cannot transition from CANCELLED to APPROVED',
         error: 'Bad Request',
         statusCode: 400,
+      });
+    });
+  });
+
+  describe('Validation and error paths', () => {
+    it('should return 404 when requesting approval for a non-existent ticket', async () => {
+      const response = await fixture.owner.agent
+        .post(`/api/v1/tickets/non-existent-ticket-${randomUUID()}/approvals`)
+        .set('x-organization-id', fixture.organization.id)
+        .send({
+          approverId: fixture.admin.userId,
+        })
+        .expect(404);
+
+      expect(response.body).toMatchObject({
+        message: 'Ticket not found',
+        error: 'Not Found',
+        statusCode: 404,
+      });
+    });
+
+    it('should return 404 when retrieving a non-existent approval', async () => {
+      const response = await fixture.owner.agent
+        .get(`/api/v1/approvals/non-existent-approval-${randomUUID()}`)
+        .set('x-organization-id', fixture.organization.id)
+        .expect(404);
+
+      expect(response.body).toMatchObject({
+        message: 'Approval not found',
+        error: 'Not Found',
+        statusCode: 404,
+      });
+    });
+
+    it('should return 404 when approving a non-existent approval', async () => {
+      const response = await fixture.admin.agent
+        .patch(
+          `/api/v1/tickets/non-existent-ticket-${randomUUID()}/approvals/non-existent-approval-${randomUUID()}/approve`,
+        )
+        .set('x-organization-id', fixture.organization.id)
+        .send({})
+        .expect(404);
+
+      expect(response.body).toMatchObject({
+        message: 'Approval not found',
+        error: 'Not Found',
+        statusCode: 404,
+      });
+    });
+
+    it('should return 404 when rejecting a non-existent approval', async () => {
+      const response = await fixture.admin.agent
+        .patch(
+          `/api/v1/tickets/non-existent-ticket-${randomUUID()}/approvals/non-existent-approval-${randomUUID()}/reject`,
+        )
+        .set('x-organization-id', fixture.organization.id)
+        .send({})
+        .expect(404);
+
+      expect(response.body).toMatchObject({
+        message: 'Approval not found',
+        error: 'Not Found',
+        statusCode: 404,
+      });
+    });
+
+    it('should return 404 when cancelling a non-existent approval', async () => {
+      const response = await fixture.admin.agent
+        .patch(
+          `/api/v1/tickets/non-existent-ticket-${randomUUID()}/approvals/non-existent-approval-${randomUUID()}/cancel`,
+        )
+        .set('x-organization-id', fixture.organization.id)
+        .expect(404);
+
+      expect(response.body).toMatchObject({
+        message: 'Approval not found',
+        error: 'Not Found',
+        statusCode: 404,
       });
     });
   });

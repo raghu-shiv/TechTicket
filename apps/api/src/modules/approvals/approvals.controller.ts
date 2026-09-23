@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 
 import { AuthGuard } from '../../common/auth/auth.guard';
 
@@ -55,35 +63,48 @@ export class ApprovalsController {
     return this.approvalsService.findOne(context, approvalId);
   }
 
-  @Post('approvals/:approvalId/approve')
+  @Patch('tickets/:ticketId/approvals/:approvalId/approve')
   @Permissions(PERMISSIONS.APPROVAL_APPROVE)
   async approve(
     @OrganizationContextParam()
     context: OrganizationContext,
+    @Param('ticketId') ticketId: string,
     @Param('approvalId') approvalId: string,
     @Body() dto: ApprovalActionDto,
   ) {
-    return this.approvalsService.approve(context, approvalId, dto.comment);
+    return this.approvalsService.approve(
+      context,
+      ticketId,
+      approvalId,
+      dto.comment,
+    );
   }
 
-  @Post('approvals/:approvalId/reject')
+  @Patch('tickets/:ticketId/approvals/:approvalId/reject')
   @Permissions(PERMISSIONS.APPROVAL_REJECT)
   async reject(
     @OrganizationContextParam()
     context: OrganizationContext,
+    @Param('ticketId') ticketId: string,
     @Param('approvalId') approvalId: string,
     @Body() dto: ApprovalActionDto,
   ) {
-    return this.approvalsService.reject(context, approvalId, dto.comment);
+    return this.approvalsService.reject(
+      context,
+      ticketId,
+      approvalId,
+      dto.comment,
+    );
   }
 
-  @Post('approvals/:approvalId/cancel')
+  @Patch('tickets/:ticketId/approvals/:approvalId/cancel')
   @Permissions(PERMISSIONS.APPROVAL_CANCEL)
   async cancel(
     @OrganizationContextParam()
     context: OrganizationContext,
+    @Param('ticketId') ticketId: string,
     @Param('approvalId') approvalId: string,
   ) {
-    return this.approvalsService.cancel(context, approvalId);
+    return this.approvalsService.cancel(context, ticketId, approvalId);
   }
 }

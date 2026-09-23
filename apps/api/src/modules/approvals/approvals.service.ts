@@ -6,33 +6,44 @@ import {
 } from '@nestjs/common';
 
 import { EventEmitter2 } from '@nestjs/event-emitter';
+
 import { APPROVAL_EVENTS } from './approval-events';
+
 import { TicketApprovalStatus, type TicketApproval } from '@prisma/client';
 
 import { DatabaseService } from '../../database/database.service';
+
 import type { OrganizationContext } from '../../common/organization/organization.types';
 
 @Injectable()
 export class ApprovalsService {
   constructor(
     private readonly database: DatabaseService,
+
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async requestApproval(
     context: OrganizationContext,
+
     ticketId: string,
+
     approverId: string,
+
     comment?: string,
   ): Promise<TicketApproval> {
     const ticket = await this.database.ticket.findFirst({
       where: {
         id: ticketId,
+
         organizationId: context.organizationId,
       },
+
       select: {
         id: true,
+
         ticketNumber: true,
+
         requesterId: true,
       },
     });
@@ -45,11 +56,14 @@ export class ApprovalsService {
       where: {
         userId_organizationId: {
           userId: approverId,
+
           organizationId: context.organizationId,
         },
       },
+
       select: {
         userId: true,
+        role: true,
       },
     });
 
@@ -65,27 +79,45 @@ export class ApprovalsService {
       );
     }
 
+    if (approverMembership.role === 'REQUESTER') {
+      throw new BadRequestException(
+        'A REQUESTER cannot be assigned as an approver',
+      );
+    }
+
     const normalizedComment = comment?.trim() || null;
 
     const approval = await this.database.ticketApproval.create({
       data: {
         ticketId: ticket.id,
+
         approverId,
+
         status: TicketApprovalStatus.PENDING,
+
         comment: normalizedComment,
       },
     });
 
     this.eventEmitter.emit(APPROVAL_EVENTS.REQUESTED, {
       approvalId: approval.id,
+
       ticketId: ticket.id,
+
       ticketNumber: ticket.ticketNumber,
+
       organizationId: context.organizationId,
+
       actorId: context.userId,
+
       requesterId: ticket.requesterId,
+
       approverId: approval.approverId,
+
       status: approval.status,
+
       comment: approval.comment,
+
       occurredAt: approval.requestedAt,
     });
 
@@ -94,13 +126,16 @@ export class ApprovalsService {
 
   async findForTicket(
     context: OrganizationContext,
+
     ticketId: string,
   ): Promise<TicketApproval[]> {
     const ticket = await this.database.ticket.findFirst({
       where: {
         id: ticketId,
+
         organizationId: context.organizationId,
       },
+
       select: {
         id: true,
       },
@@ -113,10 +148,12 @@ export class ApprovalsService {
     return this.database.ticketApproval.findMany({
       where: {
         ticketId: ticket.id,
+
         ticket: {
           organizationId: context.organizationId,
         },
       },
+
       orderBy: {
         requestedAt: 'desc',
       },
@@ -125,6 +162,7 @@ export class ApprovalsService {
 
   async findOne(
     context: OrganizationContext,
+
     approvalId: string,
   ): Promise<
     TicketApproval & { ticket: { requesterId: string; ticketNumber: string } }
@@ -132,14 +170,17 @@ export class ApprovalsService {
     const approval = await this.database.ticketApproval.findFirst({
       where: {
         id: approvalId,
+
         ticket: {
           organizationId: context.organizationId,
         },
       },
+
       include: {
         ticket: {
           select: {
             requesterId: true,
+
             ticketNumber: true,
           },
         },
@@ -155,13 +196,16 @@ export class ApprovalsService {
 
   async findPendingForTicket(
     context: OrganizationContext,
+
     ticketId: string,
   ): Promise<TicketApproval | null> {
     const ticket = await this.database.ticket.findFirst({
       where: {
         id: ticketId,
+
         organizationId: context.organizationId,
       },
+
       select: {
         id: true,
       },
@@ -174,8 +218,10 @@ export class ApprovalsService {
     return this.database.ticketApproval.findFirst({
       where: {
         ticketId: ticket.id,
+
         status: TicketApprovalStatus.PENDING,
       },
+
       orderBy: {
         requestedAt: 'desc',
       },
@@ -184,13 +230,16 @@ export class ApprovalsService {
 
   async hasPendingApproval(
     context: OrganizationContext,
+
     ticketId: string,
   ): Promise<boolean> {
     const ticket = await this.database.ticket.findFirst({
       where: {
         id: ticketId,
+
         organizationId: context.organizationId,
       },
+
       select: {
         id: true,
       },
@@ -203,8 +252,10 @@ export class ApprovalsService {
     const approval = await this.database.ticketApproval.findFirst({
       where: {
         ticketId: ticket.id,
+
         status: TicketApprovalStatus.PENDING,
       },
+
       select: {
         id: true,
       },
@@ -215,10 +266,18 @@ export class ApprovalsService {
 
   async approve(
     context: OrganizationContext,
+
+    ticketId: string,
+
     approvalId: string,
+
     comment?: string,
   ): Promise<TicketApproval> {
     const approval = await this.findOne(context, approvalId);
+
+    if (approval.ticketId !== ticketId) {
+      throw new NotFoundException('Approval not found');
+    }
 
     this.assertTransition(approval.status, TicketApprovalStatus.APPROVED);
 
@@ -238,9 +297,12 @@ export class ApprovalsService {
       where: {
         id: approval.id,
       },
+
       data: {
         status: TicketApprovalStatus.APPROVED,
+
         approvedAt: new Date(),
+
         ...(normalizedComment !== undefined && {
           comment: normalizedComment || null,
         }),
@@ -249,14 +311,23 @@ export class ApprovalsService {
 
     this.eventEmitter.emit(APPROVAL_EVENTS.APPROVED, {
       approvalId: updatedApproval.id,
+
       ticketId: approval.ticketId,
+
       ticketNumber: approval.ticket.ticketNumber,
+
       organizationId: context.organizationId,
+
       actorId: context.userId,
+
       requesterId: approval.ticket.requesterId,
+
       approverId: updatedApproval.approverId,
+
       status: updatedApproval.status,
+
       comment: updatedApproval.comment,
+
       occurredAt: updatedApproval.approvedAt ?? updatedApproval.updatedAt,
     });
 
@@ -265,10 +336,18 @@ export class ApprovalsService {
 
   async reject(
     context: OrganizationContext,
+
+    ticketId: string,
+
     approvalId: string,
+
     comment?: string,
   ): Promise<TicketApproval> {
     const approval = await this.findOne(context, approvalId);
+
+    if (approval.ticketId !== ticketId) {
+      throw new NotFoundException('Approval not found');
+    }
 
     this.assertTransition(approval.status, TicketApprovalStatus.REJECTED);
 
@@ -288,9 +367,12 @@ export class ApprovalsService {
       where: {
         id: approval.id,
       },
+
       data: {
         status: TicketApprovalStatus.REJECTED,
+
         rejectedAt: new Date(),
+
         ...(normalizedComment !== undefined && {
           comment: normalizedComment || null,
         }),
@@ -299,14 +381,23 @@ export class ApprovalsService {
 
     this.eventEmitter.emit(APPROVAL_EVENTS.REJECTED, {
       approvalId: updatedApproval.id,
+
       ticketId: approval.ticketId,
+
       ticketNumber: approval.ticket.ticketNumber,
+
       organizationId: context.organizationId,
+
       actorId: context.userId,
+
       requesterId: approval.ticket.requesterId,
+
       approverId: updatedApproval.approverId,
+
       status: updatedApproval.status,
+
       comment: updatedApproval.comment,
+
       occurredAt: updatedApproval.rejectedAt ?? updatedApproval.updatedAt,
     });
 
@@ -315,22 +406,24 @@ export class ApprovalsService {
 
   async cancel(
     context: OrganizationContext,
+
+    ticketId: string,
+
     approvalId: string,
   ): Promise<TicketApproval> {
     const approval = await this.findOne(context, approvalId);
 
-    this.assertTransition(approval.status, TicketApprovalStatus.CANCELLED);
-
-    if (approval.approverId !== context.userId) {
-      throw new ForbiddenException(
-        'You are not authorized to cancel this request',
-      );
+    if (approval.ticketId !== ticketId) {
+      throw new NotFoundException('Approval not found');
     }
+
+    this.assertTransition(approval.status, TicketApprovalStatus.CANCELLED);
 
     const updatedApproval = await this.database.ticketApproval.update({
       where: {
         id: approval.id,
       },
+
       data: {
         status: TicketApprovalStatus.CANCELLED,
       },
@@ -338,14 +431,23 @@ export class ApprovalsService {
 
     this.eventEmitter.emit(APPROVAL_EVENTS.CANCELLED, {
       approvalId: updatedApproval.id,
+
       ticketId: approval.ticketId,
+
       ticketNumber: approval.ticket.ticketNumber,
+
       organizationId: context.organizationId,
+
       actorId: context.userId,
+
       requesterId: approval.ticket.requesterId,
+
       approverId: updatedApproval.approverId,
+
       status: updatedApproval.status,
+
       comment: updatedApproval.comment,
+
       occurredAt: updatedApproval.updatedAt,
     });
 
@@ -354,6 +456,7 @@ export class ApprovalsService {
 
   private assertTransition(
     currentStatus: TicketApprovalStatus,
+
     nextStatus: TicketApprovalStatus,
   ): void {
     const allowedTransitions: Record<
@@ -362,11 +465,16 @@ export class ApprovalsService {
     > = {
       [TicketApprovalStatus.PENDING]: [
         TicketApprovalStatus.APPROVED,
+
         TicketApprovalStatus.REJECTED,
+
         TicketApprovalStatus.CANCELLED,
       ],
+
       [TicketApprovalStatus.APPROVED]: [],
+
       [TicketApprovalStatus.REJECTED]: [],
+
       [TicketApprovalStatus.CANCELLED]: [],
     };
 
