@@ -11,6 +11,7 @@ export interface ApprovalActivityEvent {
   ticketNumber: string;
   organizationId: string;
   actorId: string;
+  requesterId: string;
   approverId: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
   comment: string | null;

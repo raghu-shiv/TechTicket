@@ -1,29 +1,42 @@
 # TechTicket
 
-TechTicket is a full-stack, multi-tenant ticketing and support system built as a modular monorepo. The project uses a Docker-first development workflow with organization-scoped authentication/authorization, ticket workflows, comments, attachments, SLA automation, notifications, and approval workflows.
+TechTicket is a full-stack, multi-tenant ticketing and support system
+built as a modular monorepo. The project uses a Docker-first development
+workflow with organization-scoped authentication/authorization, ticket
+workflows, comments, attachments, SLA automation, notifications, and
+approval workflows.
 
 ## Current Status
 
-**Backend foundation, ticket core, search/filtering, attachments, SLA foundations, notifications, and the approval workflow are implemented and verified.**
+**Backend foundation, ticket core, search/filtering, attachments, SLA
+foundations, notifications, and the approval workflow are implemented
+and verified.**
 
 The latest verified backend state includes:
 
-- Organization-scoped authentication and authorization
-- Ticket CRUD, assignment, status workflow, comments, and attachments
-- Ticket search, date filtering, sorting, relationships, and advanced filtering
-- MinIO-backed attachment storage with verified upload, listing, download, and deletion
-- SLA policies, priority-based targets, timers, breach detection, and escalation
-- Ticket activity/audit history
-- Notifications and Redis/BullMQ-backed jobs
-- Approval workflow with verified audit/activity integration
+-   Organization-scoped authentication and authorization
+-   Ticket CRUD, assignment, status workflow, comments, and attachments
+-   Ticket search, date filtering, sorting, relationships, and advanced
+    filtering
+-   MinIO-backed attachment storage with verified upload, listing,
+    download, and deletion
+-   SLA policies, priority-based targets, timers, breach detection, and
+    escalation
+-   Ticket activity/audit history
+-   Notifications and Redis/BullMQ-backed jobs
+-   Approval workflow with verified audit/activity integration
+-   Approval lifecycle notifications with organization-scoped recipient
+    validation
 
-See [`PLANS.md`](./PLANS.md) for the detailed progress tracker and complete roadmap.
+See [`PLANS.md`](./PLANS.md) for the detailed progress tracker and
+complete roadmap.
 
 ## Approval Workflow
 
-The approval workflow is implemented around `TicketApproval` with these states:
+The approval workflow is implemented around `TicketApproval` with these
+states:
 
-```text
+``` text
 PENDING
 APPROVED
 REJECTED
@@ -32,7 +45,7 @@ CANCELLED
 
 Approval endpoints:
 
-```text
+``` text
 POST /api/v1/tickets/:ticketId/approvals
 GET  /api/v1/tickets/:ticketId/approvals
 GET  /api/v1/approvals/:approvalId
@@ -41,13 +54,13 @@ POST /api/v1/approvals/:approvalId/reject
 POST /api/v1/approvals/:approvalId/cancel
 ```
 
-### 4-E — Approval Audit/Activity Integration
+### 4-E --- Approval Audit/Activity Integration
 
-**COMPLETE AND VERIFIED — 2026-09-22**
+**COMPLETE AND VERIFIED --- 2026-09-22**
 
 The existing ticket activity infrastructure records:
 
-```text
+``` text
 APPROVAL_REQUESTED
 APPROVAL_APPROVED
 APPROVAL_REJECTED
@@ -56,63 +69,109 @@ APPROVAL_CANCELLED
 
 End-to-end verification on `TKT-000001` confirmed:
 
-- Admin/requester can request approval from the designated Agent (`201 Created`).
-- The approval is created as `PENDING` and can be retrieved with its human-readable ticket number.
-- The requester cannot approve the request (`403 Forbidden`).
-- The designated Agent can approve the request (`201 Created`).
-- A fresh approval can be rejected by the designated Agent.
-- Another fresh approval can be cancelled by the designated Agent.
-- Ticket activity history contains the complete approval lifecycle events.
-- Activity metadata contains the approval ID, ticket number, approver ID, status, comment, actor, and timestamp information.
-- Approval activity reuses the existing ticket activity/event infrastructure rather than introducing a separate audit system.
+-   Admin/requester can request approval from the designated Agent.
+-   The approval is created as `PENDING` and can be retrieved with its
+    human-readable ticket number.
+-   The requester cannot approve the request.
+-   The designated Agent can approve the request.
+-   Fresh approvals can be rejected and cancelled by the designated
+    Agent.
+-   Ticket activity history contains the complete approval lifecycle.
+-   Activity metadata contains approval ID, ticket number, approver ID,
+    status, comment, actor, and timestamp information.
+-   Approval activity reuses the existing ticket activity/event
+    infrastructure.
 
-Automatic ticket-status transitions resulting from approval outcomes are intentionally not assumed; those business rules remain configurable until the SOP defines them.
+Automatic ticket-status transitions resulting from approval outcomes are
+intentionally not assumed; those business rules remain configurable
+until the SOP defines them.
+
+### 4-F --- Approval Notification Integration
+
+**COMPLETE AND VERIFIED --- 2026-09-23**
+
+Approval lifecycle notifications use the existing event-driven
+Redis/BullMQ email infrastructure.
+
+Recipient routing is:
+
+``` text
+REQUESTED  -> approver
+APPROVED   -> requester
+REJECTED   -> requester
+CANCELLED  -> approver
+```
+
+Approval notification jobs carry the organization ID, and the
+notification worker validates that recipients belong to the event
+organization before resolving their email addresses. Notification
+content uses the human-readable ticket number, such as `TKT-000001`.
+
+Verification on `TKT-000001` confirmed:
+
+-   All four approval lifecycle notification routes.
+-   Correct organization context.
+-   Human-readable ticket number in notification subjects/content.
+-   Cross-organization recipients are excluded.
+-   A tested lifecycle operation produces one notification job rather
+    than duplicate jobs.
+-   Live Resend delivery works with `delivered@resend.dev`.
+-   `admin@example.com` was correctly resolved for requester
+    notifications, but Resend's development environment rejects
+    `example.com` recipients with HTTP `422`; this is a provider testing
+    restriction.
+-   Existing ticket notification behavior remains compatible after
+    organization context was added to the shared queue job.
+-   Backend build completed successfully with `0 errors`.
+
+No separate notification-type enum was introduced because the existing
+notification architecture is event-based.
 
 ## Technology Stack
 
 ### Backend
 
-- NestJS 12
-- TypeScript
-- Prisma 6.19.3
-- PostgreSQL 17
-- Better Auth 1.7.2
-- Redis 8
-- MinIO
-- Express
-- class-validator / class-transformer
-- Swagger
+-   NestJS 12
+-   TypeScript
+-   Prisma 6.19.3
+-   PostgreSQL 17
+-   Better Auth 1.7.2
+-   Redis 8
+-   MinIO
+-   Express
+-   class-validator / class-transformer
+-   Swagger
 
 ### Frontend
 
-- Next.js 16.3.3
-- React 19.2.8
-- Zustand
+-   Next.js 16.3.3
+-   React 19.2.8
+-   Zustand
 
 ### Infrastructure
 
-- Docker Compose
-- PostgreSQL
-- Redis
-- MinIO
+-   Docker Compose
+-   PostgreSQL
+-   Redis
+-   MinIO
 
 ## API Base URL
 
 Development API:
 
-```text
+``` text
 http://localhost:4000/api/v1
 ```
 
 Development web application:
 
-```text
+``` text
 http://localhost:3000
 ```
 
 ## Repository Structure
 
-```text
+``` text
 TechTicket/
 ├── apps/
 │   ├── api/                 # NestJS backend
@@ -127,50 +186,63 @@ TechTicket/
 
 ## Development Principles
 
-1. Keep organization boundaries enforced at the service/domain layer.
-2. Keep authorization explicit and permission-based.
-3. Validate state transitions rather than allowing arbitrary status changes.
-4. Keep attachment metadata and object storage lifecycle synchronized.
-5. Prefer small, verifiable implementation steps.
-6. Verify each feature through API/build tests before moving to the next roadmap item.
-7. Avoid speculative architecture changes that are not required by the current feature.
-8. Reuse existing activity/event infrastructure for audit and notifications.
-9. Do not invent approval rules or automatic ticket-status transitions that are not defined by the SOP.
+1.  Keep organization boundaries enforced at the service/domain layer.
+2.  Keep authorization explicit and permission-based.
+3.  Validate state transitions rather than allowing arbitrary status
+    changes.
+4.  Keep attachment metadata and object storage lifecycle synchronized.
+5.  Prefer small, verifiable implementation steps.
+6.  Verify each feature through API/build tests before moving to the
+    next roadmap item.
+7.  Avoid speculative architecture changes that are not required by the
+    current feature.
+8.  Reuse existing activity/event infrastructure for audit and
+    notifications.
+9.  Do not invent approval rules or automatic ticket-status transitions
+    that are not defined by the SOP.
+10. Preserve organization validation across asynchronous notification
+    processing.
 
 ## Roadmap
 
-The implementation roadmap and completion status are maintained in [`PLANS.md`](./PLANS.md).
+The implementation roadmap and completion status are maintained in
+[`PLANS.md`](./PLANS.md).
 
-### Phase 4 — Workflow
+### Phase 4 --- Workflow
 
-- Approval data model — **COMPLETE**
-- Approval service/API — **COMPLETE**
-- Pending approval helpers — **COMPLETE**
-- Approval audit/activity integration (4-E) — **COMPLETE AND VERIFIED**
-- Realtime / WebSockets — **NEXT**
-- Unassigned queue — planned
-- Junior cases — planned
-- Case history refinement — planned
+-   Approval data model --- **COMPLETE**
+-   Approval service/API --- **COMPLETE**
+-   Pending approval helpers --- **COMPLETE**
+-   Approval audit/activity integration (4-E) --- **COMPLETE AND
+    VERIFIED**
+-   Approval notification integration (4-F) --- **COMPLETE AND
+    VERIFIED**
+-   Realtime / WebSockets --- **NEXT**
+-   Unassigned queue --- planned
+-   Junior cases --- planned
+-   Case history refinement --- planned
 
-### Part 3-H — SLA & Automation
+### Part 3-H --- SLA & Automation
 
-- SLA policies — **COMPLETE**
-- First-response SLA — **COMPLETE**
-- Resolution SLA — **COMPLETE**
-- SLA timers/deadlines — **COMPLETE**
-- Breach detection — **COMPLETE**
-- Escalation — **COMPLETE**
-- Priority-based SLA — **COMPLETE**
-- Organization-specific policies — **COMPLETE**
+-   SLA policies --- **COMPLETE**
+-   First-response SLA --- **COMPLETE**
+-   Resolution SLA --- **COMPLETE**
+-   SLA timers/deadlines --- **COMPLETE**
+-   Breach detection --- **COMPLETE**
+-   Escalation --- **COMPLETE**
+-   Priority-based SLA --- **COMPLETE**
+-   Organization-specific policies --- **COMPLETE**
 
-### Part 3-I — Audit & Notifications
+### Part 3-I --- Audit & Notifications
 
-- Ticket activity/audit history — **COMPLETE**
-- Assignment notifications — **COMPLETE**
-- Status-change notifications — **COMPLETE**
-- Comment notifications — **COMPLETE**
-- Email notification infrastructure — **COMPLETE**
-- Redis-backed jobs — **COMPLETE**
-- Approval activity integration — **COMPLETE AND VERIFIED**
+-   Ticket activity/audit history --- **COMPLETE**
+-   Assignment notifications --- **COMPLETE**
+-   Status-change notifications --- **COMPLETE**
+-   Comment notifications --- **COMPLETE**
+-   Email notification infrastructure --- **COMPLETE**
+-   Redis-backed jobs --- **COMPLETE**
+-   Approval activity integration --- **COMPLETE AND VERIFIED**
+-   Approval notification integration --- **COMPLETE AND VERIFIED**
 
-The next implementation focus is realtime/WebSocket support, followed by tasks/productivity features as defined in `PLANS.md`.
+The next implementation focus is realtime/WebSocket support, followed by
+tasks/productivity features as defined in `PLANS.md`.

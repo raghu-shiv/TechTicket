@@ -30,9 +30,13 @@ export class TicketNotificationEventsService {
       `Assignment notification event: ticket=${event.ticketId}, recipient=${event.recipientId}`,
     );
 
-    await this.sendNotificationEmails([event.recipientId], event.actorId, {
-      subject: `Ticket assigned to you: ${event.ticketId}`,
-      html: `
+    await this.sendNotificationEmails(
+      [event.recipientId],
+      event.actorId,
+      event.organizationId,
+      {
+        subject: `Ticket assigned to you: ${event.ticketId}`,
+        html: `
           <div style="font-family: Arial, sans-serif; line-height: 1.6;">
             <h2>Ticket Assigned to You</h2>
             <p>
@@ -43,14 +47,15 @@ export class TicketNotificationEventsService {
             </p>
           </div>
         `,
-      text: [
-        'Ticket Assigned to You',
-        '',
-        `Ticket ${event.ticketId} has been assigned to you.`,
-        '',
-        'Please open TechTicket to review the ticket and take the appropriate action.',
-      ].join('\n'),
-    });
+        text: [
+          'Ticket Assigned to You',
+          '',
+          `Ticket ${event.ticketId} has been assigned to you.`,
+          '',
+          'Please open TechTicket to review the ticket and take the appropriate action.',
+        ].join('\n'),
+      },
+    );
   }
 
   @OnEvent(TICKET_EVENTS.STATUS_CHANGED)
@@ -73,9 +78,13 @@ export class TicketNotificationEventsService {
         `recipients=${recipientIds.join(',')}`,
     );
 
-    await this.sendNotificationEmails(recipientIds, event.actorId, {
-      subject: `Ticket status changed: ${event.ticketId}`,
-      html: `
+    await this.sendNotificationEmails(
+      recipientIds,
+      event.actorId,
+      event.organizationId,
+      {
+        subject: `Ticket status changed: ${event.ticketId}`,
+        html: `
         <div style="font-family: Arial, sans-serif; line-height: 1.6;">
           <h2>Ticket Status Changed</h2>
           <p>
@@ -90,17 +99,18 @@ export class TicketNotificationEventsService {
           </p>
         </div>
       `,
-      text: [
-        'Ticket Status Changed',
-        '',
-        `The status of ticket ${event.ticketId} has changed.`,
-        '',
-        `Previous status: ${event.fromStatus}`,
-        `New status: ${event.toStatus}`,
-        '',
-        'Open TechTicket to view the latest ticket details.',
-      ].join('\n'),
-    });
+        text: [
+          'Ticket Status Changed',
+          '',
+          `The status of ticket ${event.ticketId} has changed.`,
+          '',
+          `Previous status: ${event.fromStatus}`,
+          `New status: ${event.toStatus}`,
+          '',
+          'Open TechTicket to view the latest ticket details.',
+        ].join('\n'),
+      },
+    );
   }
 
   @OnEvent(TICKET_EVENTS.COMMENT_ADDED)
@@ -151,9 +161,13 @@ export class TicketNotificationEventsService {
           ? 'Comment updated'
           : 'Comment deleted';
 
-    await this.sendNotificationEmails(recipientIds, event.actorId, {
-      subject: `${actionLabel}: ${event.ticketId}`,
-      html: `
+    await this.sendNotificationEmails(
+      recipientIds,
+      event.actorId,
+      event.organizationId,
+      {
+        subject: `${actionLabel}: ${event.ticketId}`,
+        html: `
         <div style="font-family: Arial, sans-serif; line-height: 1.6;">
           <h2>${actionLabel}</h2>
           <p>
@@ -168,16 +182,17 @@ export class TicketNotificationEventsService {
           </p>
         </div>
       `,
-      text: [
-        actionLabel,
-        '',
-        `There has been a ${action} comment on ticket ${event.ticketId}.`,
-        '',
-        `Comment type: ${event.commentType}`,
-        '',
-        'Open TechTicket to view the latest ticket details.',
-      ].join('\n'),
-    });
+        text: [
+          actionLabel,
+          '',
+          `There has been a ${action} comment on ticket ${event.ticketId}.`,
+          '',
+          `Comment type: ${event.commentType}`,
+          '',
+          'Open TechTicket to view the latest ticket details.',
+        ].join('\n'),
+      },
+    );
   }
 
   private getUniqueRecipients(
@@ -196,6 +211,7 @@ export class TicketNotificationEventsService {
   private async sendNotificationEmails(
     recipientIds: string[],
     actorId: string,
+    organizationId: string,
     email: {
       subject: string;
       html: string;
@@ -211,6 +227,7 @@ export class TicketNotificationEventsService {
     await this.notificationQueueService.enqueueEmail({
       recipientIds: uniqueRecipientIds,
       actorId,
+      organizationId,
       subject: email.subject,
       html: email.html,
       text: email.text,

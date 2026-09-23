@@ -39,12 +39,18 @@ export class NotificationQueueProcessor extends WorkerHost {
   private async processSendEmail(
     job: Job<SendEmailNotificationJob>,
   ): Promise<void> {
-    const { recipientIds, actorId, subject, html, text } = job.data;
+    const { recipientIds, actorId, organizationId, subject, html, text } =
+      job.data;
 
     const recipients = await this.database.user.findMany({
       where: {
         id: {
           in: recipientIds,
+        },
+        memberships: {
+          some: {
+            organizationId,
+          },
         },
       },
       select: {
@@ -64,19 +70,21 @@ export class NotificationQueueProcessor extends WorkerHost {
 
     if (missingRecipientIds.length > 0) {
       this.logger.warn(
-        `Notification job ${job.id} contains missing recipients: ` +
+        `Notification job ${job.id} contains missing or out-of-organization recipients: ` +
           `${missingRecipientIds.join(', ')}`,
       );
     }
 
     if (emailAddresses.length === 0) {
       throw new Error(
-        `Notification job ${job.id} has no valid recipient email addresses`,
+        `Notification job ${job.id} has no valid recipient email addresses ` +
+          `within organization ${organizationId}`,
       );
     }
 
     this.logger.log(
       `Processing notification job ${job.id}: ` +
+        `organization=${organizationId}, ` +
         `recipients=${emailAddresses.join(', ')}, ` +
         `actor=${actorId}, ` +
         `subject="${subject}"`,
