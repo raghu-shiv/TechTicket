@@ -117,7 +117,7 @@ export class TicketAttachmentsService {
           },
         },
       });
-    } catch (error) {
+    } catch {
       try {
         await this.storage.delete(objectKey);
       } catch {
@@ -239,7 +239,7 @@ export class TicketAttachmentsService {
           id: attachment.id,
         },
       });
-    } catch (error) {
+    } catch {
       try {
         await this.storage.upload({
           objectKey: attachment.objectKey,

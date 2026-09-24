@@ -8,862 +8,482 @@ feature.
 
 # Current Phase
 
-## Phase 3-F --- Ticketing Core
+## Phase 4 --- Workflow / Approval & Reliability Checkpoint
 
-### Status: COMPLETE
+### Status: COMPLETE AND VERIFIED --- 2026-09-24
 
-The ticketing backend foundation and core workflows are substantially
-implemented and verified.
+The implemented Phase 4 workflow scope through **4-G** is complete and
+verified. This includes approval workflow, approval audit/activity
+integration, approval notifications, notification reliability testing,
+ticket regression testing, full API E2E regression, lint verification,
+and production-build verification.
 
-# Completed Work
+This completion does **not** claim that future Phase 4 roadmap items
+such as Realtime/WebSockets, Unassigned Queue, Junior Cases, or Case
+History Refinement are implemented.
 
-## 3-F-1 --- Ticket Database Model
+# Phase 3 --- Ticket Core
 
-**Status: COMPLETE**
-
-Implemented ticket persistence using Prisma/PostgreSQL.
-
-Ticket fields include:
-
-- Ticket ID
-- Ticket number
-- Organization
-- Requester
-- Assignee
-- Team
-- Title
-- Description
-- Status
-- Priority
-- Type
-- Created timestamp
-- Updated timestamp
-- Resolved timestamp
-- Closed timestamp
-
-Indexes are present for organization-scoped ticket queries and common
-filtering dimensions.
-
-## 3-F-2 --- Ticket CRUD
+## 3-F --- Ticketing Core
 
 **Status: COMPLETE**
 
+Implemented and verified:
+
+-   Ticket database model and PostgreSQL persistence
+-   Ticket CRUD
+-   Ticket assignment and team assignment
+-   Ticket status workflow
+-   Ticket filtering and pagination
+-   Public/internal comments
+-   Ticket attachments
+-   MinIO-backed object storage
+-   Ticket activity/audit history
+-   Ticket relations
+-   Advanced search/filtering
+-   SLA automation
+
+Known limitation:
+
+-   Current ticket-number generation is not fully atomic under high
+    concurrency. This remains a future production-hardening item.
+
+## 3-G --- Search / Filtering / Pagination Expansion
+
+**Status: COMPLETE AND VERIFIED**
+
 Implemented:
 
-- Create ticket
-- List tickets
-- Get ticket
-- Update ticket
-- Delete ticket
+-   Ticket keyword search
+-   Created-date filtering
+-   Controlled sorting
+-   PostgreSQL full-text search
+-   Ticket-number partial matching
+-   Relationship filtering
+-   Unassigned and updated-date filtering
+-   Organization-scoped pagination/filtering
 
-Ticket numbers are generated in the service layer.
+Known limitation:
 
-### Known limitation
+-   No dedicated PostgreSQL `tsvector`/GIN index has been added yet.
 
-The current ticket-number generation approach is not fully atomic under
-high concurrency. This has been acknowledged and is not being treated as
-solved production-grade sequencing yet.
-
-## 3-F-3 --- Ticket Assignment
+## 3-H --- SLA & Automation
 
 **Status: COMPLETE AND VERIFIED**
 
 Implemented:
 
-- Assignee assignment
-- Team assignment
-- Clearing assignments
-- Organization membership validation
-- Active-team validation
-- Team membership validation
-- Prevention of assigning `REQUESTER` users
+-   SLA policies
+-   Priority-based SLA
+-   Organization-specific policies
+-   Ticket SLA snapshots
+-   First-response and resolution SLA tracking
+-   SLA due-time calculation
+-   Breach detection
+-   Reopen behavior
+-   Breach escalation persistence
+-   Breach event emission
+-   Breach audit activities
 
-Endpoint:
-
-```text
-PATCH /api/v1/tickets/:ticketId/assignment
-```
-
-Allowed roles:
-
-```text
-OWNER
-ADMIN
-AGENT
-```
-
-## 3-F-4 --- Ticket Status Workflow
+## 3-I --- Ticket Activity, Audit History & Notifications
 
 **Status: COMPLETE AND VERIFIED**
 
-Implemented allowed transitions:
+Implemented:
 
-```text
-OPEN -> IN_PROGRESS
-OPEN -> PENDING
+-   Ticket activity/audit history
+-   Organization-scoped activity retrieval
+-   Ticket lifecycle activities
+-   Comment activities
+-   SLA breach activities
+-   Assignment/status/comment notifications
+-   Resend email infrastructure
+-   Redis/BullMQ queue and worker
+-   Recipient de-duplication and actor exclusion
+-   Approval notification integration
+-   Notification processor organization isolation
+-   Notification E2E coverage
 
-IN_PROGRESS -> PENDING
-IN_PROGRESS -> RESOLVED
+Known testing note:
 
-PENDING -> IN_PROGRESS
-PENDING -> RESOLVED
+-   Resend's development/testing environment rejects arbitrary
+    `example.com` recipients. `delivered@resend.dev` was used for live
+    provider verification.
+-   Some older notification presentation wording remains a future polish
+    item.
 
-RESOLVED -> CLOSED
-RESOLVED -> IN_PROGRESS
+# Phase 4 --- Workflow
 
-CLOSED -> none
-```
-
-Implemented timestamp behavior:
-
-- `RESOLVED` sets `resolvedAt`.
-- `CLOSED` sets `closedAt`.
-- Reopening from `RESOLVED` clears `resolvedAt` and `closedAt`.
-- `CLOSED` cannot be reopened.
-- Same-status transitions return an error.
-
-## 3-F-5 --- Ticket Filtering / Pagination
-
-**Status: COMPLETE AND VERIFIED**
-
-Implemented organization-scoped ticket list pagination and filtering.
-
-Supported query parameters include:
-
-```text
-page
-limit
-status
-priority
-type
-assigneeId
-teamId
-requesterId
-```
-
-Maximum page size:
-
-```text
-100
-```
-
-Results are ordered newest first.
-
-## 3-F-6 --- Ticket Comments
-
-**Status: COMPLETE AND VERIFIED**
-
-Ticket comments support:
-
-- Public comments
-- Internal comments
-- Listing
-- Creation
-- Editing
-- Deletion
-
-Internal comments are restricted to `OWNER`, `ADMIN`, and `AGENT`;
-requesters only see public comments.
-
-## Attachments
-
-### Attachment Database Model
+## 4-A --- Approval Database Model
 
 **Status: COMPLETE**
 
-Implemented `TicketAttachment` persistence with ticket, uploader, file
-name, object key, MIME type, size, and creation timestamp.
+`TicketApproval` persistence and required relationships are implemented.
 
-### Object Storage Layer
+## 4-B --- Approval Domain / Service / Permission Model
 
-**Status: COMPLETE AND VERIFIED**
+**Status: COMPLETE**
 
-Implemented MinIO-backed storage abstraction.
+Approval domain behavior, service logic, and permission requirements are
+implemented.
 
-Development bucket:
+## 4-C --- Approval API / Controller Layer
 
-```text
-ticket-attachments
-```
+**Status: COMPLETE**
 
-### Multipart Attachment Upload
+Approval API endpoints are implemented.
 
-**Status: COMPLETE AND VERIFIED**
-
-Implemented multipart upload using Multer with attachment validation.
-
-Maximum configured attachment size:
-
-```text
-10 MB
-```
-
-### Attachment Listing
+## 4-D --- Approval Workflow Integration
 
 **Status: COMPLETE AND VERIFIED**
 
-Implemented:
+Approval creation and lifecycle operations are integrated with the
+ticket domain.
 
-```text
-GET /api/v1/tickets/:ticketId/attachments
-```
-
-### Attachment Download + Deletion
-
-**Status: COMPLETE AND VERIFIED**
-
-Implemented:
-
-- Attachment download
-- Correct MIME type response
-- Original filename preservation
-- Attachment deletion
-- MinIO object cleanup
-- PostgreSQL metadata cleanup
-- Cross-ticket isolation
-- Cross-organization isolation
-
-# Approval Workflow
-
-### 4-E --- Approval Audit/Activity Integration
+## 4-E --- Approval Audit / Activity Integration
 
 **Status: COMPLETE AND VERIFIED --- 2026-09-22**
 
-Approval lifecycle events are integrated with the existing ticket
-activity/audit history infrastructure.
+Approval lifecycle events use the existing ticket activity
+infrastructure.
 
-Implemented activity types:
+Activity types:
 
-```text
+``` text
 APPROVAL_REQUESTED
 APPROVAL_APPROVED
 APPROVAL_REJECTED
 APPROVAL_CANCELLED
 ```
 
-Verification used ticket `TKT-000001` and confirmed:
+Verified:
 
-- Admin/requester successfully requested approval from the designated
-  Agent (`201 Created`).
-- The approval was retrievable in `PENDING` state and included
-  `ticketNumber: TKT-000001`.
-- The requester/Admin attempting to approve the request was rejected
-  with `403 Forbidden`.
-- The designated Agent successfully approved the request
-  (`201 Created`).
-- A second approval cycle was successfully rejected by the designated
-  Agent.
-- A third approval cycle was successfully cancelled by the designated
-  Agent.
-- Ticket activity history contained all four approval lifecycle
-  activity types.
-- Activity metadata included `approvalId`, `ticketNumber`,
-  `approverId`, `status`, and `comment`, with actor and timestamp
-  information.
-- Approval activity reused the existing ticket activity infrastructure
-  rather than introducing a separate audit system.
+-   Approval request creation and pending retrieval
+-   Authorization boundaries
+-   Agent approval, rejection, and cancellation
+-   Complete approval activity history
+-   Approval metadata including approval ID, ticket number, approver,
+    status, comment, actor, and timestamp
 
-> Automatic ticket-status transitions based on approval outcomes remain
-> intentionally deferred/configurable because the SOP does not yet
-> define those business rules.
+Automatic ticket-status transitions from approval outcomes remain
+deferred/configurable because those business rules are not defined by
+the SOP.
 
-### 4-F --- Approval Notification Integration
+## 4-F --- Approval Notification Integration
 
 **Status: COMPLETE AND VERIFIED --- 2026-09-23**
 
-Approval lifecycle events are integrated with the existing Redis/BullMQ
-email notification infrastructure.
+Approval lifecycle events use the existing Redis/BullMQ email
+infrastructure.
+
+Recipient routing:
+
+``` text
+REQUESTED  -> approver
+APPROVED   -> requester
+REJECTED   -> requester
+CANCELLED  -> approver
+```
 
 Implemented:
 
-- Approval notification event contract includes `approvalId`,
-  `ticketId`, `ticketNumber`, `organizationId`, `actorId`,
-  `requesterId`, `approverId`, status, comment, and event timestamp.
-- Notification handlers subscribe to:
-  - `approval.requested`
-  - `approval.approved`
-  - `approval.rejected`
-  - `approval.cancelled`
-- Recipient routing:
-  - `REQUESTED` -> approver
-  - `APPROVED` -> requester
-  - `REJECTED` -> requester
-  - `CANCELLED` -> approver
-- Approval notifications use the human-readable ticket number, such as
-  `TKT-000001`.
-- Notification jobs carry `organizationId`.
-- The notification worker validates recipient organization membership
-  before resolving email addresses.
-- Existing ticket notification producers provide `organizationId` to
-  the shared notification queue.
-- No separate notification-type enum was introduced because the
-  existing notification architecture is event-based.
+-   Approval notification event contract
+-   Four approval lifecycle notification events
+-   Organization-scoped notification jobs
+-   Organization membership validation in the worker
+-   Human-readable ticket numbers in notification content
+-   Compatibility with existing ticket notification producers
 
-#### 4-F.6 Verification
+Live Resend delivery was verified with `delivered@resend.dev`.
 
-Verification was completed against `TKT-000001`.
+`admin@example.com` was correctly resolved, but Resend rejected that
+`example.com` address with HTTP 422 in its development environment. This
+is a provider test-environment restriction rather than a
+recipient-routing failure.
 
-Confirmed:
+# 4-G --- Integration & Reliability Testing
 
-- `REQUESTED`: notification routed to the approver, organization
-  context was correct, and `TKT-000001` was used.
-- `APPROVED`: notification routed to the requester, organization
-  context was correct, and `TKT-000001` was used.
-- `REJECTED`: notification routed to the requester, organization
-  context was correct, and `TKT-000001` was used.
-- `CANCELLED`: notification routed to the approver, organization
-  context was correct, and `TKT-000001` was used.
-- Cross-organization recipients were excluded by notification-worker
-  membership validation.
-- A single tested approval lifecycle operation produced one
-  notification job rather than duplicate notification jobs.
-- Live provider delivery was successfully verified with the Resend
-  test recipient `delivered@resend.dev`.
-- The requester test address `admin@example.com` was correctly
-  resolved for approval notifications, but Resend's development
-  environment rejected delivery to the `example.com` address with HTTP
-  `422`; this was a provider test-environment restriction rather than
-  a recipient-routing failure.
-- Existing notification behavior remained compatible after adding
-  organization context to the shared queue job.
-- Backend build completed successfully with `0 errors`.
+**Status: COMPLETE AND VERIFIED --- 2026-09-24**
 
-#### 4-F.7 Build
+## 4-G.1 --- Test Infrastructure
 
-**Status: COMPLETE AND VERIFIED**
+**COMPLETE**
 
-```text
+Vitest E2E infrastructure and test setup are in place.
+
+## 4-G.2 --- Health + Authentication Tests
+
+**COMPLETE AND VERIFIED**
+
+Verified health, authentication flows, authenticated API access, and
+valid Better Auth session behavior.
+
+## 4-G.3 --- Organization / RBAC Tests
+
+**COMPLETE AND VERIFIED**
+
+Verified organization context, membership boundaries, permission/role
+authorization, and organization-scoped access.
+
+## 4-G.4 --- Approval API Tests
+
+**COMPLETE AND VERIFIED**
+
+Verified approval creation, retrieval, authorization, lifecycle actions,
+cancellation, invalid states, and organization boundaries.
+
+## 4-G.5 --- Notification Integration & Reliability Tests
+
+**COMPLETE AND VERIFIED**
+
+Verified:
+
+-   Notification queue/job foundation
+-   Approval notification integration
+-   Notification payloads and recipients
+-   All supported approval notification events
+-   Cancellation notification
+-   Queue processor behavior
+-   Organization isolation
+-   Deterministic test cleanup
+-   Full E2E regression
+
+Processor tests cover valid recipients, cross-organization recipients,
+invalid recipients, and unsupported notification jobs.
+
+Notification tests avoid destructive global BullMQ cleanup that can
+interfere with active workers or locked jobs.
+
+## 4-G.6 --- Ticket Regression Tests
+
+**COMPLETE AND VERIFIED**
+
+Dedicated `test/ticket.e2e-spec.ts` coverage protects:
+
+-   Ticket creation
+-   Retrieval/details
+-   List/search/filtering/pagination
+-   Authorization and organization isolation
+-   Assignment/team assignment
+-   Status workflow
+-   Comments/history
+-   Attachments
+-   Approval/ticket interaction
+-   Validation and error paths
+
+Verified dedicated ticket result:
+
+``` text
+test/ticket.e2e-spec.ts
+56/56 tests passed
+```
+
+## 4-G.7 --- Full API E2E Test Run
+
+**COMPLETE AND VERIFIED --- 2026-09-24**
+
+Command:
+
+``` text
+docker compose exec api npm run test:e2e
+```
+
+Result:
+
+``` text
+Test Files  8 passed (8)
+Tests       108 passed (108)
+Failures    0
+Duration    35.70s
+```
+
+## 4-G.8 --- Lint
+
+**COMPLETE AND VERIFIED --- 2026-09-24**
+
+Command:
+
+``` text
+docker compose exec api npm run lint
+```
+
+Result:
+
+``` text
+Found 0 warnings and 0 errors.
+Finished in 380ms on 101 files with 96 rules using 16 threads.
+```
+
+The seven previous warnings were removed with minimal
+behavior-preserving cleanup:
+
+-   Four unused catch parameters in `storage.service.ts`
+-   Two unused catch parameters in `ticket-attachments.service.ts`
+-   One empty `auth.middleware.ts` file
+
+## 4-G.9 --- Production Build
+
+**COMPLETE AND VERIFIED --- 2026-09-24**
+
+Command:
+
+``` text
 docker compose exec api npm run build
+```
+
+Result:
+
+``` text
 Found 0 errors.
 ```
 
-#### 4-F.8 Documentation
+## 4-G.10 --- Final Verification + Documentation
 
-**Status: COMPLETE --- 2026-09-23**
+**COMPLETE AND VERIFIED --- 2026-09-24**
 
-Updated:
+Final checkpoint:
 
-- `PLANS.md`
-- `README.md`
-
-The approval notification integration, organization-scoped recipient
-validation, verification results, and current testing limitation are
-documented in both project documents.
-
-# Testing Roadmap
-
-## 4-G --- Integration & Reliability Testing
-
-### 4-G.1 --- Foundation / Existing API Regression
-
-**Status: COMPLETE**
-
-Existing health, authentication, and foundational API behavior has been
-covered by the E2E suite.
-
-### 4-G.2 --- Health + Authentication E2E
-
-**Status: COMPLETE AND VERIFIED**
-
-Verified:
-
-- Health endpoint
-- Authentication flows
-- Authenticated API access
-
-### 4-G.3 --- Organization / RBAC E2E
-
-**Status: COMPLETE AND VERIFIED**
-
-Verified:
-
-- Organization context
-- Membership boundaries
-- Role-based authorization
-- Organization-scoped access
-
-### 4-G.4 --- Approval API E2E
-
-**Status: COMPLETE AND VERIFIED**
-
-Approval API coverage was completed with the existing approval E2E
-suite.
-
-The suite verified approval creation, retrieval, authorization,
-approval actions, cancellation, invalid states, and organization
-boundaries.
-
-### 4-G.5 --- Notification Integration & Reliability Tests
-
-**Status: COMPLETE AND VERIFIED --- 2026-09-23**
-
-Completed notification integration and reliability coverage.
-
-#### 4-G.5.1 --- Notification Queue / Job Foundation
-
-**COMPLETE**
-
-Verified the shared notification queue, job contract, queue service,
-and processor integration.
-
-#### 4-G.5.2 --- Approval Notification Integration
-
-**COMPLETE**
-
-Verified approval lifecycle events reach the notification queue.
-
-#### 4-G.5.3 --- Approval Notification Payloads
-
-**COMPLETE**
-
-Verified notification jobs contain the required organization, actor,
-recipient, subject, and message information.
-
-#### 4-G.5.4 --- Approval Notification Recipients
-
-**COMPLETE**
-
-Verified:
-
-- Approval requested -> approver
-- Approval approved -> requester
-- Approval rejected -> requester
-- Approval cancelled -> approver
-
-#### 4-G.5.5 --- Notification Event Coverage
-
-**COMPLETE**
-
-Verified all supported approval notification events.
-
-#### 4-G.5.6 --- Approval Cancellation Notification
-
-**COMPLETE**
-
-Verified the cancellation notification route and its current payload
-behavior without inventing a new cancellation-comment business rule.
-
-#### 4-G.5.7 --- Notification Queue Processor Tests
-
-**COMPLETE**
-
-Verified:
-
-- Valid recipient in the organization -> email boundary invoked.
-- Recipient outside the organization -> rejected.
-- Invalid recipient IDs -> rejected.
-- Unsupported notification job -> rejected.
-
-Processor tests mock `EmailService.send()` so processor behavior is
-verified independently of the external email provider.
-
-#### 4-G.5.8 --- Notification Organization Isolation
-
-**COMPLETE**
-
-Verified:
-
-- Cross-organization recipients are excluded.
-- Mixed recipient IDs are filtered to the job organization.
-- A user belonging to multiple organizations is resolved according to
-  the organization attached to the notification job.
-
-#### 4-G.5.9 --- Queue / Test Cleanup
-
-**COMPLETE**
-
-Notification tests were reviewed for destructive queue cleanup.
-
-The test suite does not globally purge, drain, obliterate, or remove
-potentially locked jobs.
-
-Where notification jobs must be identified, tests capture existing job
-IDs and exclude them from matching.
-
-This prevents interference from the live BullMQ worker and avoids
-failures caused by attempting to remove locked jobs.
-
-Repeated notification E2E execution was verified successfully.
-
-#### 4-G.5.10 --- Full E2E Regression
-
-**COMPLETE**
-
-The notification work was included in full API E2E regression before
-closing 4-G.5.
-
-### 4-G.6 --- Ticket Regression Tests
-
-**Status: COMPLETE AND VERIFIED**
-
-The ticket domain is implemented and feature-verified, and the dedicated
-`ticket.e2e-spec.ts` regression suite is now complete and verified.
-
-Existing E2E tests exercise ticket behavior indirectly through:
-
-- Approval E2E
-- Notification E2E
-- Organization boundary E2E
-
-A dedicated ticket regression suite will now be added to protect the
-ticket domain itself.
-
-#### 4-G.6.1 --- Ticket E2E Baseline
-
-**NEXT**
-
-Inspect the current ticket controllers, services, DTOs, authorization
-rules, and existing test helpers before writing tests.
-
-Establish the actual externally observable ticket API contract without
-inventing additional business rules.
-
-#### 4-G.6.2 --- Ticket Creation Regression
-
-Verified coverage:
-
-- Valid ticket creation
-- Required-field validation
-- Organization context
-- Requester ownership
-- Generated ticket number
-- Initial ticket state
-
-#### 4-G.6.3 --- Ticket Retrieval / Detail Regression
-
-Verified coverage:
-
-- Get ticket by ID
-- Existing ticket retrieval
-- Non-existent ticket behavior
-- Organization isolation
-- Response contract
-
-#### 4-G.6.4 --- Ticket List / Search / Filtering Regression
-
-Verified coverage:
-
-- Pagination
-- Page-size limits
-- Status filtering
-- Priority filtering
-- Type filtering
-- Assignee filtering
-- Team filtering
-- Requester filtering
-- Keyword search
-- Date filtering
-- Sorting
-- Organization scoping
-
-#### 4-G.6.5 --- Ticket Authorization / Organization Isolation
-
-Verified coverage:
-
-- Authenticated access
-- Missing organization context
-- Cross-organization ticket access
-- Role-based restrictions
-- Organization-scoped list results
-
-#### 4-G.6.6 --- Assignment Regression
-
-Verified coverage:
-
-- Assigning an eligible user
-- Team assignment
-- Clearing assignment
-- Organization membership validation
-- Team membership validation
-- Active-team validation
-- Prevention of assigning `REQUESTER` users
-- Authorization by role
-
-#### 4-G.6.7 --- Status Workflow Regression
-
-Verified coverage:
-
-```text
-OPEN -> IN_PROGRESS
-OPEN -> PENDING
-
-IN_PROGRESS -> PENDING
-IN_PROGRESS -> RESOLVED
-
-PENDING -> IN_PROGRESS
-PENDING -> RESOLVED
-
-RESOLVED -> CLOSED
-RESOLVED -> IN_PROGRESS
-
-CLOSED -> none
+``` text
+E2E test files       8/8 passed
+E2E tests            108/108 passed
+Lint                 0 warnings / 0 errors
+Production build     0 errors
 ```
 
-Also verify:
+`PLANS.md` and `README.md` were updated to reflect this verified
+checkpoint.
 
-- Same-status rejection
-- Invalid transition rejection
-- `resolvedAt`
-- `closedAt`
-- Reopen timestamp behavior
-- Closed-ticket protection
+# Phase 4 Completion Boundary
 
-#### 4-G.6.8 --- Comments / Activity Regression
+Completed implemented/verified scope:
 
-Verified coverage:
+-   Approval data model
+-   Approval service/API
+-   Approval permissions
+-   Approval workflow integration
+-   Approval audit/activity integration
+-   Approval lifecycle notifications
+-   Notification processor tests
+-   Notification organization isolation
+-   Notification test cleanup
+-   Notification E2E regression
+-   Ticket regression testing
+-   Full API E2E verification
+-   Lint verification
+-   Production build verification
 
-- Public comment creation
-- Internal comment creation
-- Comment listing
-- Comment editing
-- Comment deletion
-- Requester visibility rules
-- Activity/history creation where applicable
-- Organization isolation
+Still planned:
 
-#### 4-G.6.9 --- Attachments Regression
-
-Verified coverage:
-
-- Attachment upload
-- MIME validation
-- Size validation
-- Attachment listing
-- Attachment download
-- Original filename
-- Attachment deletion
-- Object-storage cleanup
-- Cross-ticket isolation
-- Cross-organization isolation
-
-#### 4-G.6.10 --- Approval / Ticket Interaction Regression
-
-**COMPLETE AND VERIFIED**
-
-Verified that ticket behavior remains compatible with the completed
-approval workflow.
-
-Coverage should focus on the existing contract rather than inventing
-automatic ticket-status transitions from approval outcomes.
-
-#### 4-G.6.11 --- Ticket Validation / Error Paths
-
-**COMPLETE AND VERIFIED**
-
-Verified coverage:
-
-- Invalid identifiers
-- Missing required fields
-- Invalid enum values
-- Invalid relationships
-- Unauthorized operations
-- Cross-organization resources
-- Invalid state transitions
-- Consistent HTTP error responses
-
-#### 4-G.6.12 --- Ticket E2E Regression
-
-**COMPLETE AND VERIFIED**
-
-The dedicated ticket E2E suite and complete API E2E suite were executed
-successfully. Verification confirmed no regressions across authentication,
-organization/RBAC, approvals, notifications, or the other existing API
-domains.
-
-Verified result:
-
-- `docker compose exec api npm run test:e2e` completed successfully.
-- 8 E2E test files passed.
-- 108 tests passed with 0 failures.
-- `test/ticket.e2e-spec.ts`: 56/56 passed.
-- `test/approval.e2e-spec.ts`: 24/24 passed.
-- 4-G.6.11 validation/error paths passed.
-
-### 4-G.7 --- Future Integration / Reliability Coverage
-
-**PLANNED**
-
-Further testing will be added as the remaining system capabilities are
-implemented, including realtime updates, tasks, reports, analytics,
-and other dependent domains.
-
-# Upcoming Roadmap
-
-## 3-G --- Search / Filtering / Pagination Expansion
-
-**Status: COMPLETE AND VERIFIED**
-
-Completed capabilities include:
-
-- Ticket keyword search
-- Created-date range filtering
-- Controlled sorting
-- PostgreSQL full-text search for title/description
-- Ticket-number partial matching
-- Additional relationship support
-- Advanced filtering including unassigned and updated-date filters
-- Organization-scoped filtering and pagination
-
-Known limitation:
-
-- No dedicated PostgreSQL `tsvector`/GIN index has been added yet;
-  this remains a future performance optimization.
-
-## Part 3-H --- SLA & Automation
-
-**Status: COMPLETE AND VERIFIED**
-
-Implemented and verified:
-
-- SLA policies
-- Priority-based SLA
-- Organization-specific SLA policies
-- Ticket SLA snapshots
-- First-response SLA tracking
-- Resolution SLA tracking
-- SLA due-time calculation
-- SLA breach detection
-- SLA reopen behavior
-- SLA breach escalation persistence
-- SLA breach event emission
-- SLA breach audit activities
-
-## Part 3-I --- Ticket Activity, Audit History & Notifications
-
-**Status: COMPLETE AND VERIFIED**
-
-Implemented and verified:
-
-- Ticket activity/audit history persistence
-- Organization-scoped activity retrieval
-- Ticket creation/update activities
-- Priority/status/assignee/team activities
-- Comment-added/updated/deleted activities
-- SLA breach activities
-- Assignment notifications
-- Status-change notifications
-- Comment notifications
-- Email notification infrastructure using Resend
-- Redis/BullMQ notification queue and worker
-- Recipient de-duplication and actor exclusion
-- Approval notification integration from Part 4-F
-- Notification processor organization isolation
-- Notification integration E2E coverage
-
-Known presentation/testing note:
-
-- Resend's development/testing environment rejects arbitrary
-  `example.com` recipients. `delivered@resend.dev` was used for live
-  provider delivery verification.
-- Some older ticket notification presentation wording/ticket-ID
-  cleanup remains a separate future polish item.
+-   Realtime / WebSockets
+-   Unassigned queue
+-   Junior cases
+-   Case history refinement
 
 # Recommended Development Phases
 
 ## Phase 1 --- Foundation
 
-- Monorepo
-- Docker
-- Next.js
-- NestJS
-- PostgreSQL
-- Redis
-- Prisma
-- CI
-- ESLint
-- Prettier
-- Environment management
-- UI foundation
+-   Monorepo
+-   Docker
+-   Next.js
+-   NestJS
+-   PostgreSQL
+-   Redis
+-   Prisma
+-   CI
+-   ESLint
+-   Prettier
+-   Environment management
+-   UI foundation
 
 ## Phase 2 --- Identity
 
-- Login
-- Logout
-- Refresh tokens
-- Users
-- Roles
-- Permissions
-- Profile
+-   Login
+-   Logout
+-   Refresh tokens
+-   Users
+-   Roles
+-   Permissions
+-   Profile
 
 ## Phase 3 --- Ticket Core
 
-- Create ticket
-- Ticket list
-- Ticket details
-- Assignment
-- Status
-- Priority
-- Comments
-- Attachments
-- History
+-   Create ticket
+-   Ticket list
+-   Ticket details
+-   Assignment
+-   Status
+-   Priority
+-   Comments
+-   Attachments
+-   History
 
 ## Phase 4 --- Workflow
 
-- Approvals
-- Approval notifications
-- Unassigned queue
-- Junior cases
-- Case history
-- Notifications
-- Realtime updates
+-   Approvals
+-   Approval notifications
+-   Unassigned queue
+-   Junior cases
+-   Case history
+-   Notifications
+-   Realtime updates
 
 ## Phase 5 --- Productivity
 
-- Tasks
-- Task templates
-- Case library
-- Saved filters
+-   Tasks
+-   Task templates
+-   Case library
+-   Saved filters
 
 ## Phase 6 --- SLA
 
-- SLA policies
-- SLA timers
-- SLA warnings
-- SLA breaches
-- SLA dashboard
+-   SLA policies
+-   SLA timers
+-   SLA warnings
+-   SLA breaches
+-   SLA dashboard
 
 ## Phase 7 --- Analytics
 
-- Dashboard
-- Product dashboard
-- Employee dashboard
-- SLA reports
-- TAT reports
-- Usage reports
-- Case library reports
-- Attendance reports
-- Exports
+-   Dashboard
+-   Product dashboard
+-   Employee dashboard
+-   SLA reports
+-   TAT reports
+-   Usage reports
+-   Case library reports
+-   Attendance reports
+-   Exports
 
 ## Phase 8 --- Production Hardening
 
-- Unit tests
-- Integration tests
-- E2E tests
-- Security audit
-- Performance testing
-- Database optimization
-- Logging
-- Monitoring
-- Backups
-- CI/CD
-- Production Docker
+-   Unit tests
+-   Integration tests
+-   E2E tests
+-   Security audit
+-   Performance testing
+-   Database optimization
+-   Logging
+-   Monitoring
+-   Backups
+-   CI/CD
+-   Production Docker
 
-# Engineering Rules for Remaining Work
+# Engineering Rules
 
 For each remaining feature:
 
-1. Inspect the current implementation before changing it.
-2. Make the smallest change required for the feature.
-3. Preserve organization scoping.
-4. Preserve role-based authorization.
-5. Reuse existing services and modules where appropriate.
-6. Avoid introducing unnecessary dependencies.
-7. Run a backend build after implementation.
-8. Run focused API verification.
-9. Run relevant E2E regression tests.
-10. Only mark a roadmap item complete after verification.
-11. Record known limitations instead of silently treating them as
-    solved.
+1.  Inspect the current implementation before changing it.
+2.  Make the smallest change required.
+3.  Preserve organization scoping.
+4.  Preserve role-based authorization.
+5.  Reuse existing services/modules where appropriate.
+6.  Avoid unnecessary dependencies.
+7.  Run a backend build.
+8.  Run focused API verification.
+9.  Run relevant E2E regression tests.
+10. Only mark an item complete after verification.
+11. Record known limitations explicitly.
 12. Do not invent approval or SLA business rules not defined by the SOP.
 13. Keep asynchronous notification processing organization-scoped.
 14. Avoid destructive test cleanup that can interfere with running
@@ -871,9 +491,7 @@ For each remaining feature:
 
 # Current Project Checkpoint
 
-At the latest verified checkpoint:
-
-```text
+``` text
 Authentication                    COMPLETE
 Organization context              COMPLETE
 Ticket CRUD                       COMPLETE
@@ -887,20 +505,44 @@ SLA escalation                    COMPLETE
 Ticket activity / audit history   COMPLETE
 Approval workflow                 COMPLETE
 Approval audit/activity (4-E)     COMPLETE AND VERIFIED
-Approval notifications (4-F)      COMPLETE AND VERIFIED
+Approval notifications (4-F)     COMPLETE AND VERIFIED
 Activity API                      COMPLETE
 Notifications                     COMPLETE
-Notification processor tests      COMPLETE
-Notification organization tests   COMPLETE
+Notification processor tests      COMPLETE AND VERIFIED
+Notification organization tests   COMPLETE AND VERIFIED
 Notification test cleanup         COMPLETE
-Notification E2E regression       COMPLETE
+Notification E2E regression       COMPLETE AND VERIFIED
 Email infrastructure              COMPLETE
 Redis-backed jobs                 COMPLETE
 Ticket regression tests           COMPLETE AND VERIFIED
+Full API E2E regression           COMPLETE AND VERIFIED
+Lint                              COMPLETE AND VERIFIED
+Production build                  COMPLETE AND VERIFIED
+Phase 4-G                         COMPLETE AND VERIFIED
 ```
 
-The backend currently builds successfully with `0 errors` and the NestJS
-application starts successfully with the approval and ticket activity
-endpoints registered.
+# Latest Verification Commands
 
-The 4-G.6 ticket regression testing checkpoint is **COMPLETE AND VERIFIED**.
+``` powershell
+docker compose exec api npm run test:e2e
+docker compose exec api npm run lint
+docker compose exec api npm run build
+```
+
+All three commands have been verified successfully at the latest
+checkpoint.
+
+# Next Development Direction
+
+Phase 4-G is complete. Continue with the roadmap rather than introducing
+speculative architecture.
+
+Remaining workflow candidates:
+
+-   Realtime / WebSockets
+-   Unassigned queue
+-   Junior cases
+-   Case history refinement
+
+After the remaining workflow scope, proceed into Productivity,
+Analytics, and Production Hardening.

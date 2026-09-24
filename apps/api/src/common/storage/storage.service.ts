@@ -42,7 +42,7 @@ export class StorageService {
       if (!exists) {
         await this.client.makeBucket(this.bucket);
       }
-    } catch (error) {
+    } catch {
       throw new InternalServerErrorException(
         'Unable to initialize object storage',
       );
@@ -62,7 +62,7 @@ export class StorageService {
           'Content-Type': input.contentType,
         },
       );
-    } catch (error) {
+    } catch {
       throw new InternalServerErrorException('Unable to upload attachment');
     }
   }
@@ -81,7 +81,7 @@ export class StorageService {
         objectKey,
         data: Buffer.concat(chunks),
       };
-    } catch (error) {
+    } catch {
       throw new InternalServerErrorException('Unable to retrieve attachment');
     }
   }
@@ -89,7 +89,7 @@ export class StorageService {
   async delete(objectKey: string): Promise<void> {
     try {
       await this.client.removeObject(this.bucket, objectKey);
-    } catch (error) {
+    } catch {
       throw new InternalServerErrorException('Unable to delete attachment');
     }
   }
