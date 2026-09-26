@@ -19,7 +19,7 @@ ticket regression testing, full API E2E regression, lint verification,
 and production-build verification.
 
 This completion does **not** claim that future Phase 4 roadmap items
-such as Realtime/WebSockets, Unassigned Queue, Junior Cases, or Case
+such as Realtime/WebSockets, Unassigned Queue, or Ticket
 History Refinement are implemented.
 
 # Phase 3 --- Ticket Core
@@ -30,23 +30,23 @@ History Refinement are implemented.
 
 Implemented and verified:
 
--   Ticket database model and PostgreSQL persistence
--   Ticket CRUD
--   Ticket assignment and team assignment
--   Ticket status workflow
--   Ticket filtering and pagination
--   Public/internal comments
--   Ticket attachments
--   MinIO-backed object storage
--   Ticket activity/audit history
--   Ticket relations
--   Advanced search/filtering
--   SLA automation
+- Ticket database model and PostgreSQL persistence
+- Ticket CRUD
+- Ticket assignment and team assignment
+- Ticket status workflow
+- Ticket filtering and pagination
+- Public/internal comments
+- Ticket attachments
+- MinIO-backed object storage
+- Ticket activity/audit history
+- Ticket relations
+- Advanced search/filtering
+- SLA automation
 
 Known limitation:
 
--   Current ticket-number generation is not fully atomic under high
-    concurrency. This remains a future production-hardening item.
+- Current ticket-number generation is not fully atomic under high
+  concurrency. This remains a future production-hardening item.
 
 ## 3-G --- Search / Filtering / Pagination Expansion
 
@@ -54,18 +54,18 @@ Known limitation:
 
 Implemented:
 
--   Ticket keyword search
--   Created-date filtering
--   Controlled sorting
--   PostgreSQL full-text search
--   Ticket-number partial matching
--   Relationship filtering
--   Unassigned and updated-date filtering
--   Organization-scoped pagination/filtering
+- Ticket keyword search
+- Created-date filtering
+- Controlled sorting
+- PostgreSQL full-text search
+- Ticket-number partial matching
+- Relationship filtering
+- Unassigned and updated-date filtering
+- Organization-scoped pagination/filtering
 
 Known limitation:
 
--   No dedicated PostgreSQL `tsvector`/GIN index has been added yet.
+- No dedicated PostgreSQL `tsvector`/GIN index has been added yet.
 
 ## 3-H --- SLA & Automation
 
@@ -73,17 +73,17 @@ Known limitation:
 
 Implemented:
 
--   SLA policies
--   Priority-based SLA
--   Organization-specific policies
--   Ticket SLA snapshots
--   First-response and resolution SLA tracking
--   SLA due-time calculation
--   Breach detection
--   Reopen behavior
--   Breach escalation persistence
--   Breach event emission
--   Breach audit activities
+- SLA policies
+- Priority-based SLA
+- Organization-specific policies
+- Ticket SLA snapshots
+- First-response and resolution SLA tracking
+- SLA due-time calculation
+- Breach detection
+- Reopen behavior
+- Breach escalation persistence
+- Breach event emission
+- Breach audit activities
 
 ## 3-I --- Ticket Activity, Audit History & Notifications
 
@@ -91,26 +91,26 @@ Implemented:
 
 Implemented:
 
--   Ticket activity/audit history
--   Organization-scoped activity retrieval
--   Ticket lifecycle activities
--   Comment activities
--   SLA breach activities
--   Assignment/status/comment notifications
--   Resend email infrastructure
--   Redis/BullMQ queue and worker
--   Recipient de-duplication and actor exclusion
--   Approval notification integration
--   Notification processor organization isolation
--   Notification E2E coverage
+- Ticket activity/audit history
+- Organization-scoped activity retrieval
+- Ticket lifecycle activities
+- Comment activities
+- SLA breach activities
+- Assignment/status/comment notifications
+- Resend email infrastructure
+- Redis/BullMQ queue and worker
+- Recipient de-duplication and actor exclusion
+- Approval notification integration
+- Notification processor organization isolation
+- Notification E2E coverage
 
 Known testing note:
 
--   Resend's development/testing environment rejects arbitrary
-    `example.com` recipients. `delivered@resend.dev` was used for live
-    provider verification.
--   Some older notification presentation wording remains a future polish
-    item.
+- Resend's development/testing environment rejects arbitrary
+  `example.com` recipients. `delivered@resend.dev` was used for live
+  provider verification.
+- Some older notification presentation wording remains a future polish
+  item.
 
 # Phase 4 --- Workflow
 
@@ -149,7 +149,7 @@ infrastructure.
 
 Activity types:
 
-``` text
+```text
 APPROVAL_REQUESTED
 APPROVAL_APPROVED
 APPROVAL_REJECTED
@@ -158,12 +158,12 @@ APPROVAL_CANCELLED
 
 Verified:
 
--   Approval request creation and pending retrieval
--   Authorization boundaries
--   Agent approval, rejection, and cancellation
--   Complete approval activity history
--   Approval metadata including approval ID, ticket number, approver,
-    status, comment, actor, and timestamp
+- Approval request creation and pending retrieval
+- Authorization boundaries
+- Agent approval, rejection, and cancellation
+- Complete approval activity history
+- Approval metadata including approval ID, ticket number, approver,
+  status, comment, actor, and timestamp
 
 Automatic ticket-status transitions from approval outcomes remain
 deferred/configurable because those business rules are not defined by
@@ -178,7 +178,7 @@ infrastructure.
 
 Recipient routing:
 
-``` text
+```text
 REQUESTED  -> approver
 APPROVED   -> requester
 REJECTED   -> requester
@@ -187,12 +187,12 @@ CANCELLED  -> approver
 
 Implemented:
 
--   Approval notification event contract
--   Four approval lifecycle notification events
--   Organization-scoped notification jobs
--   Organization membership validation in the worker
--   Human-readable ticket numbers in notification content
--   Compatibility with existing ticket notification producers
+- Approval notification event contract
+- Four approval lifecycle notification events
+- Organization-scoped notification jobs
+- Organization membership validation in the worker
+- Human-readable ticket numbers in notification content
+- Compatibility with existing ticket notification producers
 
 Live Resend delivery was verified with `delivered@resend.dev`.
 
@@ -238,15 +238,15 @@ cancellation, invalid states, and organization boundaries.
 
 Verified:
 
--   Notification queue/job foundation
--   Approval notification integration
--   Notification payloads and recipients
--   All supported approval notification events
--   Cancellation notification
--   Queue processor behavior
--   Organization isolation
--   Deterministic test cleanup
--   Full E2E regression
+- Notification queue/job foundation
+- Approval notification integration
+- Notification payloads and recipients
+- All supported approval notification events
+- Cancellation notification
+- Queue processor behavior
+- Organization isolation
+- Deterministic test cleanup
+- Full E2E regression
 
 Processor tests cover valid recipients, cross-organization recipients,
 invalid recipients, and unsupported notification jobs.
@@ -260,20 +260,20 @@ interfere with active workers or locked jobs.
 
 Dedicated `test/ticket.e2e-spec.ts` coverage protects:
 
--   Ticket creation
--   Retrieval/details
--   List/search/filtering/pagination
--   Authorization and organization isolation
--   Assignment/team assignment
--   Status workflow
--   Comments/history
--   Attachments
--   Approval/ticket interaction
--   Validation and error paths
+- Ticket creation
+- Retrieval/details
+- List/search/filtering/pagination
+- Authorization and organization isolation
+- Assignment/team assignment
+- Status workflow
+- Comments/history
+- Attachments
+- Approval/ticket interaction
+- Validation and error paths
 
 Verified dedicated ticket result:
 
-``` text
+```text
 test/ticket.e2e-spec.ts
 56/56 tests passed
 ```
@@ -284,13 +284,13 @@ test/ticket.e2e-spec.ts
 
 Command:
 
-``` text
+```text
 docker compose exec api npm run test:e2e
 ```
 
 Result:
 
-``` text
+```text
 Test Files  8 passed (8)
 Tests       108 passed (108)
 Failures    0
@@ -303,13 +303,13 @@ Duration    35.70s
 
 Command:
 
-``` text
+```text
 docker compose exec api npm run lint
 ```
 
 Result:
 
-``` text
+```text
 Found 0 warnings and 0 errors.
 Finished in 380ms on 101 files with 96 rules using 16 threads.
 ```
@@ -317,9 +317,9 @@ Finished in 380ms on 101 files with 96 rules using 16 threads.
 The seven previous warnings were removed with minimal
 behavior-preserving cleanup:
 
--   Four unused catch parameters in `storage.service.ts`
--   Two unused catch parameters in `ticket-attachments.service.ts`
--   One empty `auth.middleware.ts` file
+- Four unused catch parameters in `storage.service.ts`
+- Two unused catch parameters in `ticket-attachments.service.ts`
+- One empty `auth.middleware.ts` file
 
 ## 4-G.9 --- Production Build
 
@@ -327,13 +327,13 @@ behavior-preserving cleanup:
 
 Command:
 
-``` text
+```text
 docker compose exec api npm run build
 ```
 
 Result:
 
-``` text
+```text
 Found 0 errors.
 ```
 
@@ -343,7 +343,7 @@ Found 0 errors.
 
 Final checkpoint:
 
-``` text
+```text
 E2E test files       8/8 passed
 E2E tests            108/108 passed
 Lint                 0 warnings / 0 errors
@@ -357,117 +357,112 @@ checkpoint.
 
 Completed implemented/verified scope:
 
--   Approval data model
--   Approval service/API
--   Approval permissions
--   Approval workflow integration
--   Approval audit/activity integration
--   Approval lifecycle notifications
--   Notification processor tests
--   Notification organization isolation
--   Notification test cleanup
--   Notification E2E regression
--   Ticket regression testing
--   Full API E2E verification
--   Lint verification
--   Production build verification
+- Approval data model
+- Approval service/API
+- Approval permissions
+- Approval workflow integration
+- Approval audit/activity integration
+- Approval lifecycle notifications
+- Notification processor tests
+- Notification organization isolation
+- Notification test cleanup
+- Notification E2E regression
+- Ticket regression testing
+- Full API E2E verification
+- Lint verification
+- Production build verification
 
 Still planned:
 
--   Realtime / WebSockets
--   Unassigned queue
--   Junior cases
--   Case history refinement
+- Realtime / WebSockets
+- Unassigned queue
+- Ticket history refinement
 
 # Recommended Development Phases
 
 ## Phase 1 --- Foundation
 
--   Monorepo
--   Docker
--   Next.js
--   NestJS
--   PostgreSQL
--   Redis
--   Prisma
--   CI
--   ESLint
--   Prettier
--   Environment management
--   UI foundation
+- Monorepo
+- Docker
+- Next.js
+- NestJS
+- PostgreSQL
+- Redis
+- Prisma
+- CI
+- ESLint
+- Prettier
+- Environment management
+- UI foundation
 
 ## Phase 2 --- Identity
 
--   Login
--   Logout
--   Refresh tokens
--   Users
--   Roles
--   Permissions
--   Profile
+- Login
+- Logout
+- Refresh tokens
+- Users
+- Roles
+- Permissions
+- Profile
 
 ## Phase 3 --- Ticket Core
 
--   Create ticket
--   Ticket list
--   Ticket details
--   Assignment
--   Status
--   Priority
--   Comments
--   Attachments
--   History
+- Create ticket
+- Ticket list
+- Ticket details
+- Assignment
+- Status
+- Priority
+- Comments
+- Attachments
+- History
 
 ## Phase 4 --- Workflow
 
--   Approvals
--   Approval notifications
--   Unassigned queue
--   Junior cases
--   Case history
--   Notifications
--   Realtime updates
+- Approvals
+- Approval notifications
+- Unassigned queue
+- Ticket history
+- Notifications
+- Realtime updates
 
 ## Phase 5 --- Productivity
 
--   Tasks
--   Task templates
--   Case library
--   Saved filters
+- Ticket library
+- Saved filters
 
 ## Phase 6 --- SLA
 
--   SLA policies
--   SLA timers
--   SLA warnings
--   SLA breaches
--   SLA dashboard
+- SLA policies
+- SLA timers
+- SLA warnings
+- SLA breaches
+- SLA dashboard
 
 ## Phase 7 --- Analytics
 
--   Dashboard
--   Product dashboard
--   Employee dashboard
--   SLA reports
--   TAT reports
--   Usage reports
--   Case library reports
--   Attendance reports
--   Exports
+- Dashboard
+- Product dashboard
+- Employee dashboard
+- SLA reports
+- TAT reports
+- Usage reports
+- Ticket library reports
+- Exports
 
 ## Phase 8 --- Production Hardening
 
--   Unit tests
--   Integration tests
--   E2E tests
--   Security audit
--   Performance testing
--   Database optimization
--   Logging
--   Monitoring
--   Backups
--   CI/CD
--   Production Docker
+- Unit tests
+- Integration tests
+- E2E tests
+- Security audit
+- Performance testing
+- Database optimization
+- Logging
+- Monitoring
+- Backups
+- CI/CD
+- Production Docker
 
 # Engineering Rules
 
@@ -491,7 +486,7 @@ For each remaining feature:
 
 # Current Project Checkpoint
 
-``` text
+```text
 Authentication                    COMPLETE
 Organization context              COMPLETE
 Ticket CRUD                       COMPLETE
@@ -523,7 +518,7 @@ Phase 4-G                         COMPLETE AND VERIFIED
 
 # Latest Verification Commands
 
-``` powershell
+```powershell
 docker compose exec api npm run test:e2e
 docker compose exec api npm run lint
 docker compose exec api npm run build
@@ -539,10 +534,9 @@ speculative architecture.
 
 Remaining workflow candidates:
 
--   Realtime / WebSockets
--   Unassigned queue
--   Junior cases
--   Case history refinement
+- Realtime / WebSockets
+- Unassigned queue
+- Ticket history refinement
 
 After the remaining workflow scope, proceed into Productivity,
 Analytics, and Production Hardening.

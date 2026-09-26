@@ -15,25 +15,25 @@ verified.**
 
 Latest verified backend state:
 
--   Organization-scoped authentication and authorization
--   Ticket CRUD, assignment, status workflow, comments, and attachments
--   Ticket search, date filtering, sorting, relationships, and advanced
-    filtering
--   MinIO-backed attachment storage
--   SLA policies, priority-based targets, timers, breach detection, and
-    escalation
--   Ticket activity/audit history
--   Redis/BullMQ-backed notifications
--   Approval workflow with verified audit/activity integration
--   Approval lifecycle notifications with organization-scoped recipient
-    validation
--   Notification queue processor tests
--   Notification organization-isolation tests
--   Deterministic notification test cleanup
--   Dedicated ticket E2E regression coverage
--   Full API E2E regression
--   Clean API lint
--   Successful NestJS production build
+- Organization-scoped authentication and authorization
+- Ticket CRUD, assignment, status workflow, comments, and attachments
+- Ticket search, date filtering, sorting, relationships, and advanced
+  filtering
+- MinIO-backed attachment storage
+- SLA policies, priority-based targets, timers, breach detection, and
+  escalation
+- Ticket activity/audit history
+- Redis/BullMQ-backed notifications
+- Approval workflow with verified audit/activity integration
+- Approval lifecycle notifications with organization-scoped recipient
+  validation
+- Notification queue processor tests
+- Notification organization-isolation tests
+- Deterministic notification test cleanup
+- Dedicated ticket E2E regression coverage
+- Full API E2E regression
+- Clean API lint
+- Successful NestJS production build
 
 See [`PLANS.md`](./PLANS.md) for the detailed implementation tracker.
 
@@ -45,7 +45,7 @@ See [`PLANS.md`](./PLANS.md) for the detailed implementation tracker.
 
 Full API E2E:
 
-``` text
+```text
 docker compose exec api npm run test:e2e
 
 Test Files  8 passed (8)
@@ -56,7 +56,7 @@ Duration    35.70s
 
 Lint:
 
-``` text
+```text
 docker compose exec api npm run lint
 
 Found 0 warnings and 0 errors.
@@ -64,7 +64,7 @@ Found 0 warnings and 0 errors.
 
 Production build:
 
-``` text
+```text
 docker compose exec api npm run build
 
 Found 0 errors.
@@ -77,27 +77,26 @@ behavior-preserving cleanup.
 
 Completed implemented/verified scope:
 
--   Approval data model
--   Approval service/API
--   Approval permissions
--   Approval workflow integration
--   Approval audit/activity integration
--   Approval lifecycle notifications
--   Notification processor tests
--   Notification organization isolation
--   Notification test cleanup
--   Notification E2E regression
--   Ticket regression testing
--   Full API E2E verification
--   Lint verification
--   Production build verification
+- Approval data model
+- Approval service/API
+- Approval permissions
+- Approval workflow integration
+- Approval audit/activity integration
+- Approval lifecycle notifications
+- Notification processor tests
+- Notification organization isolation
+- Notification test cleanup
+- Notification E2E regression
+- Ticket regression testing
+- Full API E2E verification
+- Lint verification
+- Production build verification
 
 Still planned:
 
--   Realtime / WebSockets
--   Unassigned queue
--   Junior cases
--   Case history refinement
+- Realtime / WebSockets
+- Unassigned queue
+- Ticket history refinement
 
 This distinction intentionally avoids claiming functionality that has
 not yet been implemented.
@@ -107,7 +106,7 @@ not yet been implemented.
 The approval workflow is implemented around `TicketApproval` with these
 states:
 
-``` text
+```text
 PENDING
 APPROVED
 REJECTED
@@ -116,7 +115,7 @@ CANCELLED
 
 Approval endpoints:
 
-``` text
+```text
 POST /api/v1/tickets/:ticketId/approvals
 GET  /api/v1/tickets/:ticketId/approvals
 GET  /api/v1/approvals/:approvalId
@@ -131,7 +130,7 @@ POST /api/v1/approvals/:approvalId/cancel
 
 The existing ticket activity infrastructure records:
 
-``` text
+```text
 APPROVAL_REQUESTED
 APPROVAL_APPROVED
 APPROVAL_REJECTED
@@ -154,7 +153,7 @@ Redis/BullMQ email infrastructure.
 
 Recipient routing:
 
-``` text
+```text
 REQUESTED  -> approver
 APPROVED   -> requester
 REJECTED   -> requester
@@ -195,14 +194,14 @@ Dedicated `test/ticket.e2e-spec.ts` coverage protects:
 
 Dedicated result:
 
-``` text
+```text
 test/ticket.e2e-spec.ts
 56/56 tests passed
 ```
 
 Full API result:
 
-``` text
+```text
 8 test files
 108/108 tests passed
 ```
@@ -211,47 +210,47 @@ Full API result:
 
 ### Backend
 
--   NestJS 12
--   TypeScript
--   Prisma 6.19.0+
--   PostgreSQL 17
--   Better Auth 1.7.2
--   Redis 8
--   MinIO
--   Express
--   class-validator / class-transformer
--   Swagger
+- NestJS 12
+- TypeScript
+- Prisma 6.19.0+
+- PostgreSQL 17
+- Better Auth 1.7.2
+- Redis 8
+- MinIO
+- Express
+- class-validator / class-transformer
+- Swagger
 
 ### Frontend
 
--   Next.js 16.3.3
--   React 19.2.8
--   Zustand
+- Next.js 16.3.3
+- React 19.2.8
+- Zustand
 
 ### Infrastructure
 
--   Docker Compose
--   PostgreSQL
--   Redis
--   MinIO
+- Docker Compose
+- PostgreSQL
+- Redis
+- MinIO
 
 ## API Base URL
 
 Development API:
 
-``` text
+```text
 http://localhost:4000/api/v1
 ```
 
 Development web application:
 
-``` text
+```text
 http://localhost:3000
 ```
 
 ## Repository Structure
 
-``` text
+```text
 TechTicket/
 ├── apps/
 │   ├── api/                 # NestJS backend
@@ -292,25 +291,25 @@ TechTicket/
 
 Run the complete API E2E suite:
 
-``` powershell
+```powershell
 docker compose exec api npm run test:e2e
 ```
 
 Run lint:
 
-``` powershell
+```powershell
 docker compose exec api npm run lint
 ```
 
 Run the backend production build:
 
-``` powershell
+```powershell
 docker compose exec api npm run build
 ```
 
 ### Latest Verification
 
-``` text
+```text
 E2E test files       8/8 passed
 E2E tests            108/108 passed
 Lint                 0 warnings / 0 errors
@@ -319,7 +318,7 @@ Production build     0 errors
 
 Current E2E files:
 
-``` text
+```text
 test/approval.e2e-spec.ts
 test/auth.e2e-spec.ts
 test/health.e2e-spec.ts
@@ -334,85 +333,81 @@ test/ticket.e2e-spec.ts
 
 ### Phase 3 --- Ticket Core
 
--   Ticket database model --- **COMPLETE**
--   Ticket CRUD --- **COMPLETE**
--   Ticket assignment --- **COMPLETE AND VERIFIED**
--   Ticket status workflow --- **COMPLETE AND VERIFIED**
--   Ticket filtering/pagination --- **COMPLETE AND VERIFIED**
--   Ticket comments --- **COMPLETE AND VERIFIED**
--   Ticket attachments --- **COMPLETE AND VERIFIED**
--   Ticket relations --- **COMPLETE**
--   Advanced ticket search/filtering --- **COMPLETE AND VERIFIED**
--   SLA automation --- **COMPLETE AND VERIFIED**
--   Ticket activity/audit history --- **COMPLETE AND VERIFIED**
+- Ticket database model --- **COMPLETE**
+- Ticket CRUD --- **COMPLETE**
+- Ticket assignment --- **COMPLETE AND VERIFIED**
+- Ticket status workflow --- **COMPLETE AND VERIFIED**
+- Ticket filtering/pagination --- **COMPLETE AND VERIFIED**
+- Ticket comments --- **COMPLETE AND VERIFIED**
+- Ticket attachments --- **COMPLETE AND VERIFIED**
+- Ticket relations --- **COMPLETE**
+- Advanced ticket search/filtering --- **COMPLETE AND VERIFIED**
+- SLA automation --- **COMPLETE AND VERIFIED**
+- Ticket activity/audit history --- **COMPLETE AND VERIFIED**
 
 ### Phase 4 --- Workflow
 
--   Approval data model --- **COMPLETE**
--   Approval service/API --- **COMPLETE**
--   Approval permissions --- **COMPLETE**
--   Approval workflow integration --- **COMPLETE AND VERIFIED**
--   Approval audit/activity integration (4-E) --- **COMPLETE AND
-    VERIFIED**
--   Approval notification integration (4-F) --- **COMPLETE AND
-    VERIFIED**
--   Notification integration/reliability tests (4-G.5) --- **COMPLETE
-    AND VERIFIED**
--   Ticket regression tests (4-G.6) --- **COMPLETE AND VERIFIED**
--   Full API E2E regression (4-G.7) --- **COMPLETE AND VERIFIED**
--   Lint (4-G.8) --- **COMPLETE AND VERIFIED**
--   Production build (4-G.9) --- **COMPLETE AND VERIFIED**
--   Final verification/documentation (4-G.10) --- **COMPLETE AND
-    VERIFIED**
--   Realtime / WebSockets --- planned
--   Unassigned queue --- planned
--   Junior cases --- planned
--   Case history refinement --- planned
+- Approval data model --- **COMPLETE**
+- Approval service/API --- **COMPLETE**
+- Approval permissions --- **COMPLETE**
+- Approval workflow integration --- **COMPLETE AND VERIFIED**
+- Approval audit/activity integration (4-E) --- **COMPLETE AND
+  VERIFIED**
+- Approval notification integration (4-F) --- **COMPLETE AND
+  VERIFIED**
+- Notification integration/reliability tests (4-G.5) --- **COMPLETE
+  AND VERIFIED**
+- Ticket regression tests (4-G.6) --- **COMPLETE AND VERIFIED**
+- Full API E2E regression (4-G.7) --- **COMPLETE AND VERIFIED**
+- Lint (4-G.8) --- **COMPLETE AND VERIFIED**
+- Production build (4-G.9) --- **COMPLETE AND VERIFIED**
+- Final verification/documentation (4-G.10) --- **COMPLETE AND
+  VERIFIED**
+- Realtime / WebSockets --- planned
+- Unassigned queue --- planned
+- Ticket history refinement --- planned
 
 ### Productivity
 
--   Tasks
--   Task templates
--   Case library
--   Saved filters
+- Ticket library
+- Saved filters
 
 ### SLA
 
--   SLA policies
--   SLA timers
--   SLA warnings
--   SLA breaches
--   SLA dashboard
+- SLA policies
+- SLA timers
+- SLA warnings
+- SLA breaches
+- SLA dashboard
 
 ### Analytics
 
--   Dashboard
--   Product dashboard
--   Employee dashboard
--   SLA reports
--   TAT reports
--   Usage reports
--   Case library reports
--   Attendance reports
--   Exports
+- Dashboard
+- Product dashboard
+- Employee dashboard
+- SLA reports
+- TAT reports
+- Usage reports
+- Ticket library reports
+- Exports
 
 ### Production Hardening
 
--   Unit tests
--   Integration tests
--   E2E tests
--   Security audit
--   Performance testing
--   Database optimization
--   Logging
--   Monitoring
--   Backups
--   CI/CD
--   Production Docker
+- Unit tests
+- Integration tests
+- E2E tests
+- Security audit
+- Performance testing
+- Database optimization
+- Logging
+- Monitoring
+- Backups
+- CI/CD
+- Production Docker
 
 ## Current Project Checkpoint
 
-``` text
+```text
 Authentication                    COMPLETE
 Organization context              COMPLETE
 Ticket CRUD                       COMPLETE
@@ -449,10 +444,9 @@ speculative architecture.
 
 Remaining workflow candidates:
 
--   Realtime / WebSockets
--   Unassigned queue
--   Junior cases
--   Case history refinement
+- Realtime / WebSockets
+- Unassigned queue
+- Ticket history refinement
 
 After the remaining workflow scope, proceed into Productivity,
 Analytics, and Production Hardening.
