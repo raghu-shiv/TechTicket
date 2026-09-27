@@ -13,7 +13,7 @@ interface TestUser {
 interface AuthenticatedTestUser {
   user: TestUser;
   agent: ReturnType<typeof request.agent>;
-  sessionCookie: string;
+  cookies: string[];
 }
 
 export async function createAuthenticatedTestUser(
@@ -37,20 +37,12 @@ export async function createAuthenticatedTestUser(
     })
     .expect(200);
 
-  const setCookie = signInResponse.headers['set-cookie'];
-
-  if (!setCookie || setCookie.length === 0) {
-    throw new Error('Better Auth did not return a session cookie');
-  }
-
-  const sessionCookie = setCookie
-    .map((cookie) => cookie.split(';', 1)[0])
-    .join('; ');
+  const cookies = signInResponse.headers['set-cookie'] ?? [];
 
   return {
     user,
     agent,
-    sessionCookie,
+    cookies,
   };
 }
 

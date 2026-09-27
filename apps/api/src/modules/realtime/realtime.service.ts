@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import type { Server } from 'socket.io';
+import type { Server, Socket } from 'socket.io';
 
 @Injectable()
 export class RealtimeService {
@@ -10,7 +10,6 @@ export class RealtimeService {
 
   setServer(server: Server): void {
     this.server = server;
-
     this.logger.log('Realtime Socket.IO server registered');
   }
 
@@ -24,5 +23,15 @@ export class RealtimeService {
 
   isReady(): boolean {
     return this.server !== null;
+  }
+
+  handleDisconnect(socket: Socket): void {
+    const userId = socket.data.auth?.user?.id;
+
+    this.logger.log(
+      `Realtime client disconnected: socket=${socket.id}${
+        userId ? ` user=${userId}` : ''
+      }`,
+    );
   }
 }

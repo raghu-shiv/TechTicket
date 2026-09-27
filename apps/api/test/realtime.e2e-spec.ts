@@ -13,6 +13,7 @@ describe('Realtime Authentication (e2e)', () => {
     app = await createTestApp();
 
     const server = app.getHttpServer();
+
     await new Promise<void>((resolve) => server.listen(0, resolve));
 
     const address = server.address();
@@ -39,9 +40,11 @@ describe('Realtime Authentication (e2e)', () => {
       socket.connect();
     });
 
-    expect(error.message).toBe('Authentication required');
-
-    socket.disconnect();
+    try {
+      expect(error.message).toBe('Authentication required');
+    } finally {
+      socket.disconnect();
+    }
   });
 
   it('should reject a realtime connection with an invalid session', async () => {
@@ -58,29 +61,54 @@ describe('Realtime Authentication (e2e)', () => {
       socket.connect();
     });
 
-    expect(error.message).toBe('Authentication required');
-
-    socket.disconnect();
+    try {
+      expect(error.message).toBe('Authentication required');
+    } finally {
+      socket.disconnect();
+    }
   });
 
   it('should accept a realtime connection with a valid Better Auth session', async () => {
-    const { user, sessionCookie } = await createAuthenticatedTestUser(app);
+    const { user, cookies } = await createAuthenticatedTestUser(app);
+
+    const cookieHeader = cookies
+      .map((cookie) => cookie.split(';', 1)[0])
+      .join('; ');
 
     const socket = io(`${baseUrl}/realtime`, {
       transports: ['websocket'],
       extraHeaders: {
-        Cookie: sessionCookie,
+        Cookie: cookieHeader,
       },
       autoConnect: false,
     });
 
-    await new Promise<void>((resolve, reject) => {
-      socket.once('connect', () => resolve());
-      socket.once('connect_error', reject);
-      socket.connect();
+    const connectedEvent = new Promise<{ userId: string }>(
+      (resolve, reject) => {
+        socket.once('realtime.connected', resolve);
+        socket.once('connect_error', reject);
+      },
+    );
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        socket.once('connect', () => resolve());
+        socket.once('connect_error', reject);
+        socket.connect();
+      });
+
+      expect(socket.connected).toBe(true);
+      expect(user.email).toContain('@example.com');
+    } finally {
+      socket.disconnect();
+    }
+
+    const payload = await connectedEvent;
+
+    expect(payload).toEqual({
+      userId: expect.any(String),
     });
 
-    expect(socket.connected).toBe(true);
     expect(user.email).toContain('@example.com');
 
     socket.disconnect();
