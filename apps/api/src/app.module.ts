@@ -15,6 +15,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { PermissionsModule } from './common/permissions/permissions.module';
 import { BullModule } from '@nestjs/bullmq';
 import { ApprovalsModule } from './modules/approvals/approvals.module';
+import { RealtimeModule } from './modules/realtime/realtime.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { ApprovalsModule } from './modules/approvals/approvals.module';
     AuthModule,
     PermissionsModule,
     ApprovalsModule,
+    RealtimeModule,
     OrganizationContextModule,
     StorageModule,
     HealthModule,
