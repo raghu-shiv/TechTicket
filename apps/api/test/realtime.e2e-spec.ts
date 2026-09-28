@@ -1,5 +1,5 @@
 import { INestApplication } from '@nestjs/common';
-import { io, type Socket as ClientSocket } from 'socket.io-client';
+import { io } from 'socket.io-client';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createTestApp } from './helpers/app.helper.js';
@@ -7,7 +7,6 @@ import { createOrganizationTestFixture } from './helpers/organization.helper.js'
 
 import { RealtimeService } from '../src/modules/realtime/realtime.service.js';
 import { REALTIME_ROOMS } from '../src/modules/realtime/realtime.rooms.js';
-import { RealtimeGateway } from '../src/modules/realtime/realtime.gateway.js';
 
 describe('Realtime Authentication (e2e)', () => {
   let app: INestApplication;
