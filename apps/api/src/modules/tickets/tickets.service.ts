@@ -359,6 +359,39 @@ export class TicketsService {
     return ticket;
   }
 
+  async assertRealtimeAccess(context: OrganizationContext, ticketId: string) {
+    const ticket = await this.database.ticket.findFirst({
+      where: {
+        id: ticketId,
+        organizationId: context.organizationId,
+      },
+      select: {
+        id: true,
+        organizationId: true,
+        requesterId: true,
+        assigneeId: true,
+        teamId: true,
+      },
+    });
+
+    if (!ticket) {
+      throw new NotFoundException('Ticket not found');
+    }
+
+    const canAccess =
+      context.role === 'OWNER' ||
+      context.role === 'ADMIN' ||
+      context.role === 'AGENT' ||
+      ticket.requesterId === context.userId ||
+      ticket.assigneeId === context.userId;
+
+    if (!canAccess) {
+      throw new ForbiddenException('You do not have access to this ticket');
+    }
+
+    return ticket;
+  }
+
   async create(context: OrganizationContext, input: CreateTicketInput) {
     const title = input.title.trim();
     const description = input.description.trim();

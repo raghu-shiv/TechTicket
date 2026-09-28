@@ -445,12 +445,14 @@ describe('Realtime Authentication (e2e)', () => {
       }
 
       expect(connectedSocket.data.auth?.user.id).toBe(fixture.owner.userId);
+
       expect(connectedSocket.data.auth?.organization?.organizationId).toBe(
         organization.id,
       );
 
       const gateway = app.get(RealtimeGateway);
 
+      // Ticket belongs to the authenticated organization.
       const resolvedTicket = await gateway.resolveTicketForSocket(
         connectedSocket,
         ticket.id,
@@ -459,6 +461,7 @@ describe('Realtime Authentication (e2e)', () => {
       expect(resolvedTicket.id).toBe(ticket.id);
       expect(resolvedTicket.organizationId).toBe(organization.id);
 
+      // Ticket belongs to another organization.
       await expect(
         gateway.resolveTicketForSocket(
           connectedSocket,

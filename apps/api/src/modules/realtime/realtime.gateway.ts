@@ -102,6 +102,22 @@ export class RealtimeGateway
     return this.ticketsService.findOne(auth.organization, ticketId);
   }
 
+  async assertTicketAccessForSocket(
+    socket: AuthenticatedSocket,
+    ticketId: string,
+  ) {
+    const auth = socket.data.auth;
+
+    if (!auth?.organization?.organizationId) {
+      throw new Error('Organization context is required');
+    }
+
+    return this.ticketsService.assertRealtimeAccess(
+      auth.organization,
+      ticketId,
+    );
+  }
+
   @SubscribeMessage(REALTIME_EVENTS.SUBSCRIBE_TICKET)
   async subscribeToTicket(
     socket: AuthenticatedSocket,
@@ -115,7 +131,10 @@ export class RealtimeGateway
       throw new Error('Ticket ID is required');
     }
 
-    const ticket = await this.resolveTicketForSocket(socket, payload.ticketId);
+    const ticket = await this.assertTicketAccessForSocket(
+      socket,
+      payload.ticketId,
+    );
 
     const room = REALTIME_ROOMS.ticket(ticket.id);
 
@@ -131,7 +150,7 @@ export class RealtimeGateway
     socket: AuthenticatedSocket,
     ticketId: string,
   ): Promise<void> {
-    const ticket = await this.resolveTicketForSocket(socket, ticketId);
+    const ticket = await this.assertTicketAccessForSocket(socket, ticketId);
 
     const room = REALTIME_ROOMS.ticket(ticket.id);
 
