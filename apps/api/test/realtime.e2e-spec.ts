@@ -635,4 +635,118 @@ describe('Realtime Authentication (e2e)', () => {
       socket.disconnect();
     }
   });
+
+  it('should isolate ticket rooms between organizations', async () => {
+    const fixture = await createOrganizationTestFixture(app);
+    const otherFixture = await createOrganizationTestFixture(app);
+
+    const ticketsService = app.get(TicketsService);
+    const realtimeService = app.get(RealtimeService);
+    const gateway = app.get(RealtimeGateway);
+
+    const ticketA = await ticketsService.create(
+      {
+        userId: fixture.owner.userId,
+        organizationId: fixture.organization.id,
+        role: fixture.owner.role,
+      },
+      {
+        title: 'Organization A realtime isolation ticket',
+        description: 'Ticket belonging to organization A.',
+      },
+    );
+
+    const ticketB = await ticketsService.create(
+      {
+        userId: otherFixture.owner.userId,
+        organizationId: otherFixture.organization.id,
+        role: otherFixture.owner.role,
+      },
+      {
+        title: 'Organization B realtime isolation ticket',
+        description: 'Ticket belonging to organization B.',
+      },
+    );
+
+    const createSocket = (cookies: string[], organizationId: string) => {
+      const cookieHeader = cookies
+        .map((cookie) => cookie.split(';', 1)[0])
+        .join('; ');
+
+      return io(`${baseUrl}/realtime`, {
+        transports: ['websocket'],
+        extraHeaders: {
+          Cookie: cookieHeader,
+          'x-organization-id': organizationId,
+        },
+        autoConnect: false,
+      });
+    };
+
+    const socketA = createSocket(
+      fixture.owner.cookies,
+      fixture.organization.id,
+    );
+
+    const socketB = createSocket(
+      otherFixture.owner.cookies,
+      otherFixture.organization.id,
+    );
+
+    const waitForConnection = (socket: ReturnType<typeof io>) =>
+      new Promise<void>((resolve, reject) => {
+        socket.once('connect', () => resolve());
+        socket.once('connect_error', reject);
+      });
+
+    try {
+      socketA.connect();
+      socketB.connect();
+
+      await Promise.all([
+        waitForConnection(socketA),
+        waitForConnection(socketB),
+      ]);
+
+      expect(socketA.connected).toBe(true);
+      expect(socketB.connected).toBe(true);
+
+      const namespace = realtimeService.getNamespace();
+
+      const connectedSocketA = namespace.sockets.get(socketA.id);
+      const connectedSocketB = namespace.sockets.get(socketB.id);
+
+      expect(connectedSocketA).toBeDefined();
+      expect(connectedSocketB).toBeDefined();
+
+      if (!connectedSocketA || !connectedSocketB) {
+        throw new Error(
+          'Connected realtime sockets were not found in the realtime namespace',
+        );
+      }
+
+      await gateway.subscribeToTicket(connectedSocketA, {
+        ticketId: ticketA.id,
+      });
+
+      await gateway.subscribeToTicket(connectedSocketB, {
+        ticketId: ticketB.id,
+      });
+
+      const ticketRoomA = REALTIME_ROOMS.ticket(ticketA.id);
+      const ticketRoomB = REALTIME_ROOMS.ticket(ticketB.id);
+
+      expect(connectedSocketA.rooms.has(ticketRoomA)).toBe(true);
+      expect(connectedSocketA.rooms.has(ticketRoomB)).toBe(false);
+
+      expect(connectedSocketB.rooms.has(ticketRoomB)).toBe(true);
+      expect(connectedSocketB.rooms.has(ticketRoomA)).toBe(false);
+
+      expect(ticketA.organizationId).toBe(fixture.organization.id);
+      expect(ticketB.organizationId).toBe(otherFixture.organization.id);
+    } finally {
+      socketA.disconnect();
+      socketB.disconnect();
+    }
+  });
 });
