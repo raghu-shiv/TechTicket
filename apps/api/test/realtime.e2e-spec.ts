@@ -7,6 +7,8 @@ import { createOrganizationTestFixture } from './helpers/organization.helper.js'
 
 import { RealtimeService } from '../src/modules/realtime/realtime.service.js';
 import { REALTIME_ROOMS } from '../src/modules/realtime/realtime.rooms.js';
+import { TicketsService } from '../src/modules/tickets/tickets.service.js';
+import { RealtimeGateway } from '../src/modules/realtime/realtime.gateway.js';
 
 describe('Realtime Authentication (e2e)', () => {
   let app: INestApplication;
@@ -368,6 +370,103 @@ describe('Realtime Authentication (e2e)', () => {
       if (socket.connected) {
         socket.disconnect();
       }
+    }
+  });
+
+  it('should resolve a ticket only when it belongs to the authenticated organization', async () => {
+    const fixture = await createOrganizationTestFixture(app);
+    const otherFixture = await createOrganizationTestFixture(app);
+
+    const { cookies } = fixture.owner;
+    const { organization } = fixture;
+    const { organization: otherOrganization } = otherFixture;
+
+    const cookieHeader = cookies
+      .map((cookie) => cookie.split(';', 1)[0])
+      .join('; ');
+
+    const ticketsService = app.get(TicketsService);
+
+    const ticket = await ticketsService.create(
+      {
+        userId: fixture.owner.userId,
+        organizationId: organization.id,
+        role: fixture.owner.role,
+      },
+      {
+        title: 'Realtime ownership test',
+        description: 'Ticket used to verify realtime organization ownership.',
+      },
+    );
+
+    const otherOrganizationTicket = await ticketsService.create(
+      {
+        userId: otherFixture.owner.userId,
+        organizationId: otherOrganization.id,
+        role: otherFixture.owner.role,
+      },
+      {
+        title: 'Other organization ticket',
+        description: 'Ticket must not be visible across organizations.',
+      },
+    );
+
+    const socket = io(`${baseUrl}/realtime`, {
+      transports: ['websocket'],
+      extraHeaders: {
+        Cookie: cookieHeader,
+        'x-organization-id': organization.id,
+      },
+      autoConnect: false,
+    });
+
+    const connected = new Promise<void>((resolve, reject) => {
+      socket.once('connect', () => resolve());
+      socket.once('connect_error', reject);
+    });
+
+    try {
+      socket.connect();
+      await connected;
+
+      expect(socket.connected).toBe(true);
+
+      const realtimeService = app.get(RealtimeService);
+      const realtimeNamespace = realtimeService.getNamespace();
+
+      const connectedSocket = realtimeNamespace.sockets.get(socket.id);
+
+      expect(connectedSocket).toBeDefined();
+
+      if (!connectedSocket) {
+        throw new Error(
+          'Connected realtime socket was not found in the realtime namespace',
+        );
+      }
+
+      expect(connectedSocket.data.auth?.user.id).toBe(fixture.owner.userId);
+      expect(connectedSocket.data.auth?.organization?.organizationId).toBe(
+        organization.id,
+      );
+
+      const gateway = app.get(RealtimeGateway);
+
+      const resolvedTicket = await gateway.resolveTicketForSocket(
+        connectedSocket,
+        ticket.id,
+      );
+
+      expect(resolvedTicket.id).toBe(ticket.id);
+      expect(resolvedTicket.organizationId).toBe(organization.id);
+
+      await expect(
+        gateway.resolveTicketForSocket(
+          connectedSocket,
+          otherOrganizationTicket.id,
+        ),
+      ).rejects.toThrow('Ticket not found');
+    } finally {
+      socket.disconnect();
     }
   });
 });

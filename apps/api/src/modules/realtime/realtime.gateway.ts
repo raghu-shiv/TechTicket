@@ -9,10 +9,11 @@ import type { Namespace, Socket } from 'socket.io';
 
 import { AuthContextService } from '../../common/auth/auth-context.service';
 import type { AuthContext } from '../../common/auth/auth.types';
+import { OrganizationContextService } from '../../common/organization/organization-context.service';
+import { TicketsService } from '../tickets/tickets.service';
 import { REALTIME_EVENTS } from './realtime.types';
 import { REALTIME_ROOMS } from './realtime.rooms';
 import { RealtimeService } from './realtime.service';
-import { OrganizationContextService } from '../../common/organization/organization-context.service';
 
 type AuthenticatedSocket = Socket & {
   data: {
@@ -34,6 +35,7 @@ export class RealtimeGateway
     private readonly realtimeService: RealtimeService,
     private readonly authContext: AuthContextService,
     private readonly organizationContext: OrganizationContextService,
+    private readonly ticketsService: TicketsService,
   ) {}
 
   afterInit(namespace: Namespace): void {
@@ -87,6 +89,16 @@ export class RealtimeGateway
       userId: auth.user.id,
       organizationId: auth.organization.organizationId,
     });
+  }
+
+  async resolveTicketForSocket(socket: AuthenticatedSocket, ticketId: string) {
+    const auth = socket.data.auth;
+
+    if (!auth?.organization?.organizationId) {
+      throw new Error('Organization context is required');
+    }
+
+    return this.ticketsService.findOne(auth.organization, ticketId);
   }
 
   handleDisconnect(socket: Socket): void {

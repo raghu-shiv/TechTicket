@@ -28,5 +28,6 @@ import { NotificationsModule } from '../notifications/notifications.module';
     TicketActivityEventsService,
     TicketNotificationEventsService,
   ],
+  exports: [TicketsService],
 })
 export class TicketsModule {}
