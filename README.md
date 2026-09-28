@@ -9,8 +9,8 @@ approval workflows.
 ## Current Status
 
 **Backend foundation, ticket core, search/filtering, attachments, SLA
-foundations, notifications, approval workflow, realtime/WebSocket
-organization and ticket room foundations, ticket regression testing,
+foundations, notifications, approval workflow, secure realtime/WebSocket
+organization and ticket rooms, ticket regression testing,
 and Phase 4-G/4-H reliability verification are implemented and
 verified.**
 
@@ -65,10 +65,25 @@ Tests       115 passed (115)
 
 ### 4-H.4 --- Ticket Rooms
 
-**IN PROGRESS**
+**COMPLETE AND VERIFIED**
 
 - 4-H.4.1 — COMPLETE AND VERIFIED
-- 4-H.4.2 — NEXT: Resolve and validate ticket organization ownership
+- 4-H.4.2 — COMPLETE AND VERIFIED
+- 4-H.4.3 — COMPLETE AND VERIFIED
+- 4-H.4.4 — COMPLETE AND VERIFIED
+- 4-H.4.5 — COMPLETE AND VERIFIED
+- 4-H.4.6 — COMPLETE AND VERIFIED
+- 4-H.4.7 — COMPLETE AND VERIFIED
+- 4-H.4.8 — COMPLETE AND VERIFIED
+
+Ticket-room subscriptions are organization-scoped and protected by ticket ownership validation, cross-organization isolation, lifecycle verification, and focused/full E2E regression.
+
+Latest full API E2E verification:
+
+```text
+Test Files  9 passed (9)
+Tests       120 passed (120)
+```
 
 ## Phase 4 Completion Checkpoint
 
@@ -343,8 +358,8 @@ docker compose exec api npm run build
 ### Latest Verification
 
 ```text
-E2E test files       8/8 passed
-E2E tests            108/108 passed
+E2E test files       9/9 passed
+E2E tests            120/120 passed
 Lint                 0 warnings / 0 errors
 Production build     0 errors
 ```
@@ -359,6 +374,7 @@ test/notification-organization-isolation.e2e-spec.ts
 test/notification-processor.e2e-spec.ts
 test/notification.e2e-spec.ts
 test/organization.e2e-spec.ts
+test/realtime.e2e-spec.ts
 test/ticket.e2e-spec.ts
 ```
 
@@ -398,8 +414,7 @@ test/ticket.e2e-spec.ts
   VERIFIED**
 - Realtime / WebSockets — **IN PROGRESS**
   - Organization rooms (4-H.3) — **COMPLETE AND VERIFIED**
-  - Ticket rooms (4-H.4.1) — **COMPLETE AND VERIFIED**
-  - Ticket room ownership validation (4-H.4.2) — **NEXT**
+  - Ticket rooms (4-H.4) — **COMPLETE AND VERIFIED**
 - Unassigned queue --- planned
 - Ticket history refinement --- planned
 
@@ -471,6 +486,8 @@ Full API E2E regression           COMPLETE AND VERIFIED
 Lint                              COMPLETE AND VERIFIED
 Production build                  COMPLETE AND VERIFIED
 Phase 4-G                         COMPLETE AND VERIFIED
+Realtime / WebSockets (4-H.3)     COMPLETE AND VERIFIED
+Ticket rooms (4-H.4)              COMPLETE AND VERIFIED
 ```
 
 ## Next Development Direction

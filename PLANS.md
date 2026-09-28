@@ -14,13 +14,12 @@ feature.
 
 Phase 4-G reliability verification is complete. Phase 4-H Realtime /
 WebSockets is now in progress, with organization-room security and
-initial ticket-room foundations implemented and verified.
+ticket-room security implemented and verified.
 
 Current active scope:
 
 - 4-H.3 — Organization rooms: **COMPLETE AND VERIFIED**
-- 4-H.4.1 — Ticket rooms foundation: **COMPLETE AND VERIFIED**
-- 4-H.4.2 — Resolve and validate ticket organization ownership: **NEXT**
+- 4-H.4 — Ticket rooms | Secure ticket-level subscription: **COMPLETE AND VERIFIED**
 
 # Phase 3 --- Ticket Core
 
@@ -441,19 +440,64 @@ Tests       115 passed (115)
 
 ## 4-H.4 --- Ticket Rooms | Secure Ticket-Level Subscription
 
+**COMPLETE AND VERIFIED**
+
+Ticket-level realtime subscriptions are organization-scoped, ticket ownership is validated through the existing ticket service, cross-organization ticket room access is prevented, and ticket room lifecycle/isolation behavior is covered by focused E2E tests.
+
 ### 4-H.4.1 — Define ticket room subscription foundation
 
 **COMPLETE AND VERIFIED**
 
-Ticket room naming and the initial ticket-level realtime subscription
-foundation are implemented and verified.
+Ticket room naming and the initial ticket-level realtime subscription foundation are implemented and verified.
 
 ### 4-H.4.2 — Resolve and validate ticket organization ownership
 
-**NEXT**
+**COMPLETE AND VERIFIED**
 
-Resolve the requested ticket, verify that it belongs to the authenticated
-organization, and reject ticket-room access when ownership does not match.
+Requested tickets are resolved through the authenticated organization context, ensuring ticket ownership is validated against the active organization before ticket-room access is granted.
+
+### 4-H.4.3 — Join authenticated socket to its ticket room
+
+**COMPLETE AND VERIFIED**
+
+Authenticated sockets can join the room derived from a validated ticket.
+
+### 4-H.4.4 — Reject ticket subscriptions without ticket access
+
+**COMPLETE AND VERIFIED**
+
+Ticket subscriptions are rejected when the authenticated organization cannot access the requested ticket.
+
+### 4-H.4.5 — Prevent cross-organization ticket room access
+
+**COMPLETE AND VERIFIED**
+
+Cross-organization ticket room access is prevented by validating the ticket against the authenticated organization before joining the room.
+
+### 4-H.4.6 — Verify ticket room isolation with E2E tests
+
+**COMPLETE AND VERIFIED**
+
+Focused realtime E2E coverage verifies ticket room isolation between organizations.
+
+### 4-H.4.7 — Verify ticket room lifecycle and disconnect behavior
+
+**COMPLETE AND VERIFIED**
+
+Ticket room membership and socket disconnect behavior are covered by realtime lifecycle verification.
+
+### 4-H.4.8 — Build/lint/full E2E regression
+
+**COMPLETE AND VERIFIED**
+
+Latest full API E2E checkpoint:
+
+```text
+Test Files  9 passed (9)
+Tests       120 passed (120)
+```
+
+Build and lint were also verified successfully.
 
 # Recommended Development Phases
 
@@ -592,8 +636,7 @@ Lint                              COMPLETE AND VERIFIED
 Production build                  COMPLETE AND VERIFIED
 Phase 4-G                         COMPLETE AND VERIFIED
 Realtime / WebSockets (4-H.3)     COMPLETE AND VERIFIED
-Ticket rooms (4-H.4.1)             COMPLETE AND VERIFIED
-Ticket ownership validation (4-H.4.2) NEXT
+Ticket rooms (4-H.4)                COMPLETE AND VERIFIED
 ```
 
 # Latest Verification Commands
@@ -614,7 +657,8 @@ roadmap rather than introducing speculative architecture.
 
 Current next step:
 
-- 4-H.4.2 — Resolve and validate ticket organization ownership
+- Continue with the next planned Phase 4-H scope after completed ticket-room
+  security and lifecycle verification.
 
 Remaining workflow candidates:
 
