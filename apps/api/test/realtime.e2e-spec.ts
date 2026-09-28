@@ -68,7 +68,7 @@ describe('Realtime Authentication (e2e)', () => {
     }
   });
 
-  it('should accept a realtime connection with a valid Better Auth session', async () => {
+  it('should accept and cleanly disconnect a realtime connection with a valid Better Auth session', async () => {
     const { user, cookies } = await createAuthenticatedTestUser(app);
 
     const cookieHeader = cookies
@@ -97,20 +97,22 @@ describe('Realtime Authentication (e2e)', () => {
         socket.connect();
       });
 
+      const payload = await connectedEvent;
+
       expect(socket.connected).toBe(true);
+      expect(payload).toEqual({
+        userId: expect.any(String),
+      });
       expect(user.email).toContain('@example.com');
+
+      await new Promise<void>((resolve) => {
+        socket.once('disconnect', () => resolve());
+        socket.disconnect();
+      });
+
+      expect(socket.connected).toBe(false);
     } finally {
       socket.disconnect();
     }
-
-    const payload = await connectedEvent;
-
-    expect(payload).toEqual({
-      userId: expect.any(String),
-    });
-
-    expect(user.email).toContain('@example.com');
-
-    socket.disconnect();
   });
 });
