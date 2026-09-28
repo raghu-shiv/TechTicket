@@ -127,6 +127,17 @@ export class RealtimeGateway
     };
   }
 
+  async joinTicketRoom(
+    socket: AuthenticatedSocket,
+    ticketId: string,
+  ): Promise<void> {
+    const ticket = await this.resolveTicketForSocket(socket, ticketId);
+
+    const room = REALTIME_ROOMS.ticket(ticket.id);
+
+    await socket.join(room);
+  }
+
   handleDisconnect(socket: Socket): void {
     this.realtimeService.handleDisconnect(socket);
   }
