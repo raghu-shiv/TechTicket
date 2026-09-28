@@ -5,6 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { DatabaseService } from '../../src/database/database.service.js';
 
 interface TestUser {
+  id: string;
   name: string;
   email: string;
   password: string;
@@ -27,7 +28,25 @@ export async function createAuthenticatedTestUser(
     password: 'TestPassword123!',
   };
 
-  await agent.post('/api/v1/auth/sign-up/email').send(user).expect(200);
+  const signUpResponse = await agent
+    .post('/api/v1/auth/sign-up/email')
+    .send({
+      name: user.name,
+      email: user.email,
+      password: user.password,
+    })
+    .expect(200);
+
+  const userId = signUpResponse.body?.user?.id;
+
+  if (typeof userId !== 'string' || userId.length === 0) {
+    throw new Error('Authenticated test user ID was not returned by sign-up');
+  }
+
+  const authenticatedUser: TestUser = {
+    ...user,
+    id: userId,
+  };
 
   const signInResponse = await agent
     .post('/api/v1/auth/sign-in/email')
@@ -40,7 +59,7 @@ export async function createAuthenticatedTestUser(
   const cookies = signInResponse.headers['set-cookie'] ?? [];
 
   return {
-    user,
+    user: authenticatedUser,
     agent,
     cookies,
   };

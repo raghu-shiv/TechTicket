@@ -101,7 +101,7 @@ describe('Realtime Authentication (e2e)', () => {
 
       expect(socket.connected).toBe(true);
       expect(payload).toEqual({
-        userId: expect.any(String),
+        userId: user.id,
       });
       expect(user.email).toContain('@example.com');
 
