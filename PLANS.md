@@ -8,19 +8,19 @@ feature.
 
 # Current Phase
 
-## Phase 4 --- Workflow / Approval & Reliability Checkpoint
+## Phase 4 --- Workflow / Realtime Checkpoint
 
-### Status: COMPLETE AND VERIFIED --- 2026-09-24
+### Status: IN PROGRESS
 
-The implemented Phase 4 workflow scope through **4-G** is complete and
-verified. This includes approval workflow, approval audit/activity
-integration, approval notifications, notification reliability testing,
-ticket regression testing, full API E2E regression, lint verification,
-and production-build verification.
+Phase 4-G reliability verification is complete. Phase 4-H Realtime /
+WebSockets is now in progress, with organization-room security and
+initial ticket-room foundations implemented and verified.
 
-This completion does **not** claim that future Phase 4 roadmap items
-such as Realtime/WebSockets, Unassigned Queue, or Ticket
-History Refinement are implemented.
+Current active scope:
+
+- 4-H.3 — Organization rooms: **COMPLETE AND VERIFIED**
+- 4-H.4.1 — Ticket rooms foundation: **COMPLETE AND VERIFIED**
+- 4-H.4.2 — Resolve and validate ticket organization ownership: **NEXT**
 
 # Phase 3 --- Ticket Core
 
@@ -378,6 +378,83 @@ Still planned:
 - Unassigned queue
 - Ticket history refinement
 
+# Phase 4-H --- Realtime / WebSockets
+
+## 4-H.3 --- Organization Rooms
+
+**COMPLETE AND VERIFIED**
+
+### 4-H.3.1 — Resolve the authenticated user's organization context
+
+**COMPLETE**
+
+Authenticated realtime connections resolve the requested organization
+through the existing organization context service and membership boundary.
+
+### 4-H.3.2 — Define organization room subscription contract
+
+**COMPLETE**
+
+Organization room naming is defined through the realtime room contract.
+
+### 4-H.3.3 — Join authenticated socket to its organization room
+
+**COMPLETE**
+
+Authenticated sockets join only their resolved organization room.
+
+### 4-H.3.4 — Reject organization subscriptions without membership
+
+**COMPLETE AND VERIFIED**
+
+Non-member organization access is rejected during realtime authentication.
+
+### 4-H.3.5 — Prevent cross-organization room access
+
+**COMPLETE AND VERIFIED**
+
+Cross-organization room access is prevented by deriving the room from the
+authenticated organization context rather than trusting arbitrary room access.
+
+### 4-H.3.6 — Verify organization isolation with E2E tests
+
+**COMPLETE AND VERIFIED**
+
+Focused realtime E2E coverage verifies organization isolation.
+
+### 4-H.3.7 — Verify authenticated organization context and lifecycle
+
+**COMPLETE AND VERIFIED**
+
+Authenticated organization context and socket lifecycle behavior are verified.
+
+### 4-H.3.8 — Build/lint/full E2E regression
+
+**COMPLETE AND VERIFIED**
+
+Latest full API E2E checkpoint:
+
+```text
+Test Files  9 passed (9)
+Tests       115 passed (115)
+```
+
+## 4-H.4 --- Ticket Rooms | Secure Ticket-Level Subscription
+
+### 4-H.4.1 — Define ticket room subscription foundation
+
+**COMPLETE AND VERIFIED**
+
+Ticket room naming and the initial ticket-level realtime subscription
+foundation are implemented and verified.
+
+### 4-H.4.2 — Resolve and validate ticket organization ownership
+
+**NEXT**
+
+Resolve the requested ticket, verify that it belongs to the authenticated
+organization, and reject ticket-room access when ownership does not match.
+
 # Recommended Development Phases
 
 ## Phase 1 --- Foundation
@@ -514,6 +591,9 @@ Full API E2E regression           COMPLETE AND VERIFIED
 Lint                              COMPLETE AND VERIFIED
 Production build                  COMPLETE AND VERIFIED
 Phase 4-G                         COMPLETE AND VERIFIED
+Realtime / WebSockets (4-H.3)     COMPLETE AND VERIFIED
+Ticket rooms (4-H.4.1)             COMPLETE AND VERIFIED
+Ticket ownership validation (4-H.4.2) NEXT
 ```
 
 # Latest Verification Commands
@@ -529,12 +609,16 @@ checkpoint.
 
 # Next Development Direction
 
-Phase 4-G is complete. Continue with the roadmap rather than introducing
-speculative architecture.
+Phase 4-G is complete and Phase 4-H is in progress. Continue with the
+roadmap rather than introducing speculative architecture.
+
+Current next step:
+
+- 4-H.4.2 — Resolve and validate ticket organization ownership
 
 Remaining workflow candidates:
 
-- Realtime / WebSockets
+- Realtime / WebSockets — ticket-level security and event subscriptions
 - Unassigned queue
 - Ticket history refinement
 

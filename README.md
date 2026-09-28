@@ -9,8 +9,9 @@ approval workflows.
 ## Current Status
 
 **Backend foundation, ticket core, search/filtering, attachments, SLA
-foundations, notifications, approval workflow, ticket regression
-testing, and Phase 4-G reliability verification are implemented and
+foundations, notifications, approval workflow, realtime/WebSocket
+organization and ticket room foundations, ticket regression testing,
+and Phase 4-G/4-H reliability verification are implemented and
 verified.**
 
 Latest verified backend state:
@@ -36,6 +37,38 @@ Latest verified backend state:
 - Successful NestJS production build
 
 See [`PLANS.md`](./PLANS.md) for the detailed implementation tracker.
+
+## Phase 4-H Realtime / WebSockets Checkpoint
+
+### 4-H.3 --- Organization Rooms
+
+**COMPLETE AND VERIFIED**
+
+Completed and verified authenticated organization context resolution,
+organization room subscription, membership enforcement, cross-organization
+room isolation, lifecycle verification, focused realtime E2E coverage,
+and build/lint/full E2E regression.
+
+Latest realtime focused verification:
+
+```text
+Test Files  1 passed (1)
+Tests       7 passed (7)
+```
+
+Latest full API E2E verification:
+
+```text
+Test Files  9 passed (9)
+Tests       115 passed (115)
+```
+
+### 4-H.4 --- Ticket Rooms
+
+**IN PROGRESS**
+
+- 4-H.4.1 — COMPLETE AND VERIFIED
+- 4-H.4.2 — NEXT: Resolve and validate ticket organization ownership
 
 ## Phase 4 Completion Checkpoint
 
@@ -94,7 +127,7 @@ Completed implemented/verified scope:
 
 Still planned:
 
-- Realtime / WebSockets
+- Realtime / WebSockets — **IN PROGRESS**
 - Unassigned queue
 - Ticket history refinement
 
@@ -363,7 +396,10 @@ test/ticket.e2e-spec.ts
 - Production build (4-G.9) --- **COMPLETE AND VERIFIED**
 - Final verification/documentation (4-G.10) --- **COMPLETE AND
   VERIFIED**
-- Realtime / WebSockets --- planned
+- Realtime / WebSockets — **IN PROGRESS**
+  - Organization rooms (4-H.3) — **COMPLETE AND VERIFIED**
+  - Ticket rooms (4-H.4.1) — **COMPLETE AND VERIFIED**
+  - Ticket room ownership validation (4-H.4.2) — **NEXT**
 - Unassigned queue --- planned
 - Ticket history refinement --- planned
 
@@ -444,7 +480,7 @@ speculative architecture.
 
 Remaining workflow candidates:
 
-- Realtime / WebSockets
+- Realtime / WebSockets — **IN PROGRESS**
 - Unassigned queue
 - Ticket history refinement
 
