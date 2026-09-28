@@ -1,9 +1,13 @@
 import { INestApplication } from '@nestjs/common';
-import { io } from 'socket.io-client';
+import { io, type Socket as ClientSocket } from 'socket.io-client';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createTestApp } from './helpers/app.helper.js';
 import { createOrganizationTestFixture } from './helpers/organization.helper.js';
+
+import { RealtimeService } from '../src/modules/realtime/realtime.service.js';
+import { REALTIME_ROOMS } from '../src/modules/realtime/realtime.rooms.js';
+import { RealtimeGateway } from '../src/modules/realtime/realtime.gateway.js';
 
 describe('Realtime Authentication (e2e)', () => {
   let app: INestApplication;
@@ -36,7 +40,7 @@ describe('Realtime Authentication (e2e)', () => {
     });
 
     const error = await new Promise<Error>((resolve) => {
-      socket.on('connect_error', resolve);
+      socket.once('connect_error', resolve);
       socket.connect();
     });
 
@@ -57,7 +61,7 @@ describe('Realtime Authentication (e2e)', () => {
     });
 
     const error = await new Promise<Error>((resolve) => {
-      socket.on('connect_error', resolve);
+      socket.once('connect_error', resolve);
       socket.connect();
     });
 
@@ -145,6 +149,138 @@ describe('Realtime Authentication (e2e)', () => {
       expect(socket.connected).toBe(false);
     } finally {
       socket.disconnect();
+    }
+  });
+
+  it('should prevent cross-organization room access', async () => {
+    const fixture = await createOrganizationTestFixture(app);
+    const otherFixture = await createOrganizationTestFixture(app);
+
+    const { cookies } = fixture.owner;
+    const { organization } = fixture;
+    const { organization: otherOrganization } = otherFixture;
+
+    const cookieHeader = cookies
+      .map((cookie) => cookie.split(';', 1)[0])
+      .join('; ');
+
+    const socket = io(`${baseUrl}/realtime`, {
+      transports: ['websocket'],
+      extraHeaders: {
+        Cookie: cookieHeader,
+        'x-organization-id': organization.id,
+      },
+      autoConnect: false,
+    });
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        socket.once('connect', () => resolve());
+        socket.once('connect_error', reject);
+        socket.connect();
+      });
+
+      expect(socket.connected).toBe(true);
+
+      const realtimeService = app.get(RealtimeService);
+      const realtimeNamespace = realtimeService.getNamespace();
+
+      const connectedSocket = realtimeNamespace.sockets.get(socket.id);
+
+      expect(connectedSocket).toBeDefined();
+
+      if (!connectedSocket) {
+        throw new Error(
+          'Connected realtime socket was not found in the realtime namespace',
+        );
+      }
+
+      const organizationRoom = REALTIME_ROOMS.organization(organization.id);
+
+      const otherOrganizationRoom = REALTIME_ROOMS.organization(
+        otherOrganization.id,
+      );
+
+      expect(connectedSocket.rooms.has(organizationRoom)).toBe(true);
+
+      expect(connectedSocket.rooms.has(otherOrganizationRoom)).toBe(false);
+    } finally {
+      socket.disconnect();
+    }
+  });
+
+  it('should isolate authenticated sockets to their own organization rooms', async () => {
+    const organizationA = await createOrganizationTestFixture(app);
+    const organizationB = await createOrganizationTestFixture(app);
+
+    const cookieHeaderA = organizationA.owner.cookies
+      .map((cookie) => cookie.split(';', 1)[0])
+      .join('; ');
+
+    const cookieHeaderB = organizationB.owner.cookies
+      .map((cookie) => cookie.split(';', 1)[0])
+      .join('; ');
+
+    const socketA = io(`${baseUrl}/realtime`, {
+      transports: ['websocket'],
+      extraHeaders: {
+        Cookie: cookieHeaderA,
+        'x-organization-id': organizationA.organization.id,
+      },
+      autoConnect: false,
+    });
+
+    const socketB = io(`${baseUrl}/realtime`, {
+      transports: ['websocket'],
+      extraHeaders: {
+        Cookie: cookieHeaderB,
+        'x-organization-id': organizationB.organization.id,
+      },
+      autoConnect: false,
+    });
+
+    try {
+      await Promise.all([
+        new Promise<void>((resolve, reject) => {
+          socketA.once('connect', () => resolve());
+          socketA.once('connect_error', reject);
+          socketA.connect();
+        }),
+        new Promise<void>((resolve, reject) => {
+          socketB.once('connect', () => resolve());
+          socketB.once('connect_error', reject);
+          socketB.connect();
+        }),
+      ]);
+
+      expect(socketA.connected).toBe(true);
+      expect(socketB.connected).toBe(true);
+
+      const realtimeService = app.get(RealtimeService);
+      const realtimeNamespace = realtimeService.getNamespace();
+
+      const connectedSocketA = realtimeNamespace.sockets.get(socketA.id);
+      const connectedSocketB = realtimeNamespace.sockets.get(socketB.id);
+
+      expect(connectedSocketA).toBeDefined();
+      expect(connectedSocketB).toBeDefined();
+
+      const organizationRoomA = REALTIME_ROOMS.organization(
+        organizationA.organization.id,
+      );
+
+      const organizationRoomB = REALTIME_ROOMS.organization(
+        organizationB.organization.id,
+      );
+
+      expect(connectedSocketA?.rooms.has(organizationRoomA)).toBe(true);
+      expect(connectedSocketA?.rooms.has(organizationRoomB)).toBe(false);
+
+      expect(connectedSocketB?.rooms.has(organizationRoomB)).toBe(true);
+      expect(connectedSocketB?.rooms.has(organizationRoomA)).toBe(false);
+    } finally {
+      socketA.disconnect();
+      socketB.disconnect();
     }
   });
 });

@@ -1,28 +1,28 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import type { Server, Socket } from 'socket.io';
+import type { Namespace, Socket } from 'socket.io';
 
 @Injectable()
 export class RealtimeService {
   private readonly logger = new Logger(RealtimeService.name);
 
-  private server: Server | null = null;
+  private namespace: Namespace | null = null;
 
-  setServer(server: Server): void {
-    this.server = server;
-    this.logger.log('Realtime Socket.IO server registered');
+  setNamespace(namespace: Namespace): void {
+    this.namespace = namespace;
+    this.logger.log('Realtime Socket.IO namespace registered');
   }
 
-  getServer(): Server {
-    if (!this.server) {
-      throw new Error('Realtime Socket.IO server is not initialized');
+  getNamespace(): Namespace {
+    if (!this.namespace) {
+      throw new Error('Realtime Socket.IO namespace is not initialized');
     }
 
-    return this.server;
+    return this.namespace;
   }
 
   isReady(): boolean {
-    return this.server !== null;
+    return this.namespace !== null;
   }
 
   handleDisconnect(socket: Socket): void {

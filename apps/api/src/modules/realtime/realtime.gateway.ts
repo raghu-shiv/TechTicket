@@ -5,7 +5,7 @@ import {
   WebSocketGateway,
 } from '@nestjs/websockets';
 
-import type { Server, Socket } from 'socket.io';
+import type { Namespace, Socket } from 'socket.io';
 
 import { AuthContextService } from '../../common/auth/auth-context.service';
 import type { AuthContext } from '../../common/auth/auth.types';
@@ -36,8 +36,8 @@ export class RealtimeGateway
     private readonly organizationContext: OrganizationContextService,
   ) {}
 
-  afterInit(server: Server): void {
-    server.use(async (socket: AuthenticatedSocket, next) => {
+  afterInit(namespace: Namespace): void {
+    namespace.use(async (socket: AuthenticatedSocket, next) => {
       try {
         const authContext = await this.authContext.getContext(
           socket.handshake.headers,
@@ -66,7 +66,7 @@ export class RealtimeGateway
       }
     });
 
-    this.realtimeService.setServer(server);
+    this.realtimeService.setNamespace(namespace);
   }
 
   handleConnection(socket: Socket): void {
