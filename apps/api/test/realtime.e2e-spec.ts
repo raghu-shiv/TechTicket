@@ -114,4 +114,37 @@ describe('Realtime Authentication (e2e)', () => {
       organizationId: organization.id,
     });
   });
+
+  it('should reject a realtime connection when the authenticated user is not a member of the requested organization', async () => {
+    const fixture = await createOrganizationTestFixture(app);
+    const otherFixture = await createOrganizationTestFixture(app);
+
+    const { cookies } = fixture.owner;
+    const { organization: otherOrganization } = otherFixture;
+
+    const cookieHeader = cookies
+      .map((cookie) => cookie.split(';', 1)[0])
+      .join('; ');
+
+    const socket = io(`${baseUrl}/realtime`, {
+      transports: ['websocket'],
+      extraHeaders: {
+        Cookie: cookieHeader,
+        'x-organization-id': otherOrganization.id,
+      },
+      autoConnect: false,
+    });
+
+    const error = await new Promise<Error>((resolve) => {
+      socket.once('connect_error', resolve);
+      socket.connect();
+    });
+
+    try {
+      expect(error.message).toBe('Authentication required');
+      expect(socket.connected).toBe(false);
+    } finally {
+      socket.disconnect();
+    }
+  });
 });
