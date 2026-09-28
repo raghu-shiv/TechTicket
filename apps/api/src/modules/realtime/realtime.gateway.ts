@@ -10,6 +10,7 @@ import type { Server, Socket } from 'socket.io';
 import { AuthContextService } from '../../common/auth/auth-context.service';
 import type { AuthContext } from '../../common/auth/auth.types';
 import { REALTIME_EVENTS } from './realtime.types';
+import { REALTIME_ROOMS } from './realtime.rooms';
 import { RealtimeService } from './realtime.service';
 import { OrganizationContextService } from '../../common/organization/organization-context.service';
 
@@ -38,16 +39,6 @@ export class RealtimeGateway
   afterInit(server: Server): void {
     server.use(async (socket: AuthenticatedSocket, next) => {
       try {
-        console.log(
-          '[REALTIME AUTH] handshake headers:',
-          socket.handshake.headers,
-        );
-        console.log('[REALTIME AUTH] cookie:', socket.handshake.headers.cookie);
-        console.log(
-          '[REALTIME AUTH] organization:',
-          socket.handshake.headers['x-organization-id'],
-        );
-
         const authContext = await this.authContext.getContext(
           socket.handshake.headers,
         );
@@ -81,14 +72,20 @@ export class RealtimeGateway
   handleConnection(socket: Socket): void {
     const auth = socket.data.auth;
 
-    if (!auth?.user?.id) {
+    if (!auth?.user?.id || !auth.organization?.organizationId) {
       socket.disconnect(true);
       return;
     }
 
+    const organizationRoom = REALTIME_ROOMS.organization(
+      auth.organization.organizationId,
+    );
+
+    void socket.join(organizationRoom);
+
     socket.emit(REALTIME_EVENTS.CONNECTED, {
       userId: auth.user.id,
-      organizationId: auth.organization?.organizationId,
+      organizationId: auth.organization.organizationId,
     });
   }
 
