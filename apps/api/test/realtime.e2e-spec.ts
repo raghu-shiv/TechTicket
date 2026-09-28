@@ -165,6 +165,23 @@ describe('Realtime Authentication (e2e)', () => {
       .map((cookie) => cookie.split(';', 1)[0])
       .join('; ');
 
+    const ticketsService = app.get(TicketsService);
+    const gateway = app.get(RealtimeGateway);
+    const realtimeService = app.get(RealtimeService);
+
+    const otherOrganizationTicket = await ticketsService.create(
+      {
+        userId: otherFixture.owner.userId,
+        organizationId: otherOrganization.id,
+        role: otherFixture.owner.role,
+      },
+      {
+        title: 'Cross-organization realtime ticket',
+        description:
+          'This ticket must not be accessible from another organization.',
+      },
+    );
+
     const socket = io(`${baseUrl}/realtime`, {
       transports: ['websocket'],
       extraHeaders: {
@@ -174,19 +191,19 @@ describe('Realtime Authentication (e2e)', () => {
       autoConnect: false,
     });
 
+    const connected = new Promise<void>((resolve, reject) => {
+      socket.once('connect', () => resolve());
+      socket.once('connect_error', reject);
+    });
+
     try {
-      await new Promise<void>((resolve, reject) => {
-        socket.once('connect', () => resolve());
-        socket.once('connect_error', reject);
-        socket.connect();
-      });
+      socket.connect();
+      await connected;
 
       expect(socket.connected).toBe(true);
 
-      const realtimeService = app.get(RealtimeService);
-      const realtimeNamespace = realtimeService.getNamespace();
-
-      const connectedSocket = realtimeNamespace.sockets.get(socket.id);
+      const namespace = realtimeService.getNamespace();
+      const connectedSocket = namespace.sockets.get(socket.id);
 
       expect(connectedSocket).toBeDefined();
 
@@ -196,15 +213,17 @@ describe('Realtime Authentication (e2e)', () => {
         );
       }
 
-      const organizationRoom = REALTIME_ROOMS.organization(organization.id);
+      const ticketRoom = REALTIME_ROOMS.ticket(otherOrganizationTicket.id);
 
-      const otherOrganizationRoom = REALTIME_ROOMS.organization(
-        otherOrganization.id,
-      );
+      expect(connectedSocket.rooms.has(ticketRoom)).toBe(false);
 
-      expect(connectedSocket.rooms.has(organizationRoom)).toBe(true);
+      await expect(
+        gateway.subscribeToTicket(connectedSocket, {
+          ticketId: otherOrganizationTicket.id,
+        }),
+      ).rejects.toThrow('Ticket not found');
 
-      expect(connectedSocket.rooms.has(otherOrganizationRoom)).toBe(false);
+      expect(connectedSocket.rooms.has(ticketRoom)).toBe(false);
     } finally {
       socket.disconnect();
     }
