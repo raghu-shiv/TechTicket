@@ -2,6 +2,7 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
   OnGatewayInit,
+  SubscribeMessage,
   WebSocketGateway,
 } from '@nestjs/websockets';
 
@@ -99,6 +100,31 @@ export class RealtimeGateway
     }
 
     return this.ticketsService.findOne(auth.organization, ticketId);
+  }
+
+  @SubscribeMessage(REALTIME_EVENTS.SUBSCRIBE_TICKET)
+  async subscribeToTicket(
+    socket: AuthenticatedSocket,
+    payload: { ticketId: string },
+  ): Promise<{ ticketId: string; room: string }> {
+    if (
+      !payload ||
+      typeof payload.ticketId !== 'string' ||
+      !payload.ticketId.trim()
+    ) {
+      throw new Error('Ticket ID is required');
+    }
+
+    const ticket = await this.resolveTicketForSocket(socket, payload.ticketId);
+
+    const room = REALTIME_ROOMS.ticket(ticket.id);
+
+    await socket.join(room);
+
+    return {
+      ticketId: ticket.id,
+      room,
+    };
   }
 
   handleDisconnect(socket: Socket): void {

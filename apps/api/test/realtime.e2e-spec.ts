@@ -469,4 +469,148 @@ describe('Realtime Authentication (e2e)', () => {
       socket.disconnect();
     }
   });
+
+  it('should join the authenticated socket to its ticket room', async () => {
+    const fixture = await createOrganizationTestFixture(app);
+
+    const { cookies } = fixture.owner;
+    const { organization } = fixture;
+
+    const cookieHeader = cookies
+      .map((cookie) => cookie.split(';', 1)[0])
+      .join('; ');
+
+    const ticketsService = app.get(TicketsService);
+
+    const ticket = await ticketsService.create(
+      {
+        userId: fixture.owner.userId,
+        organizationId: organization.id,
+        role: fixture.owner.role,
+      },
+      {
+        title: 'Realtime ticket room test',
+        description: 'Ticket used to verify realtime ticket room subscription.',
+      },
+    );
+
+    const socket = io(`${baseUrl}/realtime`, {
+      transports: ['websocket'],
+      extraHeaders: {
+        Cookie: cookieHeader,
+        'x-organization-id': organization.id,
+      },
+      autoConnect: false,
+    });
+
+    const connected = new Promise<void>((resolve, reject) => {
+      socket.once('connect', () => resolve());
+      socket.once('connect_error', reject);
+    });
+
+    try {
+      socket.connect();
+      await connected;
+
+      expect(socket.connected).toBe(true);
+
+      const realtimeService = app.get(RealtimeService);
+      const realtimeNamespace = realtimeService.getNamespace();
+
+      const connectedSocket = realtimeNamespace.sockets.get(socket.id);
+
+      expect(connectedSocket).toBeDefined();
+
+      if (!connectedSocket) {
+        throw new Error(
+          'Connected realtime socket was not found in the realtime namespace',
+        );
+      }
+
+      const room = REALTIME_ROOMS.ticket(ticket.id);
+
+      expect(connectedSocket.rooms.has(room)).toBe(false);
+
+      const gateway = app.get(RealtimeGateway);
+
+      await gateway.subscribeToTicket(connectedSocket, {
+        ticketId: ticket.id,
+      });
+
+      expect(connectedSocket.rooms.has(room)).toBe(true);
+    } finally {
+      socket.disconnect();
+    }
+  });
+
+  it('should not join a ticket room for a ticket in another organization', async () => {
+    const fixture = await createOrganizationTestFixture(app);
+    const otherFixture = await createOrganizationTestFixture(app);
+
+    const cookieHeader = fixture.owner.cookies
+      .map((cookie) => cookie.split(';', 1)[0])
+      .join('; ');
+
+    const ticketsService = app.get(TicketsService);
+
+    const otherOrganizationTicket = await ticketsService.create(
+      {
+        userId: otherFixture.owner.userId,
+        organizationId: otherFixture.organization.id,
+        role: otherFixture.owner.role,
+      },
+      {
+        title: 'Cross organization realtime ticket',
+        description: 'This ticket must not be subscribable.',
+      },
+    );
+
+    const socket = io(`${baseUrl}/realtime`, {
+      transports: ['websocket'],
+      extraHeaders: {
+        Cookie: cookieHeader,
+        'x-organization-id': fixture.organization.id,
+      },
+      autoConnect: false,
+    });
+
+    const connected = new Promise<void>((resolve, reject) => {
+      socket.once('connect', () => resolve());
+      socket.once('connect_error', reject);
+    });
+
+    try {
+      socket.connect();
+      await connected;
+
+      const realtimeService = app.get(RealtimeService);
+      const realtimeNamespace = realtimeService.getNamespace();
+
+      const connectedSocket = realtimeNamespace.sockets.get(socket.id);
+
+      expect(connectedSocket).toBeDefined();
+
+      if (!connectedSocket) {
+        throw new Error(
+          'Connected realtime socket was not found in the realtime namespace',
+        );
+      }
+
+      const room = REALTIME_ROOMS.ticket(otherOrganizationTicket.id);
+
+      expect(connectedSocket.rooms.has(room)).toBe(false);
+
+      const gateway = app.get(RealtimeGateway);
+
+      await expect(
+        gateway.subscribeToTicket(connectedSocket, {
+          ticketId: otherOrganizationTicket.id,
+        }),
+      ).rejects.toThrow('Ticket not found');
+
+      expect(connectedSocket.rooms.has(room)).toBe(false);
+    } finally {
+      socket.disconnect();
+    }
+  });
 });

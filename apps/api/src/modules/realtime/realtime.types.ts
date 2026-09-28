@@ -13,6 +13,9 @@ export const REALTIME_ROOMS = {
 export const REALTIME_EVENTS = {
   CONNECTED: 'realtime.connected',
 
+  SUBSCRIBE_TICKET: 'ticket.subscribe',
+  TICKET_SUBSCRIBED: 'ticket.subscribed',
+
   TICKET_CREATED: 'ticket.created',
   TICKET_UPDATED: 'ticket.updated',
   TICKET_STATUS_CHANGED: 'ticket.status.changed',
