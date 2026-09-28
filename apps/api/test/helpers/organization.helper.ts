@@ -21,6 +21,7 @@ interface OrganizationTestUser {
   email: string;
   role: OrganizationRole;
   agent: AuthenticatedTestUser['agent'];
+  cookies: AuthenticatedTestUser['cookies'];
 }
 
 export interface OrganizationTestFixture {
@@ -129,6 +130,7 @@ export async function createOrganizationTestFixture(
       email: ownerRecord.email,
       role: 'OWNER',
       agent: ownerAuth.agent,
+      cookies: ownerAuth.cookies,
     },
 
     admin: {
@@ -136,6 +138,7 @@ export async function createOrganizationTestFixture(
       email: adminRecord.email,
       role: 'ADMIN',
       agent: adminAuth.agent,
+      cookies: adminAuth.cookies,
     },
 
     agent: {
@@ -143,6 +146,7 @@ export async function createOrganizationTestFixture(
       email: agentRecord.email,
       role: 'AGENT',
       agent: agentAuth.agent,
+      cookies: agentAuth.cookies,
     },
 
     requester: {
@@ -150,6 +154,7 @@ export async function createOrganizationTestFixture(
       email: requesterRecord.email,
       role: 'REQUESTER',
       agent: requesterAuth.agent,
+      cookies: requesterAuth.cookies,
     },
   };
 }

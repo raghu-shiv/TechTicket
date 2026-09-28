@@ -21,4 +21,11 @@ export interface CurrentSession {
 export interface AuthContext {
   user: CurrentUser;
   session: CurrentSession;
+  organization?: AuthOrganizationContext;
+}
+
+export interface AuthOrganizationContext {
+  userId: string;
+  organizationId: string;
+  role: 'OWNER' | 'ADMIN' | 'AGENT' | 'REQUESTER';
 }

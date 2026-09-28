@@ -11,9 +11,13 @@ interface TestUser {
   password: string;
 }
 
-interface AuthenticatedTestUser {
-  user: TestUser;
+export interface AuthenticatedTestUser {
   agent: ReturnType<typeof request.agent>;
+  user: {
+    id: string;
+    email: string;
+    name: string;
+  };
   cookies: string[];
 }
 

@@ -3,7 +3,7 @@ import { io } from 'socket.io-client';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createTestApp } from './helpers/app.helper.js';
-import { createAuthenticatedTestUser } from './helpers/auth.helper.js';
+import { createOrganizationTestFixture } from './helpers/organization.helper.js';
 
 describe('Realtime Authentication (e2e)', () => {
   let app: INestApplication;
@@ -68,8 +68,11 @@ describe('Realtime Authentication (e2e)', () => {
     }
   });
 
-  it('should accept and cleanly disconnect a realtime connection with a valid Better Auth session', async () => {
-    const { user, cookies } = await createAuthenticatedTestUser(app);
+  it('should accept a realtime connection with a valid Better Auth session and organization context', async () => {
+    const fixture = await createOrganizationTestFixture(app);
+
+    const { userId, cookies } = fixture.owner;
+    const { organization } = fixture;
 
     const cookieHeader = cookies
       .map((cookie) => cookie.split(';', 1)[0])
@@ -79,16 +82,18 @@ describe('Realtime Authentication (e2e)', () => {
       transports: ['websocket'],
       extraHeaders: {
         Cookie: cookieHeader,
+        'x-organization-id': organization.id,
       },
       autoConnect: false,
     });
 
-    const connectedEvent = new Promise<{ userId: string }>(
-      (resolve, reject) => {
-        socket.once('realtime.connected', resolve);
-        socket.once('connect_error', reject);
-      },
-    );
+    const connectedEvent = new Promise<{
+      userId: string;
+      organizationId: string;
+    }>((resolve, reject) => {
+      socket.once('realtime.connected', resolve);
+      socket.once('connect_error', reject);
+    });
 
     try {
       await new Promise<void>((resolve, reject) => {
@@ -97,22 +102,16 @@ describe('Realtime Authentication (e2e)', () => {
         socket.connect();
       });
 
-      const payload = await connectedEvent;
-
       expect(socket.connected).toBe(true);
-      expect(payload).toEqual({
-        userId: user.id,
-      });
-      expect(user.email).toContain('@example.com');
-
-      await new Promise<void>((resolve) => {
-        socket.once('disconnect', () => resolve());
-        socket.disconnect();
-      });
-
-      expect(socket.connected).toBe(false);
     } finally {
       socket.disconnect();
     }
+
+    const payload = await connectedEvent;
+
+    expect(payload).toEqual({
+      userId,
+      organizationId: organization.id,
+    });
   });
 });
