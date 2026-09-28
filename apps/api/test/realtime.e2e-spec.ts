@@ -749,4 +749,87 @@ describe('Realtime Authentication (e2e)', () => {
       socketB.disconnect();
     }
   });
+
+  it('should clean up ticket room membership when the socket disconnects', async () => {
+    const fixture = await createOrganizationTestFixture(app);
+
+    const { cookies } = fixture.owner;
+    const { organization } = fixture;
+
+    const ticketsService = app.get(TicketsService);
+    const realtimeService = app.get(RealtimeService);
+    const gateway = app.get(RealtimeGateway);
+
+    const ticket = await ticketsService.create(
+      {
+        userId: fixture.owner.userId,
+        organizationId: organization.id,
+        role: fixture.owner.role,
+      },
+      {
+        title: 'Realtime ticket lifecycle test',
+        description: 'Ticket used to verify room lifecycle cleanup.',
+      },
+    );
+
+    const cookieHeader = cookies
+      .map((cookie) => cookie.split(';', 1)[0])
+      .join('; ');
+
+    const socket = io(`${baseUrl}/realtime`, {
+      transports: ['websocket'],
+      extraHeaders: {
+        Cookie: cookieHeader,
+        'x-organization-id': organization.id,
+      },
+      autoConnect: false,
+    });
+
+    const connected = new Promise<void>((resolve, reject) => {
+      socket.once('connect', () => resolve());
+      socket.once('connect_error', reject);
+    });
+
+    try {
+      socket.connect();
+      await connected;
+
+      const namespace = realtimeService.getNamespace();
+      const connectedSocket = namespace.sockets.get(socket.id);
+
+      expect(connectedSocket).toBeDefined();
+
+      if (!connectedSocket) {
+        throw new Error(
+          'Connected realtime socket was not found in the realtime namespace',
+        );
+      }
+
+      await gateway.subscribeToTicket(connectedSocket, {
+        ticketId: ticket.id,
+      });
+
+      const ticketRoom = REALTIME_ROOMS.ticket(ticket.id);
+
+      expect(connectedSocket.rooms.has(ticketRoom)).toBe(true);
+
+      const socketId = socket.id;
+
+      socket.disconnect();
+
+      await new Promise<void>((resolve) => {
+        setTimeout(resolve, 100);
+      });
+
+      expect(namespace.sockets.get(socketId)).toBeUndefined();
+
+      const remainingRoomMembers = namespace.adapter.rooms.get(ticketRoom);
+
+      expect(remainingRoomMembers?.has(socketId) ?? false).toBe(false);
+    } finally {
+      if (socket.connected) {
+        socket.disconnect();
+      }
+    }
+  });
 });
