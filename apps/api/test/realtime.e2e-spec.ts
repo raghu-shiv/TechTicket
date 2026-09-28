@@ -283,4 +283,92 @@ describe('Realtime Authentication (e2e)', () => {
       socketB.disconnect();
     }
   });
+
+  it('should preserve authenticated organization context throughout socket lifecycle', async () => {
+    const fixture = await createOrganizationTestFixture(app);
+
+    const { userId, cookies } = fixture.owner;
+    const { organization } = fixture;
+
+    const cookieHeader = cookies
+      .map((cookie) => cookie.split(';', 1)[0])
+      .join('; ');
+
+    const socket = io(`${baseUrl}/realtime`, {
+      transports: ['websocket'],
+      extraHeaders: {
+        Cookie: cookieHeader,
+        'x-organization-id': organization.id,
+      },
+      autoConnect: false,
+    });
+
+    const connectedEvent = new Promise<{
+      userId: string;
+      organizationId: string;
+    }>((resolve, reject) => {
+      socket.once('realtime.connected', resolve);
+      socket.once('connect_error', reject);
+    });
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        socket.once('connect', () => resolve());
+        socket.once('connect_error', reject);
+        socket.connect();
+      });
+
+      expect(socket.connected).toBe(true);
+
+      const payload = await connectedEvent;
+
+      expect(payload).toEqual({
+        userId,
+        organizationId: organization.id,
+      });
+
+      const realtimeService = app.get(RealtimeService);
+      const realtimeNamespace = realtimeService.getNamespace();
+
+      const connectedSocket = realtimeNamespace.sockets.get(socket.id);
+
+      expect(connectedSocket).toBeDefined();
+
+      expect(connectedSocket?.data.auth?.user.id).toBe(userId);
+      expect(connectedSocket?.data.auth?.organization?.organizationId).toBe(
+        organization.id,
+      );
+
+      expect(
+        connectedSocket?.rooms.has(
+          REALTIME_ROOMS.organization(organization.id),
+        ),
+      ).toBe(true);
+
+      const socketId = socket.id;
+
+      socket.disconnect();
+
+      expect(socket.connected).toBe(false);
+
+      await new Promise<void>((resolve) => {
+        const checkDisconnected = (): void => {
+          if (!realtimeNamespace.sockets.has(socketId)) {
+            resolve();
+            return;
+          }
+
+          setTimeout(checkDisconnected, 10);
+        };
+
+        checkDisconnected();
+      });
+
+      expect(realtimeNamespace.sockets.has(socketId)).toBe(false);
+    } finally {
+      if (socket.connected) {
+        socket.disconnect();
+      }
+    }
+  });
 });
