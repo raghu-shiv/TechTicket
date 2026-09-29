@@ -20,10 +20,6 @@ export class RealtimeNotificationEventsService {
   handleNotificationCreated(event: NotificationCreatedEvent): void {
     const targets: RealtimeBroadcastTarget[] = [
       {
-        type: 'organization',
-        organizationId: event.organizationId,
-      },
-      {
         type: 'user',
         organizationId: event.organizationId,
         userId: event.recipientId,

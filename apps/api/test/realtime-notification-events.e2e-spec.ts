@@ -58,10 +58,6 @@ describe('RealtimeNotificationEventsService', () => {
       payload: event,
       targets: [
         {
-          type: 'organization',
-          organizationId: 'org-1',
-        },
-        {
           type: 'user',
           organizationId: 'org-1',
           userId: 'user-2',
@@ -90,10 +86,6 @@ describe('RealtimeNotificationEventsService', () => {
       expect.objectContaining({
         organizationId: 'org-99',
         targets: [
-          {
-            type: 'organization',
-            organizationId: 'org-99',
-          },
           {
             type: 'user',
             organizationId: 'org-99',

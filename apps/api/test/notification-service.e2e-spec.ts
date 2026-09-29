@@ -2,10 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  NOTIFICATION_EVENTS,
-  type NotificationCreatedEvent,
-} from '../src/modules/notifications/notification-events';
+import { NOTIFICATION_EVENTS } from '../src/modules/notifications/notification-events';
 import { NotificationService } from '../src/modules/notifications/notification.service';
 
 describe('NotificationService', () => {

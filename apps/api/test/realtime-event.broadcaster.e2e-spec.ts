@@ -217,4 +217,80 @@ describe('RealtimeEventBroadcaster', () => {
 
     expect(realtimeService.getNamespace).not.toHaveBeenCalled();
   });
+
+  it('should route notification.created to the user room', () => {
+    const { broadcaster, realtimeService } = createBroadcaster();
+
+    const event: RealtimeBroadcastEvent = {
+      event: REALTIME_EVENTS.NOTIFICATION_CREATED,
+      organizationId: 'org-1',
+      payload: {
+        notificationId: 'notification-1',
+        organizationId: 'org-1',
+        recipientId: 'user-1',
+      },
+      targets: [
+        {
+          type: 'user',
+          organizationId: 'org-1',
+          userId: 'user-1',
+        },
+      ],
+    };
+
+    broadcaster.broadcast(event);
+
+    const namespace = realtimeService.getNamespace.mock.results[0].value;
+
+    expect(namespace.to).toHaveBeenCalledWith(REALTIME_ROOMS.user('user-1'));
+  });
+
+  it('should reject a ticket target from another organization', () => {
+    const { broadcaster, realtimeService } = createBroadcaster();
+
+    const event: RealtimeBroadcastEvent = {
+      event: REALTIME_EVENTS.TICKET_UPDATED,
+      organizationId: 'org-1',
+      payload: {
+        ticketId: 'ticket-1',
+      },
+      targets: [
+        {
+          type: 'ticket',
+          organizationId: 'org-2',
+          ticketId: 'ticket-1',
+        },
+      ],
+    };
+
+    expect(() => broadcaster.broadcast(event)).toThrow(
+      'Realtime broadcast target organization does not match event organization',
+    );
+
+    expect(realtimeService.getNamespace).not.toHaveBeenCalled();
+  });
+
+  it('should reject an organization target from another organization', () => {
+    const { broadcaster, realtimeService } = createBroadcaster();
+
+    const event: RealtimeBroadcastEvent = {
+      event: REALTIME_EVENTS.TICKET_CREATED,
+      organizationId: 'org-1',
+      payload: {
+        ticketId: 'ticket-1',
+      },
+      targets: [
+        {
+          type: 'organization',
+          organizationId: 'org-2',
+        },
+      ],
+    };
+
+    expect(() => broadcaster.broadcast(event)).toThrow(
+      'Realtime broadcast target organization does not match event organization',
+    );
+
+    expect(realtimeService.getNamespace).not.toHaveBeenCalled();
+  });
 });

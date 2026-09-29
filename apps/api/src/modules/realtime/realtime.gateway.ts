@@ -1,19 +1,18 @@
+import { ForbiddenException } from '@nestjs/common';
 import {
-  OnGatewayConnection,
-  OnGatewayDisconnect,
-  OnGatewayInit,
+  type OnGatewayConnection,
+  type OnGatewayDisconnect,
+  type OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
 } from '@nestjs/websockets';
-
 import type { Namespace, Socket } from 'socket.io';
 
 import { AuthContextService } from '../../common/auth/auth-context.service';
 import type { AuthContext } from '../../common/auth/auth.types';
 import { OrganizationContextService } from '../../common/organization/organization-context.service';
 import { TicketsService } from '../tickets/tickets.service';
-import { REALTIME_EVENTS } from './realtime.types';
-import { REALTIME_ROOMS } from './realtime.rooms';
+import { REALTIME_EVENTS, REALTIME_ROOMS } from './realtime.types';
 import { RealtimeService } from './realtime.service';
 
 type AuthenticatedSocket = Socket & {
@@ -84,7 +83,9 @@ export class RealtimeGateway
       auth.organization.organizationId,
     );
 
-    void socket.join(organizationRoom);
+    const userRoom = REALTIME_ROOMS.user(auth.user.id);
+
+    void Promise.all([socket.join(organizationRoom), socket.join(userRoom)]);
 
     socket.emit(REALTIME_EVENTS.CONNECTED, {
       userId: auth.user.id,
@@ -93,29 +94,41 @@ export class RealtimeGateway
   }
 
   async resolveTicketForSocket(socket: AuthenticatedSocket, ticketId: string) {
-    const auth = socket.data.auth;
+    const auth = this.requireOrganizationContext(socket);
 
-    if (!auth?.organization?.organizationId) {
-      throw new Error('Organization context is required');
-    }
-
-    return this.ticketsService.findOne(auth.organization, ticketId);
+    return this.ticketsService.findOne(auth.organization!, ticketId);
   }
 
   async assertTicketAccessForSocket(
     socket: AuthenticatedSocket,
     ticketId: string,
   ) {
-    const auth = socket.data.auth;
-
-    if (!auth?.organization?.organizationId) {
-      throw new Error('Organization context is required');
-    }
+    const auth = this.requireOrganizationContext(socket);
 
     return this.ticketsService.assertRealtimeAccess(
-      auth.organization,
+      auth.organization!,
       ticketId,
     );
+  }
+
+  /**
+   * User-room authorization is intentionally strict:
+   *
+   * A socket may only subscribe to its own user room.
+   *
+   * User rooms are used for recipient-targeted realtime events,
+   * so allowing arbitrary user-room membership would expose
+   * another user's notifications.
+   */
+  async assertUserRoomAccessForSocket(
+    socket: AuthenticatedSocket,
+    userId: string,
+  ): Promise<void> {
+    const auth = this.requireOrganizationContext(socket);
+
+    if (userId !== auth.user.id) {
+      throw new ForbiddenException('You do not have access to this user room');
+    }
   }
 
   @SubscribeMessage(REALTIME_EVENTS.SUBSCRIBE_TICKET)
@@ -157,7 +170,28 @@ export class RealtimeGateway
     await socket.join(room);
   }
 
+  async joinUserRoom(
+    socket: AuthenticatedSocket,
+    userId: string,
+  ): Promise<void> {
+    await this.assertUserRoomAccessForSocket(socket, userId);
+
+    const room = REALTIME_ROOMS.user(userId);
+
+    await socket.join(room);
+  }
+
   handleDisconnect(socket: Socket): void {
     this.realtimeService.handleDisconnect(socket);
+  }
+
+  private requireOrganizationContext(socket: AuthenticatedSocket): AuthContext {
+    const auth = socket.data.auth;
+
+    if (!auth?.user?.id || !auth.organization?.organizationId) {
+      throw new Error('Organization context is required');
+    }
+
+    return auth;
   }
 }
