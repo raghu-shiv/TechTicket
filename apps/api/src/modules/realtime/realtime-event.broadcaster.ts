@@ -1,44 +1,42 @@
 import { Injectable } from '@nestjs/common';
 
-import type { RealtimeBroadcastEvent } from './realtime-event.types';
+import type {
+  RealtimeBroadcastEvent,
+  RealtimeBroadcastTarget,
+} from './realtime-event.types';
 import { REALTIME_ROOMS } from './realtime.rooms';
 import { RealtimeService } from './realtime.service';
 
 @Injectable()
-export class RealtimeEventsService {
+export class RealtimeEventBroadcaster {
   constructor(private readonly realtimeService: RealtimeService) {}
 
   broadcast<TPayload>(event: RealtimeBroadcastEvent<TPayload>): void {
-    if (!event.organizationId.trim()) {
-      throw new Error('Organization context is required');
-    }
-
-    if (!event.event) {
-      throw new Error('Realtime event name is required');
-    }
-
-    if (!event.targets.length) {
-      return;
-    }
+    this.validateTargets(event.organizationId, event.targets);
 
     const namespace = this.realtimeService.getNamespace();
 
     for (const target of event.targets) {
-      if (target.organizationId !== event.organizationId) {
-        throw new Error(
-          'Realtime event target organization does not match event organization',
-        );
-      }
-
       const room = this.resolveRoom(target);
 
       namespace.to(room).emit(event.event, event.payload);
     }
   }
 
-  private resolveRoom(
-    target: RealtimeBroadcastEvent['targets'][number],
-  ): string {
+  private validateTargets(
+    organizationId: string,
+    targets: RealtimeBroadcastTarget[],
+  ): void {
+    for (const target of targets) {
+      if (target.organizationId !== organizationId) {
+        throw new Error(
+          'Realtime broadcast target organization does not match event organization',
+        );
+      }
+    }
+  }
+
+  private resolveRoom(target: RealtimeBroadcastTarget): string {
     switch (target.type) {
       case 'organization':
         return REALTIME_ROOMS.organization(target.organizationId);
