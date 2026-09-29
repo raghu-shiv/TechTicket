@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { RealtimeEventBroadcaster } from '../src/modules/realtime/realtime-event.broadcaster';
 import { RealtimeNotificationEventsService } from '../src/modules/realtime/realtime-notification-events.service';
-import { NOTIFICATION_EVENTS } from '../src/modules/realtime/realtime-notification-events.service';
+import { NOTIFICATION_EVENTS } from '../src/modules/notifications/notification-events';
 import { REALTIME_EVENTS } from '../src/modules/realtime/realtime.types';
 
 describe('RealtimeNotificationEventsService', () => {

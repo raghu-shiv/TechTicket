@@ -5,20 +5,10 @@ import type { RealtimeBroadcastTarget } from './realtime-event.types';
 import { RealtimeEventBroadcaster } from './realtime-event.broadcaster';
 import { REALTIME_EVENTS } from './realtime.types';
 
-export const NOTIFICATION_EVENTS = {
-  CREATED: 'notification.created',
-} as const;
-
-interface NotificationCreatedEvent {
-  notificationId: string;
-  organizationId: string;
-  recipientId: string;
-  actorId: string;
-  type: string;
-  title: string;
-  message: string;
-  createdAt: Date;
-}
+import {
+  NOTIFICATION_EVENTS,
+  type NotificationCreatedEvent,
+} from '../notifications/notification-events';
 
 @Injectable()
 export class RealtimeNotificationEventsService {
