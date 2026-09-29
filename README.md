@@ -10,11 +10,10 @@ approval workflows.
 
 **Backend foundation, ticket core, search/filtering, attachments, SLA
 foundations, notifications, approval workflow, secure realtime/WebSocket
-organization, ticket, and user rooms, ticket regression testing, realtime
-security/event testing, and Phase 4-G/4-H reliability verification are
-implemented and verified. Realtime
-domain event broadcasting for ticket, approval, SLA, and notification
-events is also complete and verified.**
+organization, ticket, and user rooms, realtime security/event testing,
+hardening, and Phase 4-G/4-H reliability verification are implemented and
+verified. Realtime domain event broadcasting for ticket, approval, SLA, and
+notification events is also complete and verified.**
 
 Latest verified backend state:
 
@@ -43,6 +42,7 @@ Latest verified backend state:
 -   Focused realtime event-to-room routing E2E coverage
 -   Realtime gateway unit/security tests
 -   Realtime security and event E2E regression coverage
+-   Realtime lifecycle/error handling/logging hardening
 -   Full realtime test regression
 
 See [`PLANS.md`](./PLANS.md) for the detailed implementation tracker.
@@ -53,49 +53,58 @@ See [`PLANS.md`](./PLANS.md) for the detailed implementation tracker.
 
 **COMPLETE AND VERIFIED**
 
-Authenticated organization context resolution, organization room
-subscription, membership enforcement, cross-organization isolation,
-lifecycle verification, focused realtime E2E coverage, and regression
-verification are complete.
+Authenticated organization context resolution, organization room subscription,
+membership enforcement, cross-organization isolation, lifecycle verification,
+and focused realtime E2E coverage are complete.
 
 ### 4-H.4 --- Ticket Rooms
 
 **COMPLETE AND VERIFIED**
 
-Ticket-room subscriptions are organization-scoped and protected by
-ticket ownership validation, cross-organization isolation, lifecycle
-verification, and focused/full E2E regression.
+Ticket-room subscriptions are organization-scoped and protected by ticket
+ownership validation. Cross-organization ticket-room access is prevented and
+ticket lifecycle/isolation behavior is covered by focused and full E2E tests.
 
 ### 4-H.5 --- Domain Event Broadcasting
 
 **COMPLETE AND VERIFIED**
 
-Realtime event broadcasting is implemented for ticket lifecycle,
-approval lifecycle, SLA breach, and notification-created events. Room
-authorization is enforced for organization, ticket, and user rooms.
-Focused E2E tests verify organization routing, ticket routing,
-notification recipient routing, and rejection of unauthorized user-room
-joins.
+Realtime event broadcasting is implemented for ticket lifecycle, approval
+lifecycle, SLA breach, and notification-created events. Room authorization is
+enforced for organization, ticket, and user rooms.
 
-Latest full API E2E verification:
+### 4-H.6 --- Realtime Tests
 
-``` text
-Test Files  16 passed (16)
-Tests       151 passed (151)
-Failures    0
+**COMPLETE AND VERIFIED**
+
+Realtime gateway unit/security tests and focused realtime E2E security/event
+tests are complete.
+
+```text
+Focused realtime: 3 test files / 28 tests passed
+Full E2E at milestone: 17 test files / 166 tests passed
 ```
 
-Build completed successfully with 0 errors. Lint completed with 0
-warnings and 0 errors.
+### 4-H.7 --- Hardening
 
-### Next Phase 4-H Milestones
+**COMPLETE AND VERIFIED**
 
--   4-H.6 --- Realtime tests \| Unit + E2E security/event tests \|
-    **NEXT**
--   4-H.7 --- Hardening \| Error handling, lifecycle, cleanup, logging
-    \| **PLANNED**
--   4-H.8 --- Full verification \| lint + build + unit + E2E +
-    documentation \| **PLANNED**
+Realtime authentication/error handling, organization/ticket/user room
+authorization failures, socket lifecycle/disconnect cleanup, logging, and
+notification organization-isolation hardening are verified.
+
+### 4-H.8 --- Full Verification
+
+**COMPLETE AND VERIFIED**
+
+```text
+Unit tests          2 test files / 7 tests passed
+Full E2E            17 test files / 169 tests passed
+Lint                0 warnings / 0 errors
+Production build    0 errors
+```
+
+Documentation has been updated to record the completed Phase 4-H checkpoint.
 
 ## Phase 4 Completion Checkpoint
 
@@ -152,9 +161,8 @@ Completed implemented/verified scope:
 -   Lint verification
 -   Production build verification
 
-Still planned:
+Remaining workflow candidates:
 
--   Realtime / WebSockets --- **IN PROGRESS**
 -   Unassigned queue
 -   Ticket history refinement
 
@@ -369,9 +377,12 @@ docker compose exec api npm run build
 
 ### Latest Verification
 
-``` text
-E2E test files       16/16 passed
-E2E tests            151/151 passed
+```text
+Unit test files      2/2 passed
+Unit tests           7/7 passed
+Focused realtime     3/3 test files, 28/28 tests passed
+Full E2E test files  17/17 passed
+Full E2E tests       169/169 passed
 Lint                 0 warnings / 0 errors
 Production build     0 errors
 ```
@@ -430,13 +441,13 @@ test/ticket.e2e-spec.ts
 -   Production build (4-G.9) --- **COMPLETE AND VERIFIED**
 -   Final verification/documentation (4-G.10) --- **COMPLETE AND
     VERIFIED**
--   Realtime / WebSockets --- **IN PROGRESS**
+-   Realtime / WebSockets --- **COMPLETE AND VERIFIED**
     -   Organization rooms (4-H.3) --- **COMPLETE AND VERIFIED**
     -   Ticket rooms (4-H.4) --- **COMPLETE AND VERIFIED**
     -   Domain event broadcasting (4-H.5) --- **COMPLETE AND VERIFIED**
-    -   Realtime tests (4-H.6) --- **NEXT**
-    -   Hardening (4-H.7) --- **PLANNED**
-    -   Full verification (4-H.8) --- **PLANNED**
+    -   Realtime tests (4-H.6) --- **COMPLETE AND VERIFIED**
+    -   Hardening (4-H.7) --- **COMPLETE AND VERIFIED**
+    -   Full verification (4-H.8) --- **COMPLETE AND VERIFIED**
 -   Unassigned queue --- planned
 -   Ticket history refinement --- planned
 
@@ -511,29 +522,19 @@ Phase 4-G                         COMPLETE AND VERIFIED
 Realtime / WebSockets (4-H.3)     COMPLETE AND VERIFIED
 Ticket rooms (4-H.4)              COMPLETE AND VERIFIED
 Domain event broadcasting (4-H.5) COMPLETE AND VERIFIED
-Realtime tests (4-H.6)             COMPLETE AND VERIFIED
-Realtime hardening (4-H.7)         NEXT
-Full verification (4-H.8)          PLANNED
+Realtime tests (4-H.6)            COMPLETE AND VERIFIED
+Realtime hardening (4-H.7)        COMPLETE AND VERIFIED
+Full verification (4-H.8)         COMPLETE AND VERIFIED
 ```
 
 ## Next Development Direction
 
-Phase 4-G is complete. Phase 4-H is in progress, with 4-H.3, 4-H.4,
-4-H.5, and 4-H.6 complete and verified. Continue with the roadmap rather than
-introducing speculative architecture.
-
-Next milestones:
-
--   4-H.6 --- Realtime tests \| Unit + E2E security/event tests
--   4-H.7 --- Hardening \| Error handling, lifecycle, cleanup, logging
--   4-H.8 --- Full verification \| lint + build + unit + E2E +
-    documentation
+Phase 4-G and the complete Phase 4-H Realtime / WebSockets scope are complete
+and verified through 4-H.8.
 
 Remaining workflow candidates:
+- Unassigned queue
+- Ticket history refinement
 
--   Realtime / WebSockets --- **IN PROGRESS**
--   Unassigned queue
--   Ticket history refinement
-
-After the remaining workflow scope, proceed into Productivity,
-Analytics, and Production Hardening.
+After the remaining workflow scope, proceed into Productivity, Analytics,
+and Production Hardening.
