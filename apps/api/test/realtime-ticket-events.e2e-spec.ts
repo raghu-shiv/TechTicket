@@ -164,7 +164,7 @@ describe('RealtimeTicketEventsService', () => {
     });
   });
 
-  it('should broadcast comments to organization and ticket rooms', async () => {
+  it('should broadcast ticket.comment.added to organization and ticket rooms', async () => {
     const event = {
       ticketId: 'ticket-1',
       organizationId: 'org-1',
@@ -181,6 +181,72 @@ describe('RealtimeTicketEventsService', () => {
 
     expect(broadcaster.broadcast).toHaveBeenCalledWith({
       event: REALTIME_EVENTS.TICKET_COMMENT_ADDED,
+      organizationId: 'org-1',
+      payload: event,
+      targets: [
+        {
+          type: 'organization',
+          organizationId: 'org-1',
+        },
+        {
+          type: 'ticket',
+          organizationId: 'org-1',
+          ticketId: 'ticket-1',
+        },
+      ],
+    });
+  });
+
+  it('should broadcast ticket.comment.updated to organization and ticket rooms', async () => {
+    const event = {
+      ticketId: 'ticket-1',
+      organizationId: 'org-1',
+      actorId: 'user-1',
+      recipientIds: ['user-2'],
+      commentId: 'comment-1',
+      commentType: 'PUBLIC',
+      occurredAt: new Date(),
+    };
+
+    eventEmitter.emit(TICKET_EVENTS.COMMENT_UPDATED, event);
+
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(broadcaster.broadcast).toHaveBeenCalledWith({
+      event: REALTIME_EVENTS.TICKET_COMMENT_UPDATED,
+      organizationId: 'org-1',
+      payload: event,
+      targets: [
+        {
+          type: 'organization',
+          organizationId: 'org-1',
+        },
+        {
+          type: 'ticket',
+          organizationId: 'org-1',
+          ticketId: 'ticket-1',
+        },
+      ],
+    });
+  });
+
+  it('should broadcast ticket.comment.deleted to organization and ticket rooms', async () => {
+    const event = {
+      ticketId: 'ticket-1',
+      organizationId: 'org-1',
+      actorId: 'user-1',
+      recipientIds: ['user-2'],
+      commentId: 'comment-1',
+      commentType: 'PUBLIC',
+      occurredAt: new Date(),
+    };
+
+    eventEmitter.emit(TICKET_EVENTS.COMMENT_DELETED, event);
+
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(broadcaster.broadcast).toHaveBeenCalledWith({
+      event: REALTIME_EVENTS.TICKET_COMMENT_DELETED,
       organizationId: 'org-1',
       payload: event,
       targets: [
