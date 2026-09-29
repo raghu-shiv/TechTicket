@@ -7,16 +7,26 @@ import { RealtimeEventsService } from './realtime-events.service';
 import { RealtimeGateway } from './realtime.gateway';
 import { RealtimeService } from './realtime.service';
 import { RealtimeEventBroadcaster } from './realtime-event.broadcaster';
+import { RealtimeApprovalEventsService } from './realtime-approval-events.service';
 import { RealtimeTicketEventsService } from './realtime-ticket-events.service';
+import { PermissionsModule } from '../../common/permissions/permissions.module';
+import { ApprovalsModule } from '../approvals/approvals.module';
 
 @Module({
-  imports: [AuthModule, OrganizationContextModule, TicketsModule],
+  imports: [
+    AuthModule,
+    OrganizationContextModule,
+    TicketsModule,
+    PermissionsModule,
+    ApprovalsModule,
+  ],
   providers: [
     RealtimeService,
     RealtimeGateway,
     RealtimeEventsService,
     RealtimeEventBroadcaster,
     RealtimeTicketEventsService,
+    RealtimeApprovalEventsService,
   ],
   exports: [RealtimeService, RealtimeEventsService, RealtimeEventBroadcaster],
 })
