@@ -832,4 +832,79 @@ describe('Realtime Authentication (e2e)', () => {
       }
     }
   });
+
+  it('should isolate automatic user rooms between authenticated users', async () => {
+    const fixture = await createOrganizationTestFixture(app);
+
+    const socketRequester = io(`${baseUrl}/realtime`, {
+      transports: ['websocket'],
+      extraHeaders: {
+        Cookie: fixture.requester.cookies
+          .map((cookie) => cookie.split(';', 1)[0])
+          .join('; '),
+        'x-organization-id': fixture.organization.id,
+      },
+      autoConnect: false,
+    });
+
+    const socketAgent = io(`${baseUrl}/realtime`, {
+      transports: ['websocket'],
+      extraHeaders: {
+        Cookie: fixture.agent.cookies
+          .map((cookie) => cookie.split(';', 1)[0])
+          .join('; '),
+        'x-organization-id': fixture.organization.id,
+      },
+      autoConnect: false,
+    });
+
+    try {
+      await Promise.all([
+        new Promise<void>((resolve, reject) => {
+          socketRequester.once('connect', resolve);
+          socketRequester.once('connect_error', reject);
+          socketRequester.connect();
+        }),
+        new Promise<void>((resolve, reject) => {
+          socketAgent.once('connect', resolve);
+          socketAgent.once('connect_error', reject);
+          socketAgent.connect();
+        }),
+      ]);
+
+      const realtimeService = app.get(RealtimeService);
+
+      const requesterSocket = realtimeService
+        .getNamespace()
+        .sockets.get(socketRequester.id);
+
+      const agentSocket = realtimeService
+        .getNamespace()
+        .sockets.get(socketAgent.id);
+
+      expect(requesterSocket).toBeDefined();
+      expect(agentSocket).toBeDefined();
+
+      expect(
+        requesterSocket?.rooms.has(
+          REALTIME_ROOMS.user(fixture.requester.userId),
+        ),
+      ).toBe(true);
+
+      expect(
+        requesterSocket?.rooms.has(REALTIME_ROOMS.user(fixture.agent.userId)),
+      ).toBe(false);
+
+      expect(
+        agentSocket?.rooms.has(REALTIME_ROOMS.user(fixture.agent.userId)),
+      ).toBe(true);
+
+      expect(
+        agentSocket?.rooms.has(REALTIME_ROOMS.user(fixture.requester.userId)),
+      ).toBe(false);
+    } finally {
+      socketRequester.disconnect();
+      socketAgent.disconnect();
+    }
+  });
 });

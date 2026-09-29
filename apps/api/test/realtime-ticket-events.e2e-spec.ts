@@ -10,14 +10,12 @@ import { TICKET_EVENTS } from '../src/modules/tickets/ticket-events';
 describe('RealtimeTicketEventsService', () => {
   let module: TestingModule;
   let eventEmitter: EventEmitter2;
-  let broadcaster: {
-    broadcast: ReturnType<typeof vi.fn>;
+  const broadcaster = {
+    broadcast: vi.fn(),
   };
 
   beforeEach(async () => {
-    broadcaster = {
-      broadcast: vi.fn(),
-    };
+    vi.clearAllMocks();
 
     module = await Test.createTestingModule({
       imports: [EventEmitterModule.forRoot()],
@@ -261,5 +259,147 @@ describe('RealtimeTicketEventsService', () => {
         },
       ],
     });
+  });
+
+  it('should broadcast ticket.status_changed to organization and ticket rooms', async () => {
+    const event = {
+      ticketId: 'ticket-1',
+      organizationId: 'org-1',
+      actorId: 'user-1',
+      occurredAt: new Date(),
+      previousStatus: 'OPEN',
+      status: 'RESOLVED',
+    };
+
+    eventEmitter.emit(TICKET_EVENTS.STATUS_CHANGED, event);
+
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(broadcaster.broadcast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: REALTIME_EVENTS.TICKET_STATUS_CHANGED,
+        organizationId: 'org-1',
+        payload: event,
+      }),
+    );
+  });
+
+  it('should broadcast ticket.team_changed to organization and ticket rooms', async () => {
+    const event = {
+      ticketId: 'ticket-1',
+      organizationId: 'org-1',
+      teamId: 'team-1',
+      previousTeamId: null,
+      occurredAt: new Date(),
+    };
+
+    eventEmitter.emit(TICKET_EVENTS.TEAM_CHANGED, event);
+
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(broadcaster.broadcast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: REALTIME_EVENTS.TICKET_TEAM_CHANGED,
+        organizationId: 'org-1',
+        payload: event,
+      }),
+    );
+  });
+
+  it('should broadcast ticket comments to organization and ticket rooms', async () => {
+    const event = {
+      ticketId: 'ticket-1',
+      organizationId: 'org-1',
+      commentId: 'comment-1',
+      actorId: 'user-1',
+      occurredAt: new Date(),
+    };
+
+    eventEmitter.emit(TICKET_EVENTS.COMMENT_ADDED, event);
+
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(broadcaster.broadcast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: REALTIME_EVENTS.TICKET_COMMENT_ADDED,
+        organizationId: 'org-1',
+        payload: event,
+        targets: [
+          {
+            type: 'organization',
+            organizationId: 'org-1',
+          },
+          {
+            type: 'ticket',
+            organizationId: 'org-1',
+            ticketId: 'ticket-1',
+          },
+        ],
+      }),
+    );
+  });
+
+  it('should include the recipient user room when assignee changes include a recipient', async () => {
+    const event = {
+      ticketId: 'ticket-1',
+      organizationId: 'org-1',
+      actorId: 'user-1',
+      recipientId: 'user-2',
+      occurredAt: new Date(),
+    };
+
+    eventEmitter.emit(TICKET_EVENTS.ASSIGNEE_CHANGED, event);
+
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(broadcaster.broadcast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: REALTIME_EVENTS.TICKET_ASSIGNEE_CHANGED,
+        targets: [
+          {
+            type: 'organization',
+            organizationId: 'org-1',
+          },
+          {
+            type: 'ticket',
+            organizationId: 'org-1',
+            ticketId: 'ticket-1',
+          },
+          {
+            type: 'user',
+            organizationId: 'org-1',
+            userId: 'user-2',
+          },
+        ],
+      }),
+    );
+  });
+
+  it('should not include a user room when assignee changes have no recipient', async () => {
+    const event = {
+      ticketId: 'ticket-1',
+      organizationId: 'org-1',
+      actorId: 'user-1',
+      recipientId: null,
+      occurredAt: new Date(),
+    };
+
+    eventEmitter.emit(TICKET_EVENTS.ASSIGNEE_CHANGED, event);
+
+    await new Promise((resolve) => setImmediate(resolve));
+
+    const call = broadcaster.broadcast.mock.calls[0][0];
+
+    expect(call.targets).toEqual([
+      {
+        type: 'organization',
+        organizationId: 'org-1',
+      },
+      {
+        type: 'ticket',
+        organizationId: 'org-1',
+        ticketId: 'ticket-1',
+      },
+    ]);
   });
 });

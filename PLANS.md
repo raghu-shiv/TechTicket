@@ -616,11 +616,62 @@ This completes 4-H.5 Domain Event Broadcasting.
 
 ## 4-H.6 --- Realtime Tests
 
-**NEXT**
+**COMPLETE AND VERIFIED**
 
-Expand realtime unit and E2E security/event coverage beyond the focused
-4-H.5 routing tests, including broader authorization, event contracts,
-lifecycle behavior, and regression protection.
+Realtime unit/security and E2E security/event coverage has been expanded
+and verified.
+
+Coverage includes realtime gateway authorization, own-user-room access,
+rejection of another user's private room, required organization context,
+ticket resolution through the authenticated organization context,
+`TicketsService` realtime ticket access enforcement, organization-room
+isolation, ticket-room authorization/isolation, user-room authorization,
+socket lifecycle/disconnect behavior, notification routing, and
+event-broadcaster organization-boundary validation.
+
+The focused realtime unit test is intentionally kept at
+`test/realtime-gateway.spec.ts` and is included by the standard Vitest
+configuration.
+
+Unit test checkpoint:
+
+``` text
+docker compose exec api npm test
+
+Test Files  2 passed (2)
+Tests       7 passed (7)
+Failures    0
+```
+
+Focused realtime E2E checkpoint:
+
+``` text
+Test Files  3 passed (3)
+Tests       28 passed (28)
+Failures    0
+```
+
+Full API E2E regression after 4-H.6:
+
+``` text
+docker compose exec api npm run test:e2e
+
+Test Files  17 passed (17)
+Tests       166 passed (166)
+Failures    0
+```
+
+Additional verification:
+
+``` text
+docker compose exec api npm run lint
+Found 0 warnings and 0 errors.
+
+docker compose exec api npm run build
+Found 0 errors.
+```
+
+This completes 4-H.6 Realtime Tests.
 
 ## 4-H.7 --- Realtime Hardening
 

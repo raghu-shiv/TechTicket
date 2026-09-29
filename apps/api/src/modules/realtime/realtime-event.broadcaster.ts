@@ -27,6 +27,10 @@ export class RealtimeEventBroadcaster {
     organizationId: string,
     targets: RealtimeBroadcastTarget[],
   ): void {
+    if (!organizationId || !organizationId.trim()) {
+      throw new Error('Realtime broadcast organization is required');
+    }
+
     for (const target of targets) {
       if (target.organizationId !== organizationId) {
         throw new Error(

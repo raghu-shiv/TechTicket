@@ -293,4 +293,55 @@ describe('RealtimeEventBroadcaster', () => {
 
     expect(realtimeService.getNamespace).not.toHaveBeenCalled();
   });
+
+  it('should reject the entire broadcast before emitting any target when one target crosses organizations', () => {
+    const { broadcaster, realtimeService, emit } = createBroadcaster();
+
+    const event: RealtimeBroadcastEvent = {
+      event: REALTIME_EVENTS.TICKET_UPDATED,
+      organizationId: 'org-1',
+      payload: {
+        ticketId: 'ticket-1',
+      },
+      targets: [
+        {
+          type: 'organization',
+          organizationId: 'org-1',
+        },
+        {
+          type: 'ticket',
+          organizationId: 'org-2',
+          ticketId: 'ticket-1',
+        },
+      ],
+    };
+
+    expect(() => broadcaster.broadcast(event)).toThrow(
+      'Realtime broadcast target organization does not match event organization',
+    );
+
+    expect(realtimeService.getNamespace).not.toHaveBeenCalled();
+    expect(emit).not.toHaveBeenCalled();
+  });
+
+  it('should reject a broadcast with an empty organization id', () => {
+    const { broadcaster, realtimeService } = createBroadcaster();
+
+    const event: RealtimeBroadcastEvent = {
+      event: REALTIME_EVENTS.TICKET_CREATED,
+      organizationId: '',
+      payload: {
+        ticketId: 'ticket-1',
+      },
+      targets: [
+        {
+          type: 'organization',
+          organizationId: '',
+        },
+      ],
+    };
+
+    expect(() => broadcaster.broadcast(event)).toThrow();
+    expect(realtimeService.getNamespace).not.toHaveBeenCalled();
+  });
 });

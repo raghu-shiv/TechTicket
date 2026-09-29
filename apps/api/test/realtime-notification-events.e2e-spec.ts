@@ -95,4 +95,32 @@ describe('RealtimeNotificationEventsService', () => {
       }),
     );
   });
+
+  it('should never create a notification realtime target outside the event organization', async () => {
+    const event = {
+      notificationId: 'notification-1',
+      organizationId: 'org-42',
+      recipientId: 'user-99',
+      actorId: 'user-10',
+      type: 'SLA_BREACHED',
+      title: 'SLA breached',
+      message: 'Ticket TKT-000042 has breached its SLA.',
+      createdAt: new Date(),
+    };
+
+    eventEmitter.emit(NOTIFICATION_EVENTS.CREATED, event);
+
+    await new Promise((resolve) => setImmediate(resolve));
+
+    const broadcast = broadcaster.broadcast.mock.calls[0][0];
+
+    expect(broadcast.organizationId).toBe('org-42');
+
+    expect(
+      broadcast.targets.every(
+        (target: { organizationId: string }) =>
+          target.organizationId === 'org-42',
+      ),
+    ).toBe(true);
+  });
 });

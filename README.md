@@ -10,8 +10,9 @@ approval workflows.
 
 **Backend foundation, ticket core, search/filtering, attachments, SLA
 foundations, notifications, approval workflow, secure realtime/WebSocket
-organization and ticket rooms, ticket regression testing, and Phase
-4-G/4-H reliability verification are implemented and verified. Realtime
+organization, ticket, and user rooms, ticket regression testing, realtime
+security/event testing, and Phase 4-G/4-H reliability verification are
+implemented and verified. Realtime
 domain event broadcasting for ticket, approval, SLA, and notification
 events is also complete and verified.**
 
@@ -40,6 +41,9 @@ Latest verified backend state:
 -   Realtime ticket, approval, SLA breach, and notification-created
     event broadcasting
 -   Focused realtime event-to-room routing E2E coverage
+-   Realtime gateway unit/security tests
+-   Realtime security and event E2E regression coverage
+-   Full realtime test regression
 
 See [`PLANS.md`](./PLANS.md) for the detailed implementation tracker.
 
@@ -507,15 +511,15 @@ Phase 4-G                         COMPLETE AND VERIFIED
 Realtime / WebSockets (4-H.3)     COMPLETE AND VERIFIED
 Ticket rooms (4-H.4)              COMPLETE AND VERIFIED
 Domain event broadcasting (4-H.5) COMPLETE AND VERIFIED
-Realtime tests (4-H.6)             NEXT
-Realtime hardening (4-H.7)         PLANNED
+Realtime tests (4-H.6)             COMPLETE AND VERIFIED
+Realtime hardening (4-H.7)         NEXT
 Full verification (4-H.8)          PLANNED
 ```
 
 ## Next Development Direction
 
-Phase 4-G is complete. Phase 4-H is in progress, with 4-H.3, 4-H.4, and
-4-H.5 complete and verified. Continue with the roadmap rather than
+Phase 4-G is complete. Phase 4-H is in progress, with 4-H.3, 4-H.4,
+4-H.5, and 4-H.6 complete and verified. Continue with the roadmap rather than
 introducing speculative architecture.
 
 Next milestones:
