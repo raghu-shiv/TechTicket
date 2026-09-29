@@ -1,7 +1,15 @@
 import type { INestApplication } from '@nestjs/common';
 import type { Job } from 'bullmq';
 import { randomUUID } from 'node:crypto';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest';
 
 import { createTestApp } from './helpers/app.helper.js';
 import { createOrganizationTestFixture } from './helpers/organization.helper.js';
@@ -15,6 +23,7 @@ import type { SendEmailNotificationJob } from '../src/modules/notifications/queu
 describe('Notification Organization Isolation (e2e)', () => {
   let app: INestApplication;
   let database: DatabaseService;
+  let emailService: EmailService;
   let processor: NotificationQueueProcessor;
 
   let organizationA: Awaited<ReturnType<typeof createOrganizationTestFixture>>;
@@ -25,10 +34,15 @@ describe('Notification Organization Isolation (e2e)', () => {
     app = await createTestApp();
 
     database = app.get(DatabaseService);
+    emailService = app.get(EmailService);
     processor = app.get(NotificationQueueProcessor);
 
     organizationA = await createOrganizationTestFixture(app);
     organizationB = await createOrganizationTestFixture(app);
+  });
+
+  beforeEach(() => {
+    vi.restoreAllMocks();
   });
 
   afterAll(async () => {
@@ -55,7 +69,7 @@ describe('Notification Organization Isolation (e2e)', () => {
 
   it('should not send notifications to users from another organization', async () => {
     const sendMock = vi
-      .spyOn(app.get(EmailService), 'send')
+      .spyOn(emailService, 'send')
       .mockResolvedValue(undefined);
 
     const job = createJob(organizationA.organization.id, [
@@ -71,7 +85,7 @@ describe('Notification Organization Isolation (e2e)', () => {
 
   it('should send notifications only to recipients belonging to the job organization', async () => {
     const sendMock = vi
-      .spyOn(app.get(EmailService), 'send')
+      .spyOn(emailService, 'send')
       .mockResolvedValue(undefined);
 
     const job = createJob(organizationA.organization.id, [
@@ -101,7 +115,7 @@ describe('Notification Organization Isolation (e2e)', () => {
     });
 
     const sendMock = vi
-      .spyOn(app.get(EmailService), 'send')
+      .spyOn(emailService, 'send')
       .mockResolvedValue(undefined);
 
     const job = createJob(organizationB.organization.id, [

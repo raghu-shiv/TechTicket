@@ -1,4 +1,4 @@
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, Logger } from '@nestjs/common';
 import {
   type OnGatewayConnection,
   type OnGatewayDisconnect,
@@ -31,6 +31,8 @@ type AuthenticatedSocket = Socket & {
 export class RealtimeGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
+  private readonly logger = new Logger(RealtimeGateway.name);
+
   constructor(
     private readonly realtimeService: RealtimeService,
     private readonly authContext: AuthContextService,
@@ -63,7 +65,12 @@ export class RealtimeGateway
 
         next();
       } catch (error) {
-        console.error('[REALTIME AUTH] failed:', error);
+        this.logger.warn(
+          `Realtime authentication failed: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`,
+        );
+
         next(new Error('Authentication required'));
       }
     });
@@ -71,7 +78,7 @@ export class RealtimeGateway
     this.realtimeService.setNamespace(namespace);
   }
 
-  handleConnection(socket: Socket): void {
+  async handleConnection(socket: Socket): Promise<void> {
     const auth = socket.data.auth;
 
     if (!auth?.user?.id || !auth.organization?.organizationId) {
@@ -85,7 +92,7 @@ export class RealtimeGateway
 
     const userRoom = REALTIME_ROOMS.user(auth.user.id);
 
-    void Promise.all([socket.join(organizationRoom), socket.join(userRoom)]);
+    await Promise.all([socket.join(organizationRoom), socket.join(userRoom)]);
 
     socket.emit(REALTIME_EVENTS.CONNECTED, {
       userId: auth.user.id,

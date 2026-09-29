@@ -1,15 +1,16 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, type OnModuleDestroy } from '@nestjs/common';
 
 import type { Namespace, Socket } from 'socket.io';
 
 @Injectable()
-export class RealtimeService {
+export class RealtimeService implements OnModuleDestroy {
   private readonly logger = new Logger(RealtimeService.name);
 
   private namespace: Namespace | null = null;
 
   setNamespace(namespace: Namespace): void {
     this.namespace = namespace;
+
     this.logger.log('Realtime Socket.IO namespace registered');
   }
 
@@ -33,5 +34,11 @@ export class RealtimeService {
         userId ? ` user=${userId}` : ''
       }`,
     );
+  }
+
+  onModuleDestroy(): void {
+    this.logger.log('Realtime Socket.IO service shutting down');
+
+    this.namespace = null;
   }
 }

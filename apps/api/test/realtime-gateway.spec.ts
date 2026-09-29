@@ -167,4 +167,39 @@ describe('RealtimeGateway authorization', () => {
       gateway.assertTicketAccessForSocket(socket as never, 'ticket-1'),
     ).rejects.toThrow('Organization context is required');
   });
+
+  it('should join the authenticated organization and user rooms before connection acknowledgement', async () => {
+    const { gateway } = createGateway();
+
+    const socket = createAuthenticatedSocket('user-1', 'org-1');
+
+    await gateway.handleConnection(socket as never);
+
+    expect(socket.join).toHaveBeenCalledTimes(2);
+    expect(socket.join).toHaveBeenNthCalledWith(1, 'organization:org-1');
+    expect(socket.join).toHaveBeenNthCalledWith(2, 'user:user-1');
+
+    expect(socket.emit).toHaveBeenCalledWith('realtime.connected', {
+      userId: 'user-1',
+      organizationId: 'org-1',
+    });
+  });
+
+  it('should disconnect a socket without authenticated organization context', async () => {
+    const { gateway } = createGateway();
+
+    const socket = {
+      id: 'socket-1',
+      data: {},
+      join: vi.fn(),
+      disconnect: vi.fn(),
+      emit: vi.fn(),
+    };
+
+    await gateway.handleConnection(socket as never);
+
+    expect(socket.disconnect).toHaveBeenCalledWith(true);
+    expect(socket.join).not.toHaveBeenCalled();
+    expect(socket.emit).not.toHaveBeenCalled();
+  });
 });

@@ -344,4 +344,43 @@ describe('RealtimeEventBroadcaster', () => {
     expect(() => broadcaster.broadcast(event)).toThrow();
     expect(realtimeService.getNamespace).not.toHaveBeenCalled();
   });
+
+  it('should reject a missing event name', () => {
+    const { broadcaster, realtimeService } = createBroadcaster();
+
+    const event = {
+      event: '',
+      organizationId: 'org-1',
+      payload: {},
+      targets: [
+        {
+          type: 'organization' as const,
+          organizationId: 'org-1',
+        },
+      ],
+    };
+
+    expect(() => broadcaster.broadcast(event)).toThrow(
+      'Realtime broadcast event name is required',
+    );
+
+    expect(realtimeService.getNamespace).not.toHaveBeenCalled();
+  });
+
+  it('should reject malformed targets before namespace access', () => {
+    const { broadcaster, realtimeService } = createBroadcaster();
+
+    const event = {
+      event: REALTIME_EVENTS.TICKET_UPDATED,
+      organizationId: 'org-1',
+      payload: {},
+      targets: undefined,
+    } as never;
+
+    expect(() => broadcaster.broadcast(event)).toThrow(
+      'Realtime broadcast targets are required',
+    );
+
+    expect(realtimeService.getNamespace).not.toHaveBeenCalled();
+  });
 });

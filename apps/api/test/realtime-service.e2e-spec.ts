@@ -69,4 +69,21 @@ describe('RealtimeService', () => {
 
     expect(() => service.handleDisconnect(socket)).not.toThrow();
   });
+
+  it('should clear the namespace reference during module shutdown', () => {
+    const service = new RealtimeService();
+
+    const namespace = {} as Namespace;
+
+    service.setNamespace(namespace);
+
+    expect(service.isReady()).toBe(true);
+
+    service.onModuleDestroy();
+
+    expect(service.isReady()).toBe(false);
+    expect(() => service.getNamespace()).toThrow(
+      'Realtime Socket.IO namespace is not initialized',
+    );
+  });
 });
