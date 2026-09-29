@@ -11,6 +11,7 @@ import { RealtimeApprovalEventsService } from './realtime-approval-events.servic
 import { RealtimeTicketEventsService } from './realtime-ticket-events.service';
 import { PermissionsModule } from '../../common/permissions/permissions.module';
 import { ApprovalsModule } from '../approvals/approvals.module';
+import { RealtimeSlaEventsService } from './realtime-sla-events.service';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { ApprovalsModule } from '../approvals/approvals.module';
     RealtimeEventBroadcaster,
     RealtimeTicketEventsService,
     RealtimeApprovalEventsService,
+    RealtimeSlaEventsService,
   ],
   exports: [RealtimeService, RealtimeEventsService, RealtimeEventBroadcaster],
 })
