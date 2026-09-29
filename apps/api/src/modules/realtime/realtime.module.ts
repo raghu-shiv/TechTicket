@@ -6,10 +6,18 @@ import { TicketsModule } from '../tickets/tickets.module';
 import { RealtimeEventsService } from './realtime-events.service';
 import { RealtimeGateway } from './realtime.gateway';
 import { RealtimeService } from './realtime.service';
+import { RealtimeEventBroadcaster } from './realtime-event.broadcaster';
+import { RealtimeTicketEventsService } from './realtime-ticket-events.service';
 
 @Module({
   imports: [AuthModule, OrganizationContextModule, TicketsModule],
-  providers: [RealtimeGateway, RealtimeService, RealtimeEventsService],
-  exports: [RealtimeService, RealtimeEventsService],
+  providers: [
+    RealtimeService,
+    RealtimeGateway,
+    RealtimeEventsService,
+    RealtimeEventBroadcaster,
+    RealtimeTicketEventsService,
+  ],
+  exports: [RealtimeService, RealtimeEventsService, RealtimeEventBroadcaster],
 })
 export class RealtimeModule {}

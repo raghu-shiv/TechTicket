@@ -1,0 +1,199 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { EventEmitterModule, EventEmitter2 } from '@nestjs/event-emitter';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
+
+import { RealtimeEventBroadcaster } from '../src/modules/realtime/realtime-event.broadcaster';
+import { RealtimeTicketEventsService } from '../src/modules/realtime/realtime-ticket-events.service';
+import { REALTIME_EVENTS } from '../src/modules/realtime/realtime.types';
+import { TICKET_EVENTS } from '../src/modules/tickets/ticket-events';
+
+describe('RealtimeTicketEventsService', () => {
+  let module: TestingModule;
+  let eventEmitter: EventEmitter2;
+  let broadcaster: {
+    broadcast: ReturnType<typeof vi.fn>;
+  };
+
+  beforeEach(async () => {
+    broadcaster = {
+      broadcast: vi.fn(),
+    };
+
+    module = await Test.createTestingModule({
+      imports: [EventEmitterModule.forRoot()],
+      providers: [
+        RealtimeTicketEventsService,
+        {
+          provide: RealtimeEventBroadcaster,
+          useValue: broadcaster,
+        },
+      ],
+    }).compile();
+
+    await module.init();
+
+    eventEmitter = module.get(EventEmitter2);
+  });
+
+  it('should broadcast ticket.created to the organization room', async () => {
+    const event = {
+      ticketId: 'ticket-1',
+      organizationId: 'org-1',
+      actorId: 'user-1',
+      occurredAt: new Date(),
+    };
+
+    eventEmitter.emit(TICKET_EVENTS.CREATED, event);
+
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(broadcaster.broadcast).toHaveBeenCalledWith({
+      event: REALTIME_EVENTS.TICKET_CREATED,
+      organizationId: 'org-1',
+      payload: event,
+      targets: [
+        {
+          type: 'organization',
+          organizationId: 'org-1',
+        },
+      ],
+    });
+  });
+
+  it('should broadcast ticket.updated to organization and ticket rooms', async () => {
+    const event = {
+      ticketId: 'ticket-1',
+      organizationId: 'org-1',
+      actorId: 'user-1',
+      occurredAt: new Date(),
+    };
+
+    eventEmitter.emit(TICKET_EVENTS.UPDATED, event);
+
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(broadcaster.broadcast).toHaveBeenCalledWith({
+      event: REALTIME_EVENTS.TICKET_UPDATED,
+      organizationId: 'org-1',
+      payload: event,
+      targets: [
+        {
+          type: 'organization',
+          organizationId: 'org-1',
+        },
+        {
+          type: 'ticket',
+          organizationId: 'org-1',
+          ticketId: 'ticket-1',
+        },
+      ],
+    });
+  });
+
+  it('should broadcast status changes to organization and ticket rooms', async () => {
+    const event = {
+      ticketId: 'ticket-1',
+      organizationId: 'org-1',
+      actorId: 'user-1',
+      recipientIds: ['user-2'],
+      fromStatus: 'OPEN',
+      toStatus: 'IN_PROGRESS',
+      occurredAt: new Date(),
+    };
+
+    eventEmitter.emit(TICKET_EVENTS.STATUS_CHANGED, event);
+
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(broadcaster.broadcast).toHaveBeenCalledWith({
+      event: REALTIME_EVENTS.TICKET_STATUS_CHANGED,
+      organizationId: 'org-1',
+      payload: event,
+      targets: [
+        {
+          type: 'organization',
+          organizationId: 'org-1',
+        },
+        {
+          type: 'ticket',
+          organizationId: 'org-1',
+          ticketId: 'ticket-1',
+        },
+      ],
+    });
+  });
+
+  it('should broadcast assignment changes to the recipient user room', async () => {
+    const event = {
+      ticketId: 'ticket-1',
+      organizationId: 'org-1',
+      actorId: 'user-1',
+      recipientId: 'user-2',
+      assigneeId: 'user-2',
+      previousAssigneeId: null,
+      teamId: 'team-1',
+      previousTeamId: null,
+      activityType: 'ASSIGNEE_CHANGED',
+      occurredAt: new Date(),
+    };
+
+    eventEmitter.emit(TICKET_EVENTS.ASSIGNEE_CHANGED, event);
+
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(broadcaster.broadcast).toHaveBeenCalledWith({
+      event: REALTIME_EVENTS.TICKET_ASSIGNEE_CHANGED,
+      organizationId: 'org-1',
+      payload: event,
+      targets: [
+        {
+          type: 'organization',
+          organizationId: 'org-1',
+        },
+        {
+          type: 'ticket',
+          organizationId: 'org-1',
+          ticketId: 'ticket-1',
+        },
+        {
+          type: 'user',
+          organizationId: 'org-1',
+          userId: 'user-2',
+        },
+      ],
+    });
+  });
+
+  it('should broadcast comments to organization and ticket rooms', async () => {
+    const event = {
+      ticketId: 'ticket-1',
+      organizationId: 'org-1',
+      actorId: 'user-1',
+      recipientIds: ['user-2'],
+      commentId: 'comment-1',
+      commentType: 'PUBLIC',
+      occurredAt: new Date(),
+    };
+
+    eventEmitter.emit(TICKET_EVENTS.COMMENT_ADDED, event);
+
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(broadcaster.broadcast).toHaveBeenCalledWith({
+      event: REALTIME_EVENTS.TICKET_COMMENT_ADDED,
+      organizationId: 'org-1',
+      payload: event,
+      targets: [
+        {
+          type: 'organization',
+          organizationId: 'org-1',
+        },
+        {
+          type: 'ticket',
+          organizationId: 'org-1',
+          ticketId: 'ticket-1',
+        },
+      ],
+    });
+  });
+});

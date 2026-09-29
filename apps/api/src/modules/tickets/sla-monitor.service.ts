@@ -45,6 +45,11 @@ export class SlaMonitorService {
         select: {
           id: true,
           ticketId: true,
+          ticket: {
+            select: {
+              organizationId: true,
+            },
+          },
         },
       });
 
@@ -81,6 +86,7 @@ export class SlaMonitorService {
               ticketId: escalation.ticketId,
               ticketSlaId: escalation.ticketSlaId,
               type: escalation.type,
+              organizationId: sla.ticket.organizationId,
               occurredAt: escalation.createdAt,
             });
           }
@@ -115,6 +121,11 @@ export class SlaMonitorService {
         select: {
           id: true,
           ticketId: true,
+          ticket: {
+            select: {
+              organizationId: true,
+            },
+          },
         },
       });
 
@@ -151,6 +162,7 @@ export class SlaMonitorService {
               ticketId: escalation.ticketId,
               ticketSlaId: escalation.ticketSlaId,
               type: escalation.type,
+              organizationId: sla.ticket.organizationId,
               occurredAt: escalation.createdAt,
             });
           }
