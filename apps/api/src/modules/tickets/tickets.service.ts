@@ -206,6 +206,25 @@ export class TicketsService {
       ...(filters.requesterId !== undefined && {
         requesterId: filters.requesterId,
       }),
+      /*
+       * Unassigned queue contract:
+       *
+       * unassigned=true
+       *   -> only tickets with no individual assignee.
+       *
+       * unassigned=false
+       *   -> only tickets with an individual assignee.
+       *
+       * The queue is always organization-scoped by the base
+       * organizationId predicate above.
+       *
+       * This intentionally does not depend on team assignment:
+       * a ticket may have a teamId while remaining individually
+       * unassigned.
+       *
+       * assigneeId and unassigned are mutually exclusive and are
+       * validated above.
+       */
       ...(filters.unassigned !== undefined && {
         assigneeId: filters.unassigned ? null : { not: null },
       }),

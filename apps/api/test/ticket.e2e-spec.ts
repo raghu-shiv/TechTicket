@@ -1,15 +1,10 @@
 import { randomUUID } from 'node:crypto';
-
 import { Buffer } from 'node:buffer';
-
 import { INestApplication } from '@nestjs/common';
-
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { DatabaseService } from '../src/database/database.service.js';
-
 import { createTestApp } from './helpers/app.helper.js';
-
 import {
   createOrganizationTestFixture,
   type OrganizationTestFixture,
@@ -262,6 +257,260 @@ describe('Tickets API (e2e)', () => {
           }),
         ]),
       );
+    });
+
+    it('should return only unassigned tickets when unassigned=true', async () => {
+      const unassignedTicket = await fixture.requester.agent
+        .post('/api/v1/tickets')
+        .set('x-organization-id', fixture.organization.id)
+        .send({
+          title: '4-I.2 Unassigned Ticket',
+          description: 'Ticket used to verify unassigned queue filtering.',
+          priority: 'MEDIUM',
+          type: 'INCIDENT',
+        })
+        .expect(201);
+
+      const assignedTicket = await fixture.requester.agent
+        .post('/api/v1/tickets')
+        .set('x-organization-id', fixture.organization.id)
+        .send({
+          title: '4-I.2 Assigned Ticket',
+          description: 'Ticket used to verify assigned tickets are excluded.',
+          priority: 'MEDIUM',
+          type: 'INCIDENT',
+        })
+        .expect(201);
+
+      await fixture.agent.agent
+        .patch(`/api/v1/tickets/${assignedTicket.body.id}/assignment`)
+        .set('x-organization-id', fixture.organization.id)
+        .send({
+          assigneeId: fixture.agent.userId,
+        })
+        .expect(200);
+
+      const response = await fixture.requester.agent
+        .get('/api/v1/tickets')
+        .set('x-organization-id', fixture.organization.id)
+        .query({
+          unassigned: true,
+        })
+        .expect(200);
+
+      expect(response.body.data).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: unassignedTicket.body.id,
+            assigneeId: null,
+          }),
+        ]),
+      );
+
+      expect(response.body.data).not.toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: assignedTicket.body.id,
+          }),
+        ]),
+      );
+
+      expect(
+        response.body.data.every(
+          (ticket: { assigneeId: string | null }) => ticket.assigneeId === null,
+        ),
+      ).toBe(true);
+    });
+
+    it('should remove a ticket from the unassigned queue after assignment', async () => {
+      const createResponse = await fixture.requester.agent
+        .post('/api/v1/tickets')
+        .set('x-organization-id', fixture.organization.id)
+        .send({
+          title: '4-I.2 Assignment Transition',
+          description:
+            'Ticket used to verify queue membership after assignment.',
+          priority: 'MEDIUM',
+          type: 'INCIDENT',
+        })
+        .expect(201);
+
+      const ticketId = createResponse.body.id;
+
+      const beforeAssignment = await fixture.requester.agent
+        .get('/api/v1/tickets')
+        .set('x-organization-id', fixture.organization.id)
+        .query({
+          unassigned: true,
+        })
+        .expect(200);
+
+      expect(beforeAssignment.body.data).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: ticketId,
+            assigneeId: null,
+          }),
+        ]),
+      );
+
+      await fixture.agent.agent
+        .patch(`/api/v1/tickets/${ticketId}/assignment`)
+        .set('x-organization-id', fixture.organization.id)
+        .send({
+          assigneeId: fixture.agent.userId,
+        })
+        .expect(200);
+
+      const afterAssignment = await fixture.requester.agent
+        .get('/api/v1/tickets')
+        .set('x-organization-id', fixture.organization.id)
+        .query({
+          unassigned: true,
+        })
+        .expect(200);
+
+      expect(afterAssignment.body.data).not.toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: ticketId,
+          }),
+        ]),
+      );
+
+      expect(
+        afterAssignment.body.data.every(
+          (ticket: { assigneeId: string | null }) => ticket.assigneeId === null,
+        ),
+      ).toBe(true);
+    });
+
+    it('should return a ticket to the unassigned queue after unassignment', async () => {
+      const createResponse = await fixture.requester.agent
+        .post('/api/v1/tickets')
+        .set('x-organization-id', fixture.organization.id)
+        .send({
+          title: '4-I.2 Unassignment Transition',
+          description:
+            'Ticket used to verify queue membership after unassignment.',
+          priority: 'MEDIUM',
+          type: 'INCIDENT',
+        })
+        .expect(201);
+
+      const ticketId = createResponse.body.id;
+
+      await fixture.agent.agent
+        .patch(`/api/v1/tickets/${ticketId}/assignment`)
+        .set('x-organization-id', fixture.organization.id)
+        .send({
+          assigneeId: fixture.agent.userId,
+        })
+        .expect(200);
+
+      const assignedQueue = await fixture.requester.agent
+        .get('/api/v1/tickets')
+        .set('x-organization-id', fixture.organization.id)
+        .query({
+          unassigned: true,
+        })
+        .expect(200);
+
+      expect(assignedQueue.body.data).not.toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: ticketId,
+          }),
+        ]),
+      );
+
+      await fixture.agent.agent
+        .patch(`/api/v1/tickets/${ticketId}/assignment`)
+        .set('x-organization-id', fixture.organization.id)
+        .send({
+          assigneeId: null,
+        })
+        .expect(200);
+
+      const unassignedQueue = await fixture.requester.agent
+        .get('/api/v1/tickets')
+        .set('x-organization-id', fixture.organization.id)
+        .query({
+          unassigned: true,
+        })
+        .expect(200);
+
+      expect(unassignedQueue.body.data).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: ticketId,
+            assigneeId: null,
+          }),
+        ]),
+      );
+    });
+
+    it('should return only assigned tickets when unassigned=false', async () => {
+      const unassignedTicket = await fixture.requester.agent
+        .post('/api/v1/tickets')
+        .set('x-organization-id', fixture.organization.id)
+        .send({
+          title: '4-I.2 False Filter Unassigned',
+          description: 'Ticket used to verify unassigned=false.',
+          priority: 'LOW',
+          type: 'INCIDENT',
+        })
+        .expect(201);
+
+      const assignedTicket = await fixture.requester.agent
+        .post('/api/v1/tickets')
+        .set('x-organization-id', fixture.organization.id)
+        .send({
+          title: '4-I.2 False Filter Assigned',
+          description: 'Ticket used to verify assigned filtering.',
+          priority: 'LOW',
+          type: 'INCIDENT',
+        })
+        .expect(201);
+
+      await fixture.agent.agent
+        .patch(`/api/v1/tickets/${assignedTicket.body.id}/assignment`)
+        .set('x-organization-id', fixture.organization.id)
+        .send({
+          assigneeId: fixture.agent.userId,
+        })
+        .expect(200);
+
+      const response = await fixture.requester.agent
+        .get('/api/v1/tickets')
+        .set('x-organization-id', fixture.organization.id)
+        .query({
+          unassigned: false,
+        })
+        .expect(200);
+
+      expect(response.body.data).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: assignedTicket.body.id,
+            assigneeId: fixture.agent.userId,
+          }),
+        ]),
+      );
+
+      expect(response.body.data).not.toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: unassignedTicket.body.id,
+          }),
+        ]),
+      );
+
+      expect(
+        response.body.data.every(
+          (ticket: { assigneeId: string | null }) => ticket.assigneeId !== null,
+        ),
+      ).toBe(true);
     });
   });
 

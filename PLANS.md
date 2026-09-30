@@ -10,17 +10,20 @@ feature.
 
 ## Phase 4 --- Workflow / Realtime Checkpoint
 
-### Status: IN PROGRESS
+### Status: COMPLETE AND VERIFIED
 
-Phase 4-G reliability verification is complete. Phase 4-H Realtime /
-WebSockets is now in progress, with organization-room security and
-initial ticket-room foundations implemented and verified.
+Phase 4-G reliability verification and Phase 4-H Realtime /
+WebSockets are complete and verified. Phase 4-H covers authenticated
+organization and ticket rooms, domain event broadcasting, realtime
+security/event tests, hardening, lifecycle/cleanup behavior, logging,
+and full lint/build/unit/E2E verification.
 
-Current active scope:
+Current roadmap:
 
-- 4-H.3 — Organization rooms: **COMPLETE AND VERIFIED**
-- 4-H.4.1 — Ticket rooms foundation: **COMPLETE AND VERIFIED**
-- 4-H.4.2 — Resolve and validate ticket organization ownership: **NEXT**
+-   Phase 4-H --- Realtime / WebSockets: **COMPLETE AND VERIFIED**
+-   Phase 4-I --- Unassigned Queue: **NEXT**
+-   Phase 4-J --- Ticket History Refinement: **PLANNED**
+-   Phase 5 --- Productivity: **PLANNED**
 
 # Phase 3 --- Ticket Core
 
@@ -30,23 +33,23 @@ Current active scope:
 
 Implemented and verified:
 
-- Ticket database model and PostgreSQL persistence
-- Ticket CRUD
-- Ticket assignment and team assignment
-- Ticket status workflow
-- Ticket filtering and pagination
-- Public/internal comments
-- Ticket attachments
-- MinIO-backed object storage
-- Ticket activity/audit history
-- Ticket relations
-- Advanced search/filtering
-- SLA automation
+-   Ticket database model and PostgreSQL persistence
+-   Ticket CRUD
+-   Ticket assignment and team assignment
+-   Ticket status workflow
+-   Ticket filtering and pagination
+-   Public/internal comments
+-   Ticket attachments
+-   MinIO-backed object storage
+-   Ticket activity/audit history
+-   Ticket relations
+-   Advanced search/filtering
+-   SLA automation
 
 Known limitation:
 
-- Current ticket-number generation is not fully atomic under high
-  concurrency. This remains a future production-hardening item.
+-   Current ticket-number generation is not fully atomic under high
+    concurrency. This remains a future production-hardening item.
 
 ## 3-G --- Search / Filtering / Pagination Expansion
 
@@ -54,18 +57,18 @@ Known limitation:
 
 Implemented:
 
-- Ticket keyword search
-- Created-date filtering
-- Controlled sorting
-- PostgreSQL full-text search
-- Ticket-number partial matching
-- Relationship filtering
-- Unassigned and updated-date filtering
-- Organization-scoped pagination/filtering
+-   Ticket keyword search
+-   Created-date filtering
+-   Controlled sorting
+-   PostgreSQL full-text search
+-   Ticket-number partial matching
+-   Relationship filtering
+-   Unassigned and updated-date filtering
+-   Organization-scoped pagination/filtering
 
 Known limitation:
 
-- No dedicated PostgreSQL `tsvector`/GIN index has been added yet.
+-   No dedicated PostgreSQL `tsvector`/GIN index has been added yet.
 
 ## 3-H --- SLA & Automation
 
@@ -73,17 +76,17 @@ Known limitation:
 
 Implemented:
 
-- SLA policies
-- Priority-based SLA
-- Organization-specific policies
-- Ticket SLA snapshots
-- First-response and resolution SLA tracking
-- SLA due-time calculation
-- Breach detection
-- Reopen behavior
-- Breach escalation persistence
-- Breach event emission
-- Breach audit activities
+-   SLA policies
+-   Priority-based SLA
+-   Organization-specific policies
+-   Ticket SLA snapshots
+-   First-response and resolution SLA tracking
+-   SLA due-time calculation
+-   Breach detection
+-   Reopen behavior
+-   Breach escalation persistence
+-   Breach event emission
+-   Breach audit activities
 
 ## 3-I --- Ticket Activity, Audit History & Notifications
 
@@ -91,26 +94,26 @@ Implemented:
 
 Implemented:
 
-- Ticket activity/audit history
-- Organization-scoped activity retrieval
-- Ticket lifecycle activities
-- Comment activities
-- SLA breach activities
-- Assignment/status/comment notifications
-- Resend email infrastructure
-- Redis/BullMQ queue and worker
-- Recipient de-duplication and actor exclusion
-- Approval notification integration
-- Notification processor organization isolation
-- Notification E2E coverage
+-   Ticket activity/audit history
+-   Organization-scoped activity retrieval
+-   Ticket lifecycle activities
+-   Comment activities
+-   SLA breach activities
+-   Assignment/status/comment notifications
+-   Resend email infrastructure
+-   Redis/BullMQ queue and worker
+-   Recipient de-duplication and actor exclusion
+-   Approval notification integration
+-   Notification processor organization isolation
+-   Notification E2E coverage
 
 Known testing note:
 
-- Resend's development/testing environment rejects arbitrary
-  `example.com` recipients. `delivered@resend.dev` was used for live
-  provider verification.
-- Some older notification presentation wording remains a future polish
-  item.
+-   Resend's development/testing environment rejects arbitrary
+    `example.com` recipients. `delivered@resend.dev` was used for live
+    provider verification.
+-   Some older notification presentation wording remains a future polish
+    item.
 
 # Phase 4 --- Workflow
 
@@ -149,7 +152,7 @@ infrastructure.
 
 Activity types:
 
-```text
+``` text
 APPROVAL_REQUESTED
 APPROVAL_APPROVED
 APPROVAL_REJECTED
@@ -158,12 +161,12 @@ APPROVAL_CANCELLED
 
 Verified:
 
-- Approval request creation and pending retrieval
-- Authorization boundaries
-- Agent approval, rejection, and cancellation
-- Complete approval activity history
-- Approval metadata including approval ID, ticket number, approver,
-  status, comment, actor, and timestamp
+-   Approval request creation and pending retrieval
+-   Authorization boundaries
+-   Agent approval, rejection, and cancellation
+-   Complete approval activity history
+-   Approval metadata including approval ID, ticket number, approver,
+    status, comment, actor, and timestamp
 
 Automatic ticket-status transitions from approval outcomes remain
 deferred/configurable because those business rules are not defined by
@@ -178,7 +181,7 @@ infrastructure.
 
 Recipient routing:
 
-```text
+``` text
 REQUESTED  -> approver
 APPROVED   -> requester
 REJECTED   -> requester
@@ -187,12 +190,12 @@ CANCELLED  -> approver
 
 Implemented:
 
-- Approval notification event contract
-- Four approval lifecycle notification events
-- Organization-scoped notification jobs
-- Organization membership validation in the worker
-- Human-readable ticket numbers in notification content
-- Compatibility with existing ticket notification producers
+-   Approval notification event contract
+-   Four approval lifecycle notification events
+-   Organization-scoped notification jobs
+-   Organization membership validation in the worker
+-   Human-readable ticket numbers in notification content
+-   Compatibility with existing ticket notification producers
 
 Live Resend delivery was verified with `delivered@resend.dev`.
 
@@ -238,15 +241,15 @@ cancellation, invalid states, and organization boundaries.
 
 Verified:
 
-- Notification queue/job foundation
-- Approval notification integration
-- Notification payloads and recipients
-- All supported approval notification events
-- Cancellation notification
-- Queue processor behavior
-- Organization isolation
-- Deterministic test cleanup
-- Full E2E regression
+-   Notification queue/job foundation
+-   Approval notification integration
+-   Notification payloads and recipients
+-   All supported approval notification events
+-   Cancellation notification
+-   Queue processor behavior
+-   Organization isolation
+-   Deterministic test cleanup
+-   Full E2E regression
 
 Processor tests cover valid recipients, cross-organization recipients,
 invalid recipients, and unsupported notification jobs.
@@ -260,20 +263,20 @@ interfere with active workers or locked jobs.
 
 Dedicated `test/ticket.e2e-spec.ts` coverage protects:
 
-- Ticket creation
-- Retrieval/details
-- List/search/filtering/pagination
-- Authorization and organization isolation
-- Assignment/team assignment
-- Status workflow
-- Comments/history
-- Attachments
-- Approval/ticket interaction
-- Validation and error paths
+-   Ticket creation
+-   Retrieval/details
+-   List/search/filtering/pagination
+-   Authorization and organization isolation
+-   Assignment/team assignment
+-   Status workflow
+-   Comments/history
+-   Attachments
+-   Approval/ticket interaction
+-   Validation and error paths
 
 Verified dedicated ticket result:
 
-```text
+``` text
 test/ticket.e2e-spec.ts
 56/56 tests passed
 ```
@@ -284,13 +287,13 @@ test/ticket.e2e-spec.ts
 
 Command:
 
-```text
+``` text
 docker compose exec api npm run test:e2e
 ```
 
 Result:
 
-```text
+``` text
 Test Files  8 passed (8)
 Tests       108 passed (108)
 Failures    0
@@ -303,13 +306,13 @@ Duration    35.70s
 
 Command:
 
-```text
+``` text
 docker compose exec api npm run lint
 ```
 
 Result:
 
-```text
+``` text
 Found 0 warnings and 0 errors.
 Finished in 380ms on 101 files with 96 rules using 16 threads.
 ```
@@ -317,9 +320,9 @@ Finished in 380ms on 101 files with 96 rules using 16 threads.
 The seven previous warnings were removed with minimal
 behavior-preserving cleanup:
 
-- Four unused catch parameters in `storage.service.ts`
-- Two unused catch parameters in `ticket-attachments.service.ts`
-- One empty `auth.middleware.ts` file
+-   Four unused catch parameters in `storage.service.ts`
+-   Two unused catch parameters in `ticket-attachments.service.ts`
+-   One empty `auth.middleware.ts` file
 
 ## 4-G.9 --- Production Build
 
@@ -327,13 +330,13 @@ behavior-preserving cleanup:
 
 Command:
 
-```text
+``` text
 docker compose exec api npm run build
 ```
 
 Result:
 
-```text
+``` text
 Found 0 errors.
 ```
 
@@ -343,7 +346,7 @@ Found 0 errors.
 
 Final checkpoint:
 
-```text
+``` text
 E2E test files       8/8 passed
 E2E tests            108/108 passed
 Lint                 0 warnings / 0 errors
@@ -357,26 +360,26 @@ checkpoint.
 
 Completed implemented/verified scope:
 
-- Approval data model
-- Approval service/API
-- Approval permissions
-- Approval workflow integration
-- Approval audit/activity integration
-- Approval lifecycle notifications
-- Notification processor tests
-- Notification organization isolation
-- Notification test cleanup
-- Notification E2E regression
-- Ticket regression testing
-- Full API E2E verification
-- Lint verification
-- Production build verification
+-   Approval data model
+-   Approval service/API
+-   Approval permissions
+-   Approval workflow integration
+-   Approval audit/activity integration
+-   Approval lifecycle notifications
+-   Notification processor tests
+-   Notification organization isolation
+-   Notification test cleanup
+-   Notification E2E regression
+-   Ticket regression testing
+-   Full API E2E verification
+-   Lint verification
+-   Production build verification
 
 Still planned:
 
-- Realtime / WebSockets
-- Unassigned queue
-- Ticket history refinement
+-   Realtime / WebSockets
+-   Unassigned queue
+-   Ticket history refinement
 
 # Phase 4-H --- Realtime / WebSockets
 
@@ -384,215 +387,336 @@ Still planned:
 
 **COMPLETE AND VERIFIED**
 
-Authenticated organization context resolution, organization room subscription,
-membership enforcement, cross-organization isolation, lifecycle verification,
-and focused realtime E2E coverage are complete.
+### 4-H.3.1 --- Resolve the authenticated user's organization context
 
-## 4-H.4 --- Ticket Rooms | Secure Ticket-Level Subscription
+**COMPLETE**
+
+Authenticated realtime connections resolve the requested organization
+through the existing organization context service and membership
+boundary.
+
+### 4-H.3.2 --- Define organization room subscription contract
+
+**COMPLETE**
+
+Organization room naming is defined through the realtime room contract.
+
+### 4-H.3.3 --- Join authenticated socket to its organization room
+
+**COMPLETE**
+
+Authenticated sockets join only their resolved organization room.
+
+### 4-H.3.4 --- Reject organization subscriptions without membership
 
 **COMPLETE AND VERIFIED**
 
-Ticket-room subscriptions are organization-scoped and protected by ticket
-ownership validation. Cross-organization ticket-room access is prevented and
-ticket lifecycle/isolation behavior is covered by focused and full E2E tests.
+Non-member organization access is rejected during realtime
+authentication.
+
+### 4-H.3.5 --- Prevent cross-organization room access
+
+**COMPLETE AND VERIFIED**
+
+Cross-organization room access is prevented by deriving the room from
+the authenticated organization context rather than trusting arbitrary
+room access.
+
+### 4-H.3.6 --- Verify organization isolation with E2E tests
+
+**COMPLETE AND VERIFIED**
+
+Focused realtime E2E coverage verifies organization isolation.
+
+### 4-H.3.7 --- Verify authenticated organization context and lifecycle
+
+**COMPLETE AND VERIFIED**
+
+Authenticated organization context and socket lifecycle behavior are
+verified.
+
+### 4-H.3.8 --- Build/lint/full E2E regression
+
+**COMPLETE AND VERIFIED**
+
+Latest full API E2E checkpoint:
+
+``` text
+Test Files  9 passed (9)
+Tests       115 passed (115)
+```
+
+## 4-H.4 --- Ticket Rooms \| Secure Ticket-Level Subscription
+
+**COMPLETE AND VERIFIED**
+
+Ticket-level realtime subscriptions are organization-scoped, ticket
+ownership is validated through the existing ticket service,
+cross-organization ticket room access is prevented, and ticket room
+lifecycle/isolation behavior is covered by focused E2E tests.
+
+### 4-H.4.1 --- Define ticket room subscription foundation
+
+**COMPLETE AND VERIFIED**
+
+Ticket room naming and the initial ticket-level realtime subscription
+foundation are implemented and verified.
+
+### 4-H.4.2 --- Resolve and validate ticket organization ownership
+
+**COMPLETE AND VERIFIED**
+
+Requested tickets are resolved through the authenticated organization
+context, ensuring ticket ownership is validated against the active
+organization before ticket-room access is granted.
+
+### 4-H.4.3 --- Join authenticated socket to its ticket room
+
+**COMPLETE AND VERIFIED**
+
+Authenticated sockets can join the room derived from a validated ticket.
+
+### 4-H.4.4 --- Reject ticket subscriptions without ticket access
+
+**COMPLETE AND VERIFIED**
+
+Ticket subscriptions are rejected when the authenticated organization
+cannot access the requested ticket.
+
+### 4-H.4.5 --- Prevent cross-organization ticket room access
+
+**COMPLETE AND VERIFIED**
+
+Cross-organization ticket room access is prevented by validating the
+ticket against the authenticated organization before joining the room.
+
+### 4-H.4.6 --- Verify ticket room isolation with E2E tests
+
+**COMPLETE AND VERIFIED**
+
+Focused realtime E2E coverage verifies ticket room isolation between
+organizations.
+
+### 4-H.4.7 --- Verify ticket room lifecycle and disconnect behavior
+
+**COMPLETE AND VERIFIED**
+
+Ticket room membership and socket disconnect behavior are covered by
+realtime lifecycle verification.
+
+### 4-H.4.8 --- Build/lint/full E2E regression
+
+**COMPLETE AND VERIFIED**
+
+Latest full API E2E checkpoint:
+
+``` text
+Test Files  9 passed (9)
+Tests       120 passed (120)
+```
+
+Build and lint were also verified successfully.
 
 ## 4-H.5 --- Domain Event Broadcasting
 
 **COMPLETE AND VERIFIED**
 
-Realtime broadcasting is implemented and verified for ticket lifecycle,
-approval lifecycle, SLA breach, and notification-created events.
+Domain events are bridged into realtime broadcasts with organization,
+ticket, and user room targeting. The implementation preserves
+organization boundaries and validates user-room access against the
+authenticated socket context.
 
-### 4-H.5.8 — Enforce organization/ticket/user room authorization
+### 4-H.5.1 --- Broadcast ticket events
 
 **COMPLETE AND VERIFIED**
 
-Organization context is required for ticket and user-room authorization.
-Ticket access uses the existing realtime ticket authorization path, and
-user-room access is restricted to the authenticated user's own room.
+Ticket lifecycle events are broadcast to the appropriate organization
+and ticket rooms.
 
-### 4-H.5.9 — Verify event-to-room routing with focused E2E tests
+### 4-H.5.2 --- Broadcast approval events
+
+**COMPLETE AND VERIFIED**
+
+Approval lifecycle events are broadcast to organization, ticket,
+requester, and approver rooms.
+
+### 4-H.5.3 --- Broadcast SLA breach events
+
+**COMPLETE AND VERIFIED**
+
+SLA breach events are broadcast with organization and ticket scoping.
+
+### 4-H.5.4 --- Broadcast notification-created events
+
+**COMPLETE AND VERIFIED**
+
+Notification-created events are broadcast to the organization room and
+the intended recipient's user room.
+
+### 4-H.5.5 --- Preserve event organization boundaries
+
+**COMPLETE AND VERIFIED**
+
+Realtime broadcasts retain organization context and do not permit
+cross-organization event routing.
+
+### 4-H.5.6 --- Broadcast SLA breach events
+
+**COMPLETE AND VERIFIED**
+
+Focused realtime tests verify first-response SLA breach routing to the
+organization and ticket rooms.
+
+### 4-H.5.7 --- Broadcast notification-created events
+
+**COMPLETE AND VERIFIED**
+
+Focused notification service and realtime notification event tests
+verify notification creation, recipient preservation, organization
+scoping, and realtime broadcast routing.
+
+### 4-H.5.8 --- Enforce organization/ticket/user room authorization
+
+**COMPLETE AND VERIFIED**
+
+Organization, ticket, and user room authorization is enforced from the
+authenticated realtime context. Cross-organization room access is
+prevented, ticket access is validated against the authenticated
+organization, and a socket cannot join another user's private room.
+
+### 4-H.5.9 --- Verify event-to-room routing with focused E2E tests
 
 **COMPLETE AND VERIFIED**
 
 Focused E2E coverage verifies organization routing, ticket routing,
-notification recipient routing, and rejection of unauthorized user-room joins.
+notification recipient routing, and rejection of unauthorized user-room
+joins.
 
-### 4-H.5.10 — Build/lint/full E2E regression
-
-**COMPLETE AND VERIFIED**
-
-The realtime/domain-event implementation passed build, lint, and full API E2E
-regression.
-
-## 4-H.6 --- Realtime Tests | Unit + E2E Security/Event Tests
+### 4-H.5.10 --- Build/lint/full E2E regression
 
 **COMPLETE AND VERIFIED**
 
-`test/realtime-gateway.spec.ts` contains six authorization-focused unit tests
-covering own-user-room access, cross-user-room rejection, missing organization
-context, ticket resolution, ticket authorization, and missing organization
-context for ticket authorization.
+Latest full API E2E checkpoint:
 
-Focused realtime verification:
-
-```text
-Test Files  3 passed (3)
-Tests       28 passed (28)
+``` text
+Test Files  16 passed (16)
+Tests       151 passed (151)
 Failures    0
 ```
 
-Full E2E verification at this milestone:
+Build completed successfully with 0 errors. Lint completed with 0
+warnings and 0 errors.
 
-```text
-Test Files  17 passed (17)
-Tests       166 passed (166)
-Failures    0
-```
+This completes 4-H.5 Domain Event Broadcasting.
 
-## 4-H.7 --- Hardening | Error Handling, Lifecycle, Cleanup, Logging
+## 4-H.6 --- Realtime Tests
 
-**COMPLETE AND VERIFIED**
+**NEXT**
 
-Realtime authentication/error handling, organization/ticket/user room
-authorization failures, socket lifecycle/disconnect cleanup, logging, and
-notification organization-isolation hardening are verified.
+Expand realtime unit and E2E security/event coverage beyond the focused
+4-H.5 routing tests, including broader authorization, event contracts,
+lifecycle behavior, and regression protection.
 
-Notification isolation regression:
+## 4-H.7 --- Realtime Hardening
 
-```text
-Test Files  1 passed (1)
-Tests       3 passed (3)
-Failures    0
-```
+**PLANNED**
 
-## 4-H.8 --- Full Verification | Lint + Build + Unit + E2E + Documentation
+Focus on realtime error handling, socket lifecycle behavior, cleanup,
+disconnect handling, room membership cleanup, and structured logging.
 
-**COMPLETE AND VERIFIED**
+## 4-H.8 --- Full Verification
 
-Unit tests:
+**PLANNED**
 
-```text
-Test Files  2 passed (2)
-Tests       7 passed (7)
-Failures    0
-```
-
-Full E2E regression:
-
-```text
-Test Files  17 passed (17)
-Tests       169 passed (169)
-Failures    0
-```
-
-Lint:
-
-```text
-Found 0 warnings and 0 errors.
-```
-
-Production build completed successfully with 0 errors.
-
-`PLANS.md` and `README.md` have been updated to record the completed Phase 4-H
-checkpoint and verified results.
-
-## Phase 4-H Final Checkpoint
-
-```text
-4-H.3 Organization rooms             COMPLETE AND VERIFIED
-4-H.4 Ticket rooms                  COMPLETE AND VERIFIED
-4-H.5 Domain event broadcasting     COMPLETE AND VERIFIED
-4-H.6 Realtime tests                COMPLETE AND VERIFIED
-4-H.7 Hardening                     COMPLETE AND VERIFIED
-4-H.8 Full verification             COMPLETE AND VERIFIED
-```
+Run and document the complete verification boundary: lint, production
+build, unit tests, full E2E tests, realtime security/event tests, and
+final documentation checkpoint.
 
 # Recommended Development Phases
 
 ## Phase 1 --- Foundation
 
-- Monorepo
-- Docker
-- Next.js
-- NestJS
-- PostgreSQL
-- Redis
-- Prisma
-- CI
-- ESLint
-- Prettier
-- Environment management
-- UI foundation
+-   Monorepo
+-   Docker
+-   Next.js
+-   NestJS
+-   PostgreSQL
+-   Redis
+-   Prisma
+-   CI
+-   ESLint
+-   Prettier
+-   Environment management
+-   UI foundation
 
 ## Phase 2 --- Identity
 
-- Login
-- Logout
-- Refresh tokens
-- Users
-- Roles
-- Permissions
-- Profile
+-   Login
+-   Logout
+-   Refresh tokens
+-   Users
+-   Roles
+-   Permissions
+-   Profile
 
 ## Phase 3 --- Ticket Core
 
-- Create ticket
-- Ticket list
-- Ticket details
-- Assignment
-- Status
-- Priority
-- Comments
-- Attachments
-- History
+-   Create ticket
+-   Ticket list
+-   Ticket details
+-   Assignment
+-   Status
+-   Priority
+-   Comments
+-   Attachments
+-   History
 
 ## Phase 4 --- Workflow
 
-- Approvals
-- Approval notifications
-- Unassigned queue
-- Ticket history
-- Notifications
-- Realtime updates
+-   Approvals
+-   Approval notifications
+-   Unassigned queue
+-   Ticket history
+-   Notifications
+-   Realtime updates
 
 ## Phase 5 --- Productivity
 
-- Ticket library
-- Saved filters
+-   Ticket library
+-   Saved filters
 
 ## Phase 6 --- SLA
 
-- SLA policies
-- SLA timers
-- SLA warnings
-- SLA breaches
-- SLA dashboard
+-   SLA policies
+-   SLA timers
+-   SLA warnings
+-   SLA breaches
+-   SLA dashboard
 
 ## Phase 7 --- Analytics
 
-- Dashboard
-- Product dashboard
-- Employee dashboard
-- SLA reports
-- TAT reports
-- Usage reports
-- Ticket library reports
-- Exports
+-   Dashboard
+-   Product dashboard
+-   Employee dashboard
+-   SLA reports
+-   TAT reports
+-   Usage reports
+-   Ticket library reports
+-   Exports
 
 ## Phase 8 --- Production Hardening
 
-- Unit tests
-- Integration tests
-- E2E tests
-- Security audit
-- Performance testing
-- Database optimization
-- Logging
-- Monitoring
-- Backups
-- CI/CD
-- Production Docker
+-   Unit tests
+-   Integration tests
+-   E2E tests
+-   Security audit
+-   Performance testing
+-   Database optimization
+-   Logging
+-   Monitoring
+-   Backups
+-   CI/CD
+-   Production Docker
 
 # Engineering Rules
 
@@ -616,7 +740,7 @@ For each remaining feature:
 
 # Current Project Checkpoint
 
-```text
+``` text
 Authentication                    COMPLETE
 Organization context              COMPLETE
 Ticket CRUD                       COMPLETE
@@ -645,40 +769,36 @@ Lint                              COMPLETE AND VERIFIED
 Production build                  COMPLETE AND VERIFIED
 Phase 4-G                         COMPLETE AND VERIFIED
 Realtime / WebSockets (4-H.3)     COMPLETE AND VERIFIED
-Ticket rooms (4-H.4)              COMPLETE AND VERIFIED
-Domain event broadcasting (4-H.5) COMPLETE AND VERIFIED
-Realtime tests (4-H.6)            COMPLETE AND VERIFIED
-Realtime hardening (4-H.7)        COMPLETE AND VERIFIED
-Full verification (4-H.8)         COMPLETE AND VERIFIED
+Ticket rooms (4-H.4)                COMPLETE AND VERIFIED
 ```
 
 # Latest Verification Commands
 
-```powershell
-docker compose exec api npm test
+``` powershell
 docker compose exec api npm run test:e2e
 docker compose exec api npm run lint
 docker compose exec api npm run build
 ```
 
-Latest verified results:
-
-```text
-Unit tests          2 test files / 7 tests passed
-Focused realtime    3 test files / 28 tests passed
-Full E2E            17 test files / 169 tests passed
-Lint                0 warnings / 0 errors
-Production build    0 errors
-```
+All three commands have been verified successfully at the latest
+checkpoint.
 
 # Next Development Direction
 
-Phase 4-G and the complete Phase 4-H Realtime / WebSockets scope are complete
-and verified through 4-H.8.
+Phase 4-G is complete and Phase 4-H is in progress. Continue with the
+roadmap rather than introducing speculative architecture.
 
-Next workflow candidates:
-- Unassigned queue
-- Ticket history refinement
+Current next step:
 
-After the remaining workflow scope, proceed into Productivity, Analytics,
-and Production Hardening.
+-   Continue with the next planned Phase 4-H scope after completed
+    ticket-room security and lifecycle verification.
+
+Remaining workflow candidates:
+
+-   Realtime / WebSockets --- ticket-level security and event
+    subscriptions
+-   Unassigned queue
+-   Ticket history refinement
+
+After the remaining workflow scope, proceed into Productivity,
+Analytics, and Production Hardening.
