@@ -4,6 +4,7 @@ import { Prisma, TicketActivityType } from '@prisma/client';
 import { DatabaseService } from '../../database/database.service';
 import {
   getTicketActivityCategory,
+  getTicketActivityDescription,
   getTicketActivityTimeline,
 } from './ticket-activity.presentation.js';
 
@@ -56,6 +57,10 @@ export class TicketActivityService {
       ...activity,
       category: getTicketActivityCategory(activity.type),
       timeline: getTicketActivityTimeline(activity.createdAt),
+      description: getTicketActivityDescription(
+        activity.type,
+        activity.metadata as Record<string, unknown> | null,
+      ),
     }));
   }
 

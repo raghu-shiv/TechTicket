@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   getTicketActivityCategory,
   getTicketActivityTimeline,
+  getTicketActivityDescription,
 } from '../src/modules/tickets/ticket-activity.presentation.js';
 
 describe('Ticket activity categorization', () => {
@@ -95,5 +96,118 @@ describe('Ticket activity timeline metadata', () => {
     const timeline = getTicketActivityTimeline(createdAt);
 
     expect(timeline.timestamp).toBe(createdAt.toISOString());
+  });
+});
+
+describe('Ticket activity descriptions', () => {
+  it('describes ticket creation', () => {
+    expect(
+      getTicketActivityDescription(TicketActivityType.TICKET_CREATED, {
+        ticketNumber: 'TKT-000001',
+        priority: 'HIGH',
+        type: 'INCIDENT',
+      }),
+    ).toBe('Ticket TKT-000001 was created');
+  });
+
+  it('describes ticket field updates', () => {
+    expect(
+      getTicketActivityDescription(TicketActivityType.TICKET_UPDATED, {
+        title: {
+          from: 'Old title',
+          to: 'New title',
+        },
+      }),
+    ).toBe(
+      'Ticket details were updated: title from "Old title" to "New title"',
+    );
+  });
+
+  it('describes status changes', () => {
+    expect(
+      getTicketActivityDescription(TicketActivityType.STATUS_CHANGED, {
+        from: 'OPEN',
+        to: 'IN_PROGRESS',
+      }),
+    ).toBe('Status changed from OPEN to IN_PROGRESS');
+  });
+
+  it('describes priority changes', () => {
+    expect(
+      getTicketActivityDescription(TicketActivityType.PRIORITY_CHANGED, {
+        from: 'MEDIUM',
+        to: 'HIGH',
+      }),
+    ).toBe('Priority changed from MEDIUM to HIGH');
+  });
+
+  it('describes assignment and team changes', () => {
+    expect(
+      getTicketActivityDescription(TicketActivityType.ASSIGNEE_CHANGED, {
+        from: null,
+        to: 'user-123',
+      }),
+    ).toBe('Assignee changed from unassigned to user-123');
+
+    expect(
+      getTicketActivityDescription(TicketActivityType.TEAM_CHANGED, {
+        from: 'team-old',
+        to: 'team-new',
+      }),
+    ).toBe('Team changed from team-old to team-new');
+  });
+
+  it('describes comment activities', () => {
+    expect(
+      getTicketActivityDescription(TicketActivityType.COMMENT_ADDED, {
+        commentType: 'PUBLIC',
+      }),
+    ).toBe('Public comment added');
+
+    expect(
+      getTicketActivityDescription(TicketActivityType.COMMENT_UPDATED, {
+        commentType: 'INTERNAL',
+      }),
+    ).toBe('Internal comment updated');
+
+    expect(
+      getTicketActivityDescription(TicketActivityType.COMMENT_DELETED, {
+        commentType: 'PUBLIC',
+      }),
+    ).toBe('Public comment deleted');
+  });
+
+  it('describes SLA events', () => {
+    expect(
+      getTicketActivityDescription(
+        TicketActivityType.SLA_FIRST_RESPONSE_BREACHED,
+        {},
+      ),
+    ).toBe('First response SLA breached');
+
+    expect(
+      getTicketActivityDescription(
+        TicketActivityType.SLA_RESOLUTION_BREACHED,
+        {},
+      ),
+    ).toBe('Resolution SLA breached');
+  });
+
+  it('describes approval events', () => {
+    expect(
+      getTicketActivityDescription(TicketActivityType.APPROVAL_REQUESTED, {}),
+    ).toBe('Approval requested');
+
+    expect(
+      getTicketActivityDescription(TicketActivityType.APPROVAL_APPROVED, {}),
+    ).toBe('Approval approved');
+
+    expect(
+      getTicketActivityDescription(TicketActivityType.APPROVAL_REJECTED, {}),
+    ).toBe('Approval rejected');
+
+    expect(
+      getTicketActivityDescription(TicketActivityType.APPROVAL_CANCELLED, {}),
+    ).toBe('Approval cancelled');
   });
 });

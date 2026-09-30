@@ -2680,6 +2680,14 @@ describe('Tickets API (e2e)', () => {
           })
           .expect(200);
 
+        await fixture.agent.agent
+          .patch(`/api/v1/tickets/${ticketId}/status`)
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            status: 'IN_PROGRESS',
+          })
+          .expect(200);
+
         const activityResponse = await fixture.requester.agent
           .get(`/api/v1/tickets/${ticketId}/activity`)
           .set('x-organization-id', fixture.organization.id)
@@ -2699,6 +2707,20 @@ describe('Tickets API (e2e)', () => {
               }),
             }),
           ]),
+        );
+
+        const statusActivity = activityResponse.body.find(
+          (activity: { type: string; ticketId: string }) =>
+            activity.ticketId === ticketId &&
+            activity.type === 'STATUS_CHANGED',
+        );
+
+        expect(statusActivity).toEqual(
+          expect.objectContaining({
+            type: 'STATUS_CHANGED',
+            category: 'WORKFLOW',
+            description: 'Status changed from OPEN to IN_PROGRESS',
+          }),
         );
 
         const createdActivity = activityResponse.body.find(
@@ -2725,55 +2747,37 @@ describe('Tickets API (e2e)', () => {
 
     it('should delete a comment and record the deletion activity', async () => {
       const ticketResponse = await fixture.requester.agent
-
         .post('/api/v1/tickets')
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           title: 'Comment deletion test',
-
           description: 'Testing comment deletion.',
-
           priority: 'MEDIUM',
-
           type: 'INCIDENT',
         })
-
         .expect(201);
 
       const ticketId = ticketResponse.body.id;
 
       const commentResponse = await fixture.requester.agent
-
         .post(`/api/v1/tickets/${ticketId}/comments`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           body: 'Comment to delete.',
-
           type: 'PUBLIC',
         })
-
         .expect(201);
 
       const commentId = commentResponse.body.id;
 
       await fixture.requester.agent
-
         .delete(`/api/v1/tickets/${ticketId}/comments/${commentId}`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .expect(200);
 
       const commentsResponse = await fixture.requester.agent
-
         .get(`/api/v1/tickets/${ticketId}/comments`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .expect(200);
 
       expect(
@@ -2783,13 +2787,25 @@ describe('Tickets API (e2e)', () => {
       ).toBe(false);
 
       const activityResponse = await fixture.requester.agent
-
         .get(`/api/v1/tickets/${ticketId}/activity`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .expect(200);
 
+      expect(activityResponse.body).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            ticketId,
+            type: 'TICKET_CREATED',
+            category: 'TICKET',
+            description: `Ticket ${ticketResponse.body.ticketNumber} was created`,
+            timeline: expect.objectContaining({
+              timestamp: expect.any(String),
+              date: expect.any(String),
+              time: expect.any(String),
+            }),
+          }),
+        ]),
+      );
       expect(activityResponse.body).toEqual(
         expect.arrayContaining([
           expect.objectContaining({

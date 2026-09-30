@@ -17,6 +17,23 @@ export interface TicketActivityTimelineMetadata {
   time: string;
 }
 
+export interface TicketActivityDescriptionInput {
+  ticketNumber?: string;
+  priority?: string;
+  type?: string;
+  commentType?: string;
+  from?: unknown;
+  to?: unknown;
+  approvalId?: string;
+  approverId?: string;
+  status?: string;
+  comment?: string;
+  commentId?: string;
+  escalationId?: string;
+  ticketSlaId?: string;
+  [key: string]: unknown;
+}
+
 export function getTicketActivityTimeline(
   createdAt: Date,
 ): TicketActivityTimelineMetadata {
@@ -55,6 +72,140 @@ export function getTicketActivityCategory(
     case TicketActivityType.APPROVAL_REJECTED:
     case TicketActivityType.APPROVAL_CANCELLED:
       return 'APPROVAL';
+
+    default: {
+      const exhaustiveCheck: never = type;
+      throw new Error(
+        `Unsupported ticket activity type: ${String(exhaustiveCheck)}`,
+      );
+    }
+  }
+}
+
+function formatActivityValue(value: unknown): string {
+  if (value === null || value === undefined) {
+    return 'unassigned';
+  }
+
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+
+  return JSON.stringify(value);
+}
+
+function formatChangedField(
+  field: string,
+  value: TicketActivityDescriptionInput,
+): string {
+  const from = formatActivityValue(value.from);
+  const to = formatActivityValue(value.to);
+
+  switch (field) {
+    case 'title':
+      return `title from "${from}" to "${to}"`;
+
+    case 'description':
+      return 'description';
+
+    case 'priority':
+      return `priority from ${from} to ${to}`;
+
+    case 'type':
+      return `type from ${from} to ${to}`;
+
+    default:
+      return `${field} from ${from} to ${to}`;
+  }
+}
+
+function getUpdatedFieldsDescription(
+  metadata: TicketActivityDescriptionInput,
+): string {
+  const changedFields = Object.keys(metadata).filter(
+    (key) =>
+      ![
+        'ticketNumber',
+        'commentId',
+        'commentType',
+        'approvalId',
+        'approverId',
+        'status',
+        'comment',
+        'escalationId',
+        'ticketSlaId',
+      ].includes(key),
+  );
+
+  if (changedFields.length === 0) {
+    return 'ticket details';
+  }
+
+  return changedFields
+    .map((field) =>
+      formatChangedField(
+        field,
+        metadata[field] as TicketActivityDescriptionInput,
+      ),
+    )
+    .join(', ');
+}
+
+export function getTicketActivityDescription(
+  type: TicketActivityType,
+  metadata: TicketActivityDescriptionInput | null | undefined,
+): string {
+  const data = metadata ?? {};
+
+  switch (type) {
+    case TicketActivityType.TICKET_CREATED:
+      return `Ticket ${data.ticketNumber ?? 'created'} was created`;
+
+    case TicketActivityType.TICKET_UPDATED:
+      return `Ticket details were updated: ${getUpdatedFieldsDescription(data)}`;
+
+    case TicketActivityType.PRIORITY_CHANGED:
+      return `Priority changed from ${formatActivityValue(data.from)} to ${formatActivityValue(data.to)}`;
+
+    case TicketActivityType.STATUS_CHANGED:
+      return `Status changed from ${formatActivityValue(data.from)} to ${formatActivityValue(data.to)}`;
+
+    case TicketActivityType.ASSIGNEE_CHANGED:
+      return `Assignee changed from ${formatActivityValue(data.from)} to ${formatActivityValue(data.to)}`;
+
+    case TicketActivityType.TEAM_CHANGED:
+      return `Team changed from ${formatActivityValue(data.from)} to ${formatActivityValue(data.to)}`;
+
+    case TicketActivityType.COMMENT_ADDED:
+      return `${data.commentType === 'INTERNAL' ? 'Internal' : 'Public'} comment added`;
+
+    case TicketActivityType.COMMENT_UPDATED:
+      return `${data.commentType === 'INTERNAL' ? 'Internal' : 'Public'} comment updated`;
+
+    case TicketActivityType.COMMENT_DELETED:
+      return `${data.commentType === 'INTERNAL' ? 'Internal' : 'Public'} comment deleted`;
+
+    case TicketActivityType.SLA_FIRST_RESPONSE_BREACHED:
+      return 'First response SLA breached';
+
+    case TicketActivityType.SLA_RESOLUTION_BREACHED:
+      return 'Resolution SLA breached';
+
+    case TicketActivityType.APPROVAL_REQUESTED:
+      return 'Approval requested';
+
+    case TicketActivityType.APPROVAL_APPROVED:
+      return 'Approval approved';
+
+    case TicketActivityType.APPROVAL_REJECTED:
+      return 'Approval rejected';
+
+    case TicketActivityType.APPROVAL_CANCELLED:
+      return 'Approval cancelled';
 
     default: {
       const exhaustiveCheck: never = type;
