@@ -985,6 +985,424 @@ describe('Tickets API (e2e)', () => {
         );
       });
     });
+
+    describe('4-I.5 --- Sorting, pagination, and filter interaction', () => {
+      it('should preserve unassigned filtering across pagination', async () => {
+        const createdTickets: string[] = [];
+
+        for (let index = 1; index <= 3; index += 1) {
+          const response = await fixture.requester.agent
+            .post('/api/v1/tickets')
+            .set('x-organization-id', fixture.organization.id)
+            .send({
+              title: `4-I.5 Pagination Isolation ${index}`,
+              description: `4-I.5 Pagination Isolation test ticket ${index}.`,
+              priority: 'MEDIUM',
+              type: 'INCIDENT',
+            })
+            .expect(201);
+
+          createdTickets.push(response.body.id);
+        }
+
+        const pageOne = await fixture.requester.agent
+          .get('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .query({
+            unassigned: true,
+            search: '4-I.5 Pagination Isolation',
+            page: 1,
+            limit: 2,
+            sortBy: 'createdAt',
+            sortOrder: 'asc',
+          })
+          .expect(200);
+
+        const pageTwo = await fixture.requester.agent
+          .get('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .query({
+            unassigned: true,
+            search: '4-I.5 Pagination Isolation',
+            page: 2,
+            limit: 2,
+            sortBy: 'createdAt',
+            sortOrder: 'asc',
+          })
+          .expect(200);
+
+        expect(pageOne.body.meta.page).toBe(1);
+        expect(pageOne.body.meta.limit).toBe(2);
+
+        expect(pageTwo.body.meta.page).toBe(2);
+        expect(pageTwo.body.meta.limit).toBe(2);
+
+        expect(pageOne.body.meta.total).toBe(3);
+        expect(pageOne.body.meta.totalPages).toBe(2);
+
+        expect(pageOne.body.data).toHaveLength(2);
+        expect(pageTwo.body.data).toHaveLength(1);
+
+        const returnedTickets = [...pageOne.body.data, ...pageTwo.body.data];
+
+        const returnedIds = returnedTickets.map(
+          (ticket: { id: string }) => ticket.id,
+        );
+
+        expect(returnedIds).toEqual(expect.arrayContaining(createdTickets));
+
+        expect(new Set(returnedIds).size).toBe(3);
+
+        expect(
+          returnedTickets.every(
+            (ticket: { assigneeId: string | null }) =>
+              ticket.assigneeId === null,
+          ),
+        ).toBe(true);
+      });
+
+      it('should sort unassigned tickets by title ascending', async () => {
+        const ticketC = await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-I.5 Sort C',
+            description: 'Sorting test C.',
+            priority: 'LOW',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        const ticketA = await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-I.5 Sort A',
+            description: 'Sorting test A.',
+            priority: 'LOW',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        const ticketB = await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-I.5 Sort B',
+            description: 'Sorting test B.',
+            priority: 'LOW',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        const response = await fixture.requester.agent
+          .get('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .query({
+            unassigned: true,
+            sortBy: 'title',
+            sortOrder: 'asc',
+          })
+          .expect(200);
+
+        const relevantTickets = response.body.data.filter(
+          (ticket: { id: string }) =>
+            [ticketA.body.id, ticketB.body.id, ticketC.body.id].includes(
+              ticket.id,
+            ),
+        );
+
+        expect(relevantTickets).toHaveLength(3);
+
+        expect(
+          relevantTickets.map((ticket: { title: string }) => ticket.title),
+        ).toEqual(['4-I.5 Sort A', '4-I.5 Sort B', '4-I.5 Sort C']);
+
+        expect(
+          relevantTickets.every(
+            (ticket: { assigneeId: string | null }) =>
+              ticket.assigneeId === null,
+          ),
+        ).toBe(true);
+      });
+
+      it('should sort unassigned tickets by title descending', async () => {
+        const ticketA = await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-I.5 Desc A',
+            description: 'Descending sorting test A.',
+            priority: 'LOW',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        const ticketB = await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-I.5 Desc B',
+            description: 'Descending sorting test B.',
+            priority: 'LOW',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        const ticketC = await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-I.5 Desc C',
+            description: 'Descending sorting test C.',
+            priority: 'LOW',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        const response = await fixture.requester.agent
+          .get('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .query({
+            unassigned: true,
+            sortBy: 'title',
+            sortOrder: 'desc',
+          })
+          .expect(200);
+
+        const relevantTickets = response.body.data.filter(
+          (ticket: { id: string }) =>
+            [ticketA.body.id, ticketB.body.id, ticketC.body.id].includes(
+              ticket.id,
+            ),
+        );
+
+        expect(relevantTickets).toHaveLength(3);
+
+        expect(
+          relevantTickets.map((ticket: { title: string }) => ticket.title),
+        ).toEqual(['4-I.5 Desc C', '4-I.5 Desc B', '4-I.5 Desc A']);
+
+        expect(
+          relevantTickets.every(
+            (ticket: { assigneeId: string | null }) =>
+              ticket.assigneeId === null,
+          ),
+        ).toBe(true);
+      });
+
+      it('should combine unassigned filtering with search and priority', async () => {
+        const matchingTicket = await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-I.5 Critical VPN Queue',
+            description: 'Specific search target for combined filter coverage.',
+            priority: 'HIGH',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        const wrongPriority = await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-I.5 Critical VPN Queue',
+            description: 'Same search terms but wrong priority.',
+            priority: 'LOW',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        const wrongSearch = await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-I.5 Network Queue',
+            description: 'Wrong search target.',
+            priority: 'HIGH',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        const assignedMatchingTicket = await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-I.5 Critical VPN Queue',
+            description: 'Assigned ticket must not enter queue.',
+            priority: 'HIGH',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        await fixture.agent.agent
+          .patch(`/api/v1/tickets/${assignedMatchingTicket.body.id}/assignment`)
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            assigneeId: fixture.agent.userId,
+          })
+          .expect(200);
+
+        const response = await fixture.requester.agent
+          .get('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .query({
+            unassigned: true,
+            search: 'Critical VPN Queue',
+            priority: 'HIGH',
+          })
+          .expect(200);
+
+        expect(response.body.data).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              id: matchingTicket.body.id,
+              assigneeId: null,
+              priority: 'HIGH',
+            }),
+          ]),
+        );
+
+        expect(response.body.data).not.toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              id: wrongPriority.body.id,
+            }),
+          ]),
+        );
+
+        expect(response.body.data).not.toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              id: wrongSearch.body.id,
+            }),
+          ]),
+        );
+
+        expect(response.body.data).not.toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              id: assignedMatchingTicket.body.id,
+            }),
+          ]),
+        );
+
+        expect(
+          response.body.data.every(
+            (ticket: { assigneeId: string | null; priority: string }) =>
+              ticket.assigneeId === null && ticket.priority === 'HIGH',
+          ),
+        ).toBe(true);
+      });
+
+      it('should preserve unassigned filtering when sorting by priority', async () => {
+        const lowTicket = await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-I.5 Priority Isolation',
+            description: 'LOW priority sorting test.',
+            priority: 'LOW',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        const highTicket = await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-I.5 Priority Isolation',
+            description: 'HIGH priority sorting test.',
+            priority: 'HIGH',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        const mediumTicket = await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-I.5 Priority Isolation',
+            description: 'MEDIUM priority sorting test.',
+            priority: 'MEDIUM',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        const response = await fixture.requester.agent
+          .get('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .query({
+            unassigned: true,
+            search: '4-I.5 Priority Isolation',
+            sortBy: 'priority',
+            sortOrder: 'asc',
+            page: 1,
+            limit: 10,
+          })
+          .expect(200);
+
+        expect(response.body.meta.total).toBe(3);
+        expect(response.body.data).toHaveLength(3);
+
+        const relevantTickets = response.body.data;
+
+        expect(
+          relevantTickets.map((ticket: { id: string }) => ticket.id),
+        ).toEqual([
+          lowTicket.body.id,
+          mediumTicket.body.id,
+          highTicket.body.id,
+        ]);
+
+        expect(
+          relevantTickets.map(
+            (ticket: { priority: string }) => ticket.priority,
+          ),
+        ).toEqual(['LOW', 'MEDIUM', 'HIGH']);
+
+        expect(
+          relevantTickets.every(
+            (ticket: { assigneeId: string | null }) =>
+              ticket.assigneeId === null,
+          ),
+        ).toBe(true);
+      });
+
+      it('should reject an unsupported sort field', async () => {
+        const response = await fixture.requester.agent
+          .get('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .query({
+            unassigned: true,
+            sortBy: 'assigneeId',
+          })
+          .expect(400);
+
+        expect(response.body).toMatchObject({
+          error: 'Bad Request',
+          statusCode: 400,
+        });
+      });
+
+      it('should reject an unsupported sort direction', async () => {
+        const response = await fixture.requester.agent
+          .get('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .query({
+            unassigned: true,
+            sortBy: 'title',
+            sortOrder: 'sideways',
+          })
+          .expect(400);
+
+        expect(response.body).toMatchObject({
+          error: 'Bad Request',
+          statusCode: 400,
+        });
+      });
+    });
   });
 
   describe('PATCH /api/v1/tickets/:ticketId/assignment', () => {
