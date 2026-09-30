@@ -34,6 +34,32 @@ export interface TicketActivityDescriptionInput {
   [key: string]: unknown;
 }
 
+export interface TicketActivityActor {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export interface TicketActivityActorPresentation {
+  displayName: string;
+  email: string;
+  userId: string;
+}
+
+export function getTicketActivityActorPresentation(
+  actor: TicketActivityActor | null,
+): TicketActivityActorPresentation | null {
+  if (!actor) {
+    return null;
+  }
+
+  return {
+    displayName: actor.name,
+    email: actor.email,
+    userId: actor.id,
+  };
+}
+
 export function getTicketActivityTimeline(
   createdAt: Date,
 ): TicketActivityTimelineMetadata {

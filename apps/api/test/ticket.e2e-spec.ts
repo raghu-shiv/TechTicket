@@ -3,7 +3,6 @@ import { Buffer } from 'node:buffer';
 
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { DatabaseService } from '../src/database/database.service.js';
 import { createTestApp } from './helpers/app.helper.js';
@@ -2177,72 +2176,49 @@ describe('Tickets API (e2e)', () => {
   describe('Comments + activity', () => {
     it('should create and list a public comment', async () => {
       const ticketResponse = await fixture.requester.agent
-
         .post('/api/v1/tickets')
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           title: 'Public comment test',
-
           description: 'Testing public ticket comments.',
-
           priority: 'MEDIUM',
-
           type: 'INCIDENT',
         })
-
         .expect(201);
 
       const ticketId = ticketResponse.body.id;
 
       const createResponse = await fixture.requester.agent
-
         .post(`/api/v1/tickets/${ticketId}/comments`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           body: 'This is a public comment.',
-
           type: 'PUBLIC',
         })
-
         .expect(201);
 
       expect(createResponse.body).toEqual(
         expect.objectContaining({
           id: expect.any(String),
-
           ticketId,
-
           authorId: fixture.requester.userId,
-
           body: 'This is a public comment.',
-
           type: 'PUBLIC',
         }),
       );
 
       const listResponse = await fixture.requester.agent
-
         .get(`/api/v1/tickets/${ticketId}/comments`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .expect(200);
 
       expect(listResponse.body).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             id: createResponse.body.id,
-
             ticketId,
-
             authorId: fixture.requester.userId,
-
             body: 'This is a public comment.',
-
             type: 'PUBLIC',
           }),
         ]),
@@ -2251,49 +2227,33 @@ describe('Tickets API (e2e)', () => {
 
     it('should allow an authorized member to create an internal comment', async () => {
       const ticketResponse = await fixture.requester.agent
-
         .post('/api/v1/tickets')
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           title: 'Internal comment test',
-
           description: 'Testing internal ticket comments.',
-
           priority: 'MEDIUM',
-
           type: 'INCIDENT',
         })
-
         .expect(201);
 
       const ticketId = ticketResponse.body.id;
 
       const response = await fixture.agent.agent
-
         .post(`/api/v1/tickets/${ticketId}/comments`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           body: 'Internal agent-only comment.',
-
           type: 'INTERNAL',
         })
-
         .expect(201);
 
       expect(response.body).toEqual(
         expect.objectContaining({
           id: expect.any(String),
-
           ticketId,
-
           authorId: fixture.agent.userId,
-
           body: 'Internal agent-only comment.',
-
           type: 'INTERNAL',
         }),
       );
@@ -2301,104 +2261,70 @@ describe('Tickets API (e2e)', () => {
 
     it('should not allow a requester to create an internal comment', async () => {
       const ticketResponse = await fixture.requester.agent
-
         .post('/api/v1/tickets')
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           title: 'Requester internal comment test',
-
           description: 'Testing internal comment authorization.',
-
           priority: 'LOW',
-
           type: 'INCIDENT',
         })
-
         .expect(201);
 
       const ticketId = ticketResponse.body.id;
 
       await fixture.requester.agent
-
         .post(`/api/v1/tickets/${ticketId}/comments`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           body: 'Requester should not create this.',
-
           type: 'INTERNAL',
         })
-
         .expect(403);
     });
 
     it('should hide internal comments from requesters', async () => {
       const ticketResponse = await fixture.requester.agent
-
         .post('/api/v1/tickets')
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           title: 'Internal visibility test',
-
           description: 'Testing comment visibility.',
-
           priority: 'MEDIUM',
-
           type: 'INCIDENT',
         })
-
         .expect(201);
 
       const ticketId = ticketResponse.body.id;
 
       const publicComment = await fixture.requester.agent
-
         .post(`/api/v1/tickets/${ticketId}/comments`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           body: 'Requester-visible public comment.',
-
           type: 'PUBLIC',
         })
-
         .expect(201);
 
       const internalComment = await fixture.agent.agent
-
         .post(`/api/v1/tickets/${ticketId}/comments`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           body: 'Agent-only internal comment.',
-
           type: 'INTERNAL',
         })
-
         .expect(201);
 
       const requesterResponse = await fixture.requester.agent
-
         .get(`/api/v1/tickets/${ticketId}/comments`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .expect(200);
 
       expect(requesterResponse.body).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             id: publicComment.body.id,
-
             body: 'Requester-visible public comment.',
-
             type: 'PUBLIC',
           }),
         ]),
@@ -2413,63 +2339,43 @@ describe('Tickets API (e2e)', () => {
 
     it('should allow an author to update their own comment', async () => {
       const ticketResponse = await fixture.requester.agent
-
         .post('/api/v1/tickets')
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           title: 'Comment update test',
-
           description: 'Testing comment editing.',
-
           priority: 'MEDIUM',
-
           type: 'INCIDENT',
         })
-
         .expect(201);
 
       const ticketId = ticketResponse.body.id;
 
       const commentResponse = await fixture.requester.agent
-
         .post(`/api/v1/tickets/${ticketId}/comments`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           body: 'Original comment.',
-
           type: 'PUBLIC',
         })
-
         .expect(201);
 
       const commentId = commentResponse.body.id;
 
       const updateResponse = await fixture.requester.agent
-
         .patch(`/api/v1/tickets/${ticketId}/comments/${commentId}`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           body: 'Updated comment.',
         })
-
         .expect(200);
 
       expect(updateResponse.body).toEqual(
         expect.objectContaining({
           id: commentId,
-
           ticketId,
-
           authorId: fixture.requester.userId,
-
           body: 'Updated comment.',
-
           type: 'PUBLIC',
         }),
       );
@@ -2477,107 +2383,74 @@ describe('Tickets API (e2e)', () => {
 
     it('should not allow another non-admin member to edit someone else comment', async () => {
       const ticketResponse = await fixture.requester.agent
-
         .post('/api/v1/tickets')
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           title: 'Comment authorization test',
-
           description: 'Testing comment ownership.',
-
           priority: 'MEDIUM',
-
           type: 'INCIDENT',
         })
-
         .expect(201);
 
       const ticketId = ticketResponse.body.id;
 
       const commentResponse = await fixture.requester.agent
-
         .post(`/api/v1/tickets/${ticketId}/comments`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           body: 'Requester-owned comment.',
-
           type: 'PUBLIC',
         })
-
         .expect(201);
 
       await fixture.agent.agent
-
         .patch(
           `/api/v1/tickets/${ticketId}/comments/${commentResponse.body.id}`,
         )
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           body: 'Agent should not modify this comment.',
         })
-
         .expect(403);
     });
 
     it('should allow an admin to edit another user comment', async () => {
       const ticketResponse = await fixture.requester.agent
-
         .post('/api/v1/tickets')
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           title: 'Admin comment edit test',
-
           description: 'Testing admin comment permissions.',
-
           priority: 'MEDIUM',
-
           type: 'INCIDENT',
         })
-
         .expect(201);
 
       const ticketId = ticketResponse.body.id;
 
       const commentResponse = await fixture.requester.agent
-
         .post(`/api/v1/tickets/${ticketId}/comments`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           body: 'Requester-created comment.',
-
           type: 'PUBLIC',
         })
-
         .expect(201);
 
       const response = await fixture.admin.agent
-
         .patch(
           `/api/v1/tickets/${ticketId}/comments/${commentResponse.body.id}`,
         )
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           body: 'Admin-updated comment.',
         })
-
         .expect(200);
 
       expect(response.body).toEqual(
         expect.objectContaining({
           id: commentResponse.body.id,
-
           body: 'Admin-updated comment.',
         }),
       );
@@ -2585,72 +2458,51 @@ describe('Tickets API (e2e)', () => {
 
     it('should record comment creation and update in ticket activity', async () => {
       const ticketResponse = await fixture.requester.agent
-
         .post('/api/v1/tickets')
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           title: 'Comment activity test',
-
           description: 'Testing comment activity history.',
-
           priority: 'MEDIUM',
-
           type: 'INCIDENT',
         })
-
         .expect(201);
 
       const ticketId = ticketResponse.body.id;
 
       const commentResponse = await fixture.requester.agent
-
         .post(`/api/v1/tickets/${ticketId}/comments`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           body: 'Activity comment.',
-
           type: 'PUBLIC',
         })
-
         .expect(201);
 
       await fixture.requester.agent
-
         .patch(
           `/api/v1/tickets/${ticketId}/comments/${commentResponse.body.id}`,
         )
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           body: 'Updated activity comment.',
         })
-
         .expect(200);
 
       const activityResponse = await fixture.requester.agent
-
         .get(`/api/v1/tickets/${ticketId}/activity`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .expect(200);
 
       expect(activityResponse.body).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             ticketId,
-
             type: 'COMMENT_ADDED',
           }),
 
           expect.objectContaining({
             ticketId,
-
             type: 'COMMENT_UPDATED',
           }),
         ]),
@@ -2699,6 +2551,17 @@ describe('Tickets API (e2e)', () => {
               ticketId,
               type: 'TICKET_CREATED',
               category: 'TICKET',
+              actorId: fixture.requester.userId,
+              actor: expect.objectContaining({
+                id: fixture.requester.userId,
+                name: expect.any(String),
+                email: expect.any(String),
+              }),
+              actorPresentation: {
+                userId: fixture.requester.userId,
+                displayName: expect.any(String),
+                email: expect.any(String),
+              },
               createdAt: expect.any(String),
               timeline: expect.objectContaining({
                 timestamp: expect.any(String),
@@ -2719,6 +2582,17 @@ describe('Tickets API (e2e)', () => {
           expect.objectContaining({
             type: 'STATUS_CHANGED',
             category: 'WORKFLOW',
+            actorId: fixture.agent.userId,
+            actor: expect.objectContaining({
+              id: fixture.agent.userId,
+              name: expect.any(String),
+              email: expect.any(String),
+            }),
+            actorPresentation: expect.objectContaining({
+              userId: fixture.agent.userId,
+              displayName: expect.any(String),
+              email: expect.any(String),
+            }),
             description: 'Status changed from OPEN to IN_PROGRESS',
           }),
         );
@@ -2822,65 +2696,43 @@ describe('Tickets API (e2e)', () => {
 
       try {
         const ticketResponse = await otherFixture.requester.agent
-
           .post('/api/v1/tickets')
-
           .set('x-organization-id', otherFixture.organization.id)
-
           .send({
             title: 'Other organization comment test',
-
             description: 'Cross-organization comment isolation.',
-
             priority: 'MEDIUM',
-
             type: 'INCIDENT',
           })
-
           .expect(201);
 
         const commentResponse = await otherFixture.requester.agent
-
           .post(`/api/v1/tickets/${ticketResponse.body.id}/comments`)
-
           .set('x-organization-id', otherFixture.organization.id)
-
           .send({
             body: 'Other organization comment.',
-
             type: 'PUBLIC',
           })
-
           .expect(201);
 
         await fixture.requester.agent
-
           .get(`/api/v1/tickets/${ticketResponse.body.id}/comments`)
-
           .set('x-organization-id', fixture.organization.id)
-
           .expect(404);
 
         await fixture.requester.agent
-
           .get(`/api/v1/tickets/${ticketResponse.body.id}/activity`)
-
           .set('x-organization-id', fixture.organization.id)
-
           .expect(404);
 
         await fixture.requester.agent
-
           .patch(
             `/api/v1/tickets/${ticketResponse.body.id}/comments/${commentResponse.body.id}`,
           )
-
           .set('x-organization-id', fixture.organization.id)
-
           .send({
             body: 'Cross-org modification attempt.',
           })
-
           .expect(404);
       } finally {
         await database.organization.delete({
@@ -2894,11 +2746,8 @@ describe('Tickets API (e2e)', () => {
             id: {
               in: [
                 otherFixture.owner.userId,
-
                 otherFixture.admin.userId,
-
                 otherFixture.agent.userId,
-
                 otherFixture.requester.userId,
               ],
             },
@@ -2911,21 +2760,14 @@ describe('Tickets API (e2e)', () => {
   describe('Attachments', () => {
     it('should upload and list an attachment for a ticket', async () => {
       const ticketResponse = await fixture.requester.agent
-
         .post('/api/v1/tickets')
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           title: 'Attachment upload test',
-
           description: 'Testing ticket attachments.',
-
           priority: 'MEDIUM',
-
           type: 'INCIDENT',
         })
-
         .expect(201);
 
       const ticketId = ticketResponse.body.id;
@@ -2933,33 +2775,22 @@ describe('Tickets API (e2e)', () => {
       const fileContent = Buffer.from('TechTicket attachment test');
 
       const uploadResponse = await fixture.requester.agent
-
         .post(`/api/v1/tickets/${ticketId}/attachments`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .attach('file', fileContent, {
           filename: 'test.txt',
-
           contentType: 'text/plain',
         })
-
         .expect(201);
 
       expect(uploadResponse.body).toEqual(
         expect.objectContaining({
           id: expect.any(String),
-
           ticketId,
-
           uploadedById: fixture.requester.userId,
-
           fileName: 'test.txt',
-
           mimeType: 'text/plain',
-
           size: fileContent.length,
-
           createdAt: expect.any(String),
         }),
       );
@@ -2967,26 +2798,18 @@ describe('Tickets API (e2e)', () => {
       const attachmentId = uploadResponse.body.id;
 
       const listResponse = await fixture.requester.agent
-
         .get(`/api/v1/tickets/${ticketId}/attachments`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .expect(200);
 
       expect(listResponse.body).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             id: attachmentId,
-
             ticketId,
-
             uploadedById: fixture.requester.userId,
-
             fileName: 'test.txt',
-
             mimeType: 'text/plain',
-
             size: fileContent.length,
           }),
         ]),
@@ -2995,21 +2818,14 @@ describe('Tickets API (e2e)', () => {
 
     it('should download an uploaded attachment with the original content and metadata', async () => {
       const ticketResponse = await fixture.requester.agent
-
         .post('/api/v1/tickets')
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           title: 'Attachment download test',
-
           description: 'Testing attachment download.',
-
           priority: 'LOW',
-
           type: 'INCIDENT',
         })
-
         .expect(201);
 
       const ticketId = ticketResponse.body.id;
@@ -3017,29 +2833,20 @@ describe('Tickets API (e2e)', () => {
       const fileContent = Buffer.from('Download this attachment');
 
       const uploadResponse = await fixture.requester.agent
-
         .post(`/api/v1/tickets/${ticketId}/attachments`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .attach('file', fileContent, {
           filename: 'download-test.txt',
-
           contentType: 'text/plain',
         })
-
         .expect(201);
 
       const attachmentId = uploadResponse.body.id;
 
       const response = await fixture.requester.agent
-
         .get(`/api/v1/tickets/${ticketId}/attachments/${attachmentId}`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .buffer(true)
-
         .parse((res, callback) => {
           const chunks: Buffer[] = [];
 
@@ -3051,7 +2858,6 @@ describe('Tickets API (e2e)', () => {
             callback(null, Buffer.concat(chunks));
           });
         })
-
         .expect(200);
 
       expect(Buffer.isBuffer(response.body)).toBe(true);
@@ -3065,57 +2871,38 @@ describe('Tickets API (e2e)', () => {
 
     it('should reject an unsupported attachment MIME type', async () => {
       const ticketResponse = await fixture.requester.agent
-
         .post('/api/v1/tickets')
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           title: 'Invalid attachment test',
-
           description: 'Testing unsupported attachment types.',
-
           priority: 'LOW',
-
           type: 'INCIDENT',
         })
-
         .expect(201);
 
       const ticketId = ticketResponse.body.id;
 
       await fixture.requester.agent
-
         .post(`/api/v1/tickets/${ticketId}/attachments`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .attach('file', Buffer.from('<script>alert("test")</script>'), {
           filename: 'malicious.html',
-
           contentType: 'text/html',
         })
-
         .expect(400);
     });
 
     it('should reject an attachment larger than 10 MB', async () => {
       const ticketResponse = await fixture.requester.agent
-
         .post('/api/v1/tickets')
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           title: 'Large attachment test',
-
           description: 'Testing attachment size limits.',
-
           priority: 'LOW',
-
           type: 'INCIDENT',
         })
-
         .expect(201);
 
       const ticketId = ticketResponse.body.id;
@@ -3123,37 +2910,25 @@ describe('Tickets API (e2e)', () => {
       const oversizedFile = Buffer.alloc(10 * 1024 * 1024 + 1, 'a');
 
       await fixture.requester.agent
-
         .post(`/api/v1/tickets/${ticketId}/attachments`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .attach('file', oversizedFile, {
           filename: 'oversized.txt',
-
           contentType: 'text/plain',
         })
-
         .expect(413);
     });
 
     it('should not allow attachment access from another organization', async () => {
       const ticketResponse = await fixture.requester.agent
-
         .post('/api/v1/tickets')
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           title: 'Organization attachment isolation',
-
           description: 'Testing attachment organization isolation.',
-
           priority: 'MEDIUM',
-
           type: 'INCIDENT',
         })
-
         .expect(201);
 
       const ticketId = ticketResponse.body.id;
@@ -3161,17 +2936,12 @@ describe('Tickets API (e2e)', () => {
       const fileContent = Buffer.from('Organization scoped attachment');
 
       const uploadResponse = await fixture.requester.agent
-
         .post(`/api/v1/tickets/${ticketId}/attachments`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .attach('file', fileContent, {
           filename: 'organization.txt',
-
           contentType: 'text/plain',
         })
-
         .expect(201);
 
       const attachmentId = uploadResponse.body.id;
@@ -3180,27 +2950,18 @@ describe('Tickets API (e2e)', () => {
 
       try {
         await otherOrganization.requester.agent
-
           .get(`/api/v1/tickets/${ticketId}/attachments`)
-
           .set('x-organization-id', otherOrganization.organization.id)
-
           .expect(404);
 
         await otherOrganization.requester.agent
-
           .get(`/api/v1/tickets/${ticketId}/attachments/${attachmentId}`)
-
           .set('x-organization-id', otherOrganization.organization.id)
-
           .expect(404);
 
         await otherOrganization.requester.agent
-
           .delete(`/api/v1/tickets/${ticketId}/attachments/${attachmentId}`)
-
           .set('x-organization-id', otherOrganization.organization.id)
-
           .expect(403);
       } finally {
         await database.organization.delete({
@@ -3214,11 +2975,8 @@ describe('Tickets API (e2e)', () => {
             id: {
               in: [
                 otherOrganization.owner.userId,
-
                 otherOrganization.admin.userId,
-
                 otherOrganization.agent.userId,
-
                 otherOrganization.requester.userId,
               ],
             },
@@ -3229,123 +2987,83 @@ describe('Tickets API (e2e)', () => {
 
     it('should not allow a REQUESTER to delete an attachment', async () => {
       const ticketResponse = await fixture.requester.agent
-
         .post('/api/v1/tickets')
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           title: 'Attachment authorization test',
-
           description: 'Testing attachment deletion authorization.',
-
           priority: 'MEDIUM',
-
           type: 'INCIDENT',
         })
-
         .expect(201);
 
       const ticketId = ticketResponse.body.id;
 
       const uploadResponse = await fixture.requester.agent
-
         .post(`/api/v1/tickets/${ticketId}/attachments`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .attach('file', Buffer.from('Protected attachment'), {
           filename: 'protected.txt',
-
           contentType: 'text/plain',
         })
-
         .expect(201);
 
       const attachmentId = uploadResponse.body.id;
 
       await fixture.requester.agent
-
         .delete(`/api/v1/tickets/${ticketId}/attachments/${attachmentId}`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .expect(403);
 
       await fixture.requester.agent
-
         .get(`/api/v1/tickets/${ticketId}/attachments/${attachmentId}`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .expect(200);
     });
 
     it('should allow an authorized AGENT to delete an attachment', async () => {
       const ticketResponse = await fixture.requester.agent
-
         .post('/api/v1/tickets')
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           title: 'Attachment deletion test',
-
           description: 'Testing authorized attachment deletion.',
-
           priority: 'MEDIUM',
-
           type: 'INCIDENT',
         })
-
         .expect(201);
 
       const ticketId = ticketResponse.body.id;
 
       const uploadResponse = await fixture.requester.agent
-
         .post(`/api/v1/tickets/${ticketId}/attachments`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .attach('file', Buffer.from('Attachment to delete'), {
           filename: 'delete-me.txt',
-
           contentType: 'text/plain',
         })
-
         .expect(201);
 
       const attachmentId = uploadResponse.body.id;
 
       const deleteResponse = await fixture.agent.agent
-
         .delete(`/api/v1/tickets/${ticketId}/attachments/${attachmentId}`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .expect(200);
 
       expect(deleteResponse.body).toEqual({
         id: attachmentId,
-
         deleted: true,
       });
 
       await fixture.agent.agent
-
         .get(`/api/v1/tickets/${ticketId}/attachments/${attachmentId}`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .expect(404);
 
       const listResponse = await fixture.agent.agent
-
         .get(`/api/v1/tickets/${ticketId}/attachments`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .expect(200);
 
       expect(listResponse.body).not.toEqual(
@@ -3361,45 +3079,31 @@ describe('Tickets API (e2e)', () => {
   describe('Approvals', () => {
     it('should create a pending approval for an authorized member', async () => {
       const ticketResponse = await fixture.requester.agent
-
         .post('/api/v1/tickets')
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           title: 'Production database change',
-
           description: 'Approval required before applying the database change.',
-
           priority: 'HIGH',
-
           type: 'INCIDENT',
         })
-
         .expect(201);
 
       const ticketId = ticketResponse.body.id;
 
       const response = await fixture.admin.agent
-
         .post(`/api/v1/tickets/${ticketId}/approvals`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           approverId: fixture.owner.userId,
         })
-
         .expect(201);
 
       expect(response.body).toEqual(
         expect.objectContaining({
           id: expect.any(String),
-
           ticketId,
-
           approverId: fixture.owner.userId,
-
           status: 'PENDING',
         }),
       );
@@ -3409,54 +3113,37 @@ describe('Tickets API (e2e)', () => {
 
     it('should list approvals for a ticket', async () => {
       const ticketResponse = await fixture.requester.agent
-
         .post('/api/v1/tickets')
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           title: 'Approval list test',
-
           description: 'Testing approval listing.',
-
           priority: 'MEDIUM',
-
           type: 'INCIDENT',
         })
-
         .expect(201);
 
       const ticketId = ticketResponse.body.id;
 
       const createResponse = await fixture.admin.agent
-
         .post(`/api/v1/tickets/${ticketId}/approvals`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           approverId: fixture.agent.userId,
         })
-
         .expect(201);
 
       const response = await fixture.admin.agent
-
         .get(`/api/v1/tickets/${ticketId}/approvals`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .expect(200);
 
       expect(response.body).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             id: createResponse.body.id,
-
             ticketId,
-
             approverId: fixture.agent.userId,
-
             status: 'PENDING',
           }),
         ]),
@@ -3465,61 +3152,42 @@ describe('Tickets API (e2e)', () => {
 
     it('should allow the designated approver to approve a pending approval', async () => {
       const ticketResponse = await fixture.requester.agent
-
         .post('/api/v1/tickets')
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           title: 'Approval success test',
-
           description: 'Testing approval.',
-
           priority: 'HIGH',
-
           type: 'INCIDENT',
         })
-
         .expect(201);
 
       const ticketId = ticketResponse.body.id;
 
       const approvalResponse = await fixture.admin.agent
-
         .post(`/api/v1/tickets/${ticketId}/approvals`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           approverId: fixture.agent.userId,
         })
-
         .expect(201);
 
       const approvalId = approvalResponse.body.id;
 
       const response = await fixture.agent.agent
-
         .patch(`/api/v1/tickets/${ticketId}/approvals/${approvalId}/approve`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           comment: 'Approved for implementation.',
         })
-
         .expect(200);
 
       expect(response.body).toEqual(
         expect.objectContaining({
           id: approvalId,
-
           ticketId,
-
           approverId: fixture.agent.userId,
-
           status: 'APPROVED',
-
           comment: 'Approved for implementation.',
         }),
       );
@@ -3529,61 +3197,42 @@ describe('Tickets API (e2e)', () => {
 
     it('should allow the designated approver to reject a pending approval', async () => {
       const ticketResponse = await fixture.requester.agent
-
         .post('/api/v1/tickets')
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           title: 'Approval rejection test',
-
           description: 'Testing approval rejection.',
-
           priority: 'HIGH',
-
           type: 'INCIDENT',
         })
-
         .expect(201);
 
       const ticketId = ticketResponse.body.id;
 
       const approvalResponse = await fixture.admin.agent
-
         .post(`/api/v1/tickets/${ticketId}/approvals`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           approverId: fixture.agent.userId,
         })
-
         .expect(201);
 
       const approvalId = approvalResponse.body.id;
 
       const response = await fixture.agent.agent
-
         .patch(`/api/v1/tickets/${ticketId}/approvals/${approvalId}/reject`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           comment: 'The requested change needs additional review.',
         })
-
         .expect(200);
 
       expect(response.body).toEqual(
         expect.objectContaining({
           id: approvalId,
-
           ticketId,
-
           approverId: fixture.agent.userId,
-
           status: 'REJECTED',
-
           comment: 'The requested change needs additional review.',
         }),
       );
@@ -3593,55 +3242,38 @@ describe('Tickets API (e2e)', () => {
 
     it('should allow an authorized member to cancel a pending approval', async () => {
       const ticketResponse = await fixture.requester.agent
-
         .post('/api/v1/tickets')
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           title: 'Approval cancellation test',
-
           description: 'Testing approval cancellation.',
-
           priority: 'MEDIUM',
-
           type: 'INCIDENT',
         })
-
         .expect(201);
 
       const ticketId = ticketResponse.body.id;
 
       const approvalResponse = await fixture.admin.agent
-
         .post(`/api/v1/tickets/${ticketId}/approvals`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           approverId: fixture.agent.userId,
         })
-
         .expect(201);
 
       const approvalId = approvalResponse.body.id;
 
       const response = await fixture.admin.agent
-
         .patch(`/api/v1/tickets/${ticketId}/approvals/${approvalId}/cancel`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .expect(200);
 
       expect(response.body).toEqual(
         expect.objectContaining({
           id: approvalId,
-
           ticketId,
-
           approverId: fixture.agent.userId,
-
           status: 'CANCELLED',
         }),
       );
@@ -3649,100 +3281,67 @@ describe('Tickets API (e2e)', () => {
 
     it('should reject approval creation by a REQUESTER', async () => {
       const ticketResponse = await fixture.requester.agent
-
         .post('/api/v1/tickets')
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           title: 'Requester approval test',
-
           description: 'Requester should not create approvals.',
-
           priority: 'LOW',
-
           type: 'INCIDENT',
         })
-
         .expect(201);
 
       await fixture.requester.agent
-
         .post(`/api/v1/tickets/${ticketResponse.body.id}/approvals`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           approverId: fixture.agent.userId,
         })
-
         .expect(403);
     });
 
     it('should reject assigning a REQUESTER as an approver', async () => {
       const ticketResponse = await fixture.admin.agent
-
         .post('/api/v1/tickets')
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           title: 'Invalid approver role',
-
           description: 'Requester cannot be an approver.',
-
           priority: 'MEDIUM',
-
           type: 'INCIDENT',
         })
-
         .expect(201);
 
       await fixture.admin.agent
-
         .post(`/api/v1/tickets/${ticketResponse.body.id}/approvals`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           approverId: fixture.requester.userId,
         })
-
         .expect(400);
     });
 
     it('should reject an approver from another organization', async () => {
       const ticketResponse = await fixture.admin.agent
-
         .post('/api/v1/tickets')
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           title: 'Cross organization approver',
-
           description: 'Approver must belong to the same organization.',
-
           priority: 'HIGH',
-
           type: 'INCIDENT',
         })
-
         .expect(201);
 
       const otherOrganization = await createOrganizationTestFixture(app);
 
       try {
         await fixture.admin.agent
-
           .post(`/api/v1/tickets/${ticketResponse.body.id}/approvals`)
-
           .set('x-organization-id', fixture.organization.id)
-
           .send({
             approverId: otherOrganization.agent.userId,
           })
-
           .expect(400);
       } finally {
         await database.organization.delete({
@@ -3756,11 +3355,8 @@ describe('Tickets API (e2e)', () => {
             id: {
               in: [
                 otherOrganization.owner.userId,
-
                 otherOrganization.admin.userId,
-
                 otherOrganization.agent.userId,
-
                 otherOrganization.requester.userId,
               ],
             },
@@ -3771,175 +3367,118 @@ describe('Tickets API (e2e)', () => {
 
     it('should reject approval action by a different organization member', async () => {
       const ticketResponse = await fixture.admin.agent
-
         .post('/api/v1/tickets')
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           title: 'Wrong approver test',
-
           description: 'Only the designated approver can approve.',
-
           priority: 'HIGH',
-
           type: 'INCIDENT',
         })
-
         .expect(201);
 
       const approvalResponse = await fixture.admin.agent
-
         .post(`/api/v1/tickets/${ticketResponse.body.id}/approvals`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           approverId: fixture.agent.userId,
         })
-
         .expect(201);
 
       await fixture.admin.agent
-
         .patch(
           `/api/v1/tickets/${ticketResponse.body.id}/approvals/${approvalResponse.body.id}/approve`,
         )
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           comment: 'Admin is not the designated approver.',
         })
-
         .expect(403);
     });
 
     it('should reject approving an already approved approval', async () => {
       const ticketResponse = await fixture.admin.agent
-
         .post('/api/v1/tickets')
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           title: 'Duplicate approval test',
-
           description: 'Approval cannot be completed twice.',
-
           priority: 'HIGH',
-
           type: 'INCIDENT',
         })
-
         .expect(201);
 
       const ticketId = ticketResponse.body.id;
 
       const approvalResponse = await fixture.admin.agent
-
         .post(`/api/v1/tickets/${ticketId}/approvals`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           approverId: fixture.agent.userId,
         })
-
         .expect(201);
 
       const approvalId = approvalResponse.body.id;
 
       await fixture.agent.agent
-
         .patch(`/api/v1/tickets/${ticketId}/approvals/${approvalId}/approve`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .expect(200);
 
       await fixture.agent.agent
-
         .patch(`/api/v1/tickets/${ticketId}/approvals/${approvalId}/approve`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .expect(400);
     });
 
     it('should reject rejecting an already cancelled approval', async () => {
       const ticketResponse = await fixture.admin.agent
-
         .post('/api/v1/tickets')
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           title: 'Cancelled approval test',
-
           description: 'Cancelled approvals cannot be rejected.',
-
           priority: 'MEDIUM',
-
           type: 'INCIDENT',
         })
-
         .expect(201);
 
       const ticketId = ticketResponse.body.id;
 
       const approvalResponse = await fixture.admin.agent
-
         .post(`/api/v1/tickets/${ticketId}/approvals`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           approverId: fixture.agent.userId,
         })
-
         .expect(201);
 
       const approvalId = approvalResponse.body.id;
 
       await fixture.admin.agent
-
         .patch(`/api/v1/tickets/${ticketId}/approvals/${approvalId}/cancel`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .expect(200);
 
       await fixture.agent.agent
-
         .patch(`/api/v1/tickets/${ticketId}/approvals/${approvalId}/reject`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           comment: 'This should fail.',
         })
-
         .expect(400);
     });
 
     it('should not allow approval access from another organization', async () => {
       const ticketResponse = await fixture.admin.agent
-
         .post('/api/v1/tickets')
-
         .set('x-organization-id', fixture.organization.id)
-
         .send({
           title: 'Cross organization approval access',
-
           description: 'Approval must remain organization isolated.',
-
           priority: 'HIGH',
-
           type: 'INCIDENT',
         })
-
         .expect(201);
 
       const ticketId = ticketResponse.body.id;
@@ -4049,11 +3588,8 @@ describe('Tickets API (e2e)', () => {
         .expect(200);
 
       const activityResponse = await fixture.admin.agent
-
         .get(`/api/v1/tickets/${ticketId}/activity`)
-
         .set('x-organization-id', fixture.organization.id)
-
         .expect(200);
 
       expect(activityResponse.body).toEqual(

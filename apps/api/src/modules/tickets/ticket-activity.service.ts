@@ -6,6 +6,7 @@ import {
   getTicketActivityCategory,
   getTicketActivityDescription,
   getTicketActivityTimeline,
+  getTicketActivityActorPresentation,
 } from './ticket-activity.presentation.js';
 
 @Injectable()
@@ -61,6 +62,7 @@ export class TicketActivityService {
         activity.type,
         activity.metadata as Record<string, unknown> | null,
       ),
+      actorPresentation: getTicketActivityActorPresentation(activity.actor),
     }));
   }
 

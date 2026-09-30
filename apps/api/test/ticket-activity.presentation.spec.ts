@@ -5,6 +5,7 @@ import {
   getTicketActivityCategory,
   getTicketActivityTimeline,
   getTicketActivityDescription,
+  getTicketActivityActorPresentation,
 } from '../src/modules/tickets/ticket-activity.presentation.js';
 
 describe('Ticket activity categorization', () => {
@@ -209,5 +210,43 @@ describe('Ticket activity descriptions', () => {
     expect(
       getTicketActivityDescription(TicketActivityType.APPROVAL_CANCELLED, {}),
     ).toBe('Approval cancelled');
+  });
+});
+
+describe('Ticket activity actor presentation', () => {
+  it('should present a user actor using name, email, and id', () => {
+    expect(
+      getTicketActivityActorPresentation({
+        id: 'user-123',
+        name: 'John Doe',
+        email: 'john@example.com',
+      }),
+    ).toEqual({
+      displayName: 'John Doe',
+      email: 'john@example.com',
+      userId: 'user-123',
+    });
+  });
+
+  it('should return null for system activities without an actor', () => {
+    expect(getTicketActivityActorPresentation(null)).toBeNull();
+  });
+
+  it('should return null actor presentation for system-generated activity', () => {
+    expect(getTicketActivityActorPresentation(null)).toBeNull();
+  });
+
+  it('should return actor presentation for user-generated activity', () => {
+    expect(
+      getTicketActivityActorPresentation({
+        id: 'user-1',
+        name: 'Test User',
+        email: 'test@example.com',
+      }),
+    ).toEqual({
+      userId: 'user-1',
+      displayName: 'Test User',
+      email: 'test@example.com',
+    });
   });
 });
