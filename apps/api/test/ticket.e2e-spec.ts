@@ -2616,7 +2616,135 @@ describe('Tickets API (e2e)', () => {
         expect(createdActivity.timeline.time).toBe(
           createdActivity.createdAt.slice(11, 19),
         );
+        // ============================================
+        // 4-J.5 — History filtering
+        // ============================================
+
+        // Type filter
+        const statusOnlyResponse = await fixture.requester.agent
+          .get(`/api/v1/tickets/${ticketId}/activity`)
+          .set('x-organization-id', fixture.organization.id)
+          .query({
+            type: 'STATUS_CHANGED',
+          })
+          .expect(200);
+
+        expect(statusOnlyResponse.body).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              ticketId,
+              type: 'STATUS_CHANGED',
+              category: 'WORKFLOW',
+            }),
+          ]),
+        );
+
+        expect(
+          statusOnlyResponse.body.every(
+            (activity: { type: string }) => activity.type === 'STATUS_CHANGED',
+          ),
+        ).toBe(true);
+
+        // Category filter
+        const workflowResponse = await fixture.requester.agent
+          .get(`/api/v1/tickets/${ticketId}/activity`)
+          .set('x-organization-id', fixture.organization.id)
+          .query({
+            category: 'WORKFLOW',
+          })
+          .expect(200);
+
+        expect(workflowResponse.body.length).toBeGreaterThan(0);
+
+        expect(
+          workflowResponse.body.every(
+            (activity: { category: string }) =>
+              activity.category === 'WORKFLOW',
+          ),
+        ).toBe(true);
+
+        // Actor filter
+        const agentActivitiesResponse = await fixture.requester.agent
+          .get(`/api/v1/tickets/${ticketId}/activity`)
+          .set('x-organization-id', fixture.organization.id)
+          .query({
+            actorId: fixture.agent.userId,
+          })
+          .expect(200);
+
+        expect(agentActivitiesResponse.body.length).toBeGreaterThan(0);
+
+        expect(
+          agentActivitiesResponse.body.every(
+            (activity: { actorId: string }) =>
+              activity.actorId === fixture.agent.userId,
+          ),
+        ).toBe(true);
+
+        // Combined filter
+        const combinedResponse = await fixture.requester.agent
+          .get(`/api/v1/tickets/${ticketId}/activity`)
+          .set('x-organization-id', fixture.organization.id)
+          .query({
+            type: 'STATUS_CHANGED',
+            category: 'WORKFLOW',
+            actorId: fixture.agent.userId,
+          })
+          .expect(200);
+
+        expect(combinedResponse.body).toHaveLength(1);
+
+        expect(combinedResponse.body[0]).toEqual(
+          expect.objectContaining({
+            ticketId,
+            type: 'STATUS_CHANGED',
+            category: 'WORKFLOW',
+            actorId: fixture.agent.userId,
+          }),
+        );
       });
+    });
+
+    it('should reject an unsupported activity type filter', async () => {
+      const ticketResponse = await fixture.requester.agent
+        .post('/api/v1/tickets')
+        .set('x-organization-id', fixture.organization.id)
+        .send({
+          title: '4-J.5 Invalid activity type',
+          description: 'Invalid activity type filter test.',
+          priority: 'MEDIUM',
+          type: 'INCIDENT',
+        })
+        .expect(201);
+
+      await fixture.requester.agent
+        .get(`/api/v1/tickets/${ticketResponse.body.id}/activity`)
+        .set('x-organization-id', fixture.organization.id)
+        .query({
+          type: 'NOT_A_REAL_ACTIVITY_TYPE',
+        })
+        .expect(400);
+    });
+
+    it('should reject an unsupported activity category filter', async () => {
+      const ticketResponse = await fixture.requester.agent
+        .post('/api/v1/tickets')
+        .set('x-organization-id', fixture.organization.id)
+        .send({
+          title: '4-J.5 Invalid activity category',
+          description: 'Invalid activity category filter test.',
+          priority: 'MEDIUM',
+          type: 'INCIDENT',
+        })
+        .expect(201);
+
+      await fixture.requester.agent
+        .get(`/api/v1/tickets/${ticketResponse.body.id}/activity`)
+        .set('x-organization-id', fixture.organization.id)
+        .query({
+          category: 'NOT_A_REAL_CATEGORY',
+        })
+        .expect(400);
     });
 
     it('should delete a comment and record the deletion activity', async () => {

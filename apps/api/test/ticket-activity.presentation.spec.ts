@@ -6,6 +6,7 @@ import {
   getTicketActivityTimeline,
   getTicketActivityDescription,
   getTicketActivityActorPresentation,
+  TICKET_ACTIVITY_CATEGORIES,
 } from '../src/modules/tickets/ticket-activity.presentation.js';
 
 describe('Ticket activity categorization', () => {
@@ -77,6 +78,16 @@ describe('Ticket activity categorization', () => {
     expect(
       getTicketActivityCategory(TicketActivityType.APPROVAL_CANCELLED),
     ).toBe('APPROVAL');
+  });
+
+  it('should expose the supported ticket activity categories', () => {
+    expect(TICKET_ACTIVITY_CATEGORIES).toEqual([
+      'TICKET',
+      'WORKFLOW',
+      'COMMUNICATION',
+      'SLA',
+      'APPROVAL',
+    ]);
   });
 });
 

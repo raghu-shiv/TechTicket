@@ -34,6 +34,7 @@ import { UpdateTicketStatusDto } from './dto/update-ticket-status.dto';
 import { ListTicketsDto } from './dto/list-tickets.dto';
 import { CreateTicketCommentDto } from './dto/create-ticket-comment.dto';
 import { UpdateTicketCommentDto } from './dto/update-ticket-comment.dto';
+import { TicketActivityQueryDto } from './dto/ticket-activity-query.dto';
 import { TicketActivityService } from './ticket-activity.service';
 
 @Controller('tickets')
@@ -217,8 +218,17 @@ export class TicketsController {
   async getTicketActivity(
     @OrganizationContextParam() context: OrganizationContext,
     @Param('ticketId') ticketId: string,
+    @Query() query: TicketActivityQueryDto,
   ) {
-    return this.ticketActivityService.findAll(context.organizationId, ticketId);
+    return this.ticketActivityService.findAll(
+      context.organizationId,
+      ticketId,
+      {
+        type: query.type,
+        category: query.category,
+        actorId: query.actorId,
+      },
+    );
   }
 
   @Get(':ticketId/comments')
