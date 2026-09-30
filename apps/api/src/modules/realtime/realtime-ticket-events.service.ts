@@ -110,12 +110,71 @@ export class RealtimeTicketEventsService {
       });
     }
 
+    /*
+     * Preserve the existing assignee-change realtime event.
+     */
     this.realtimeEventBroadcaster.broadcast({
       event: REALTIME_EVENTS.TICKET_ASSIGNEE_CHANGED,
       organizationId: event.organizationId,
       payload: event,
       targets,
     });
+
+    /*
+     * 4-I.7.2
+     *
+     * A ticket is in the unassigned queue when assigneeId === null.
+     *
+     * Queue transitions therefore happen only on:
+     *
+     * assigned -> unassigned : queue entry
+     * unassigned -> assigned : queue removal
+     *
+     * assigned -> assigned does not change queue membership.
+     */
+    const enteredUnassignedQueue =
+      event.previousAssigneeId !== null && event.assigneeId === null;
+
+    const leftUnassignedQueue =
+      event.previousAssigneeId === null && event.assigneeId !== null;
+
+    /*
+     * 4-I.7.4
+     *
+     * Ticket entered the unassigned queue.
+     */
+    if (enteredUnassignedQueue) {
+      this.realtimeEventBroadcaster.broadcast({
+        event: REALTIME_EVENTS.TICKET_UNASSIGNED_ADDED,
+        organizationId: event.organizationId,
+        payload: event,
+        targets: [
+          {
+            type: 'organization',
+            organizationId: event.organizationId,
+          },
+        ],
+      });
+    }
+
+    /*
+     * 4-I.7.3
+     *
+     * Ticket left the unassigned queue because it was assigned.
+     */
+    if (leftUnassignedQueue) {
+      this.realtimeEventBroadcaster.broadcast({
+        event: REALTIME_EVENTS.TICKET_UNASSIGNED_REMOVED,
+        organizationId: event.organizationId,
+        payload: event,
+        targets: [
+          {
+            type: 'organization',
+            organizationId: event.organizationId,
+          },
+        ],
+      });
+    }
   }
 
   @OnEvent(TICKET_EVENTS.TEAM_CHANGED)

@@ -6,6 +6,7 @@ import { createTestApp } from './helpers/app.helper.js';
 import { createOrganizationTestFixture } from './helpers/organization.helper.js';
 
 import { RealtimeService } from '../src/modules/realtime/realtime.service.js';
+import { REALTIME_EVENTS } from '../src/modules/realtime/realtime.types.js';
 import { REALTIME_ROOMS } from '../src/modules/realtime/realtime.rooms.js';
 import { TicketsService } from '../src/modules/tickets/tickets.service.js';
 import { RealtimeGateway } from '../src/modules/realtime/realtime.gateway.js';
@@ -905,6 +906,339 @@ describe('Realtime Authentication (e2e)', () => {
     } finally {
       socketRequester.disconnect();
       socketAgent.disconnect();
+    }
+  });
+
+  it('should broadcast unassigned queue addition when an assigned ticket is unassigned', async () => {
+    const fixture = await createOrganizationTestFixture(app);
+    const { organization } = fixture;
+
+    const ticket = await fixture.requester.agent
+      .post('/api/v1/tickets')
+      .set('x-organization-id', organization.id)
+      .send({
+        title: 'Realtime unassignment queue test',
+        description: 'Ticket should enter the unassigned queue in realtime.',
+        priority: 'MEDIUM',
+        type: 'INCIDENT',
+      })
+      .expect(201);
+
+    await fixture.admin.agent
+      .patch(`/api/v1/tickets/${ticket.body.id}/assignment`)
+      .set('x-organization-id', organization.id)
+      .send({
+        assigneeId: fixture.agent.userId,
+      })
+      .expect(200);
+
+    const cookieHeader = fixture.admin.cookies
+      .map((cookie) => cookie.split(';', 1)[0])
+      .join('; ');
+
+    const socket = io(`${baseUrl}/realtime`, {
+      transports: ['websocket'],
+      extraHeaders: {
+        Cookie: cookieHeader,
+        'x-organization-id': organization.id,
+      },
+      autoConnect: false,
+    });
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        socket.once('connect', () => resolve());
+        socket.once('connect_error', reject);
+        socket.connect();
+      });
+
+      const eventPromise = new Promise<{
+        ticketId: string;
+        organizationId: string;
+        previousAssigneeId: string | null;
+        assigneeId: string | null;
+      }>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(
+            new Error(
+              'Timed out waiting for realtime unassigned queue addition',
+            ),
+          );
+        }, 5000);
+
+        socket.once(REALTIME_EVENTS.TICKET_UNASSIGNED_ADDED, (payload) => {
+          clearTimeout(timeout);
+          resolve(payload);
+        });
+      });
+
+      await fixture.admin.agent
+        .patch(`/api/v1/tickets/${ticket.body.id}/assignment`)
+        .set('x-organization-id', organization.id)
+        .send({
+          assigneeId: null,
+        })
+        .expect(200);
+
+      const payload = await eventPromise;
+
+      expect(payload).toMatchObject({
+        ticketId: ticket.body.id,
+        organizationId: organization.id,
+        previousAssigneeId: fixture.agent.userId,
+        assigneeId: null,
+      });
+    } finally {
+      socket.disconnect();
+    }
+  });
+
+  it('should broadcast unassigned queue removal when an unassigned ticket is assigned', async () => {
+    const fixture = await createOrganizationTestFixture(app);
+    const { organization } = fixture;
+
+    const ticket = await fixture.requester.agent
+      .post('/api/v1/tickets')
+      .set('x-organization-id', organization.id)
+      .send({
+        title: 'Realtime assignment queue test',
+        description: 'Ticket should leave the unassigned queue in realtime.',
+        priority: 'MEDIUM',
+        type: 'INCIDENT',
+      })
+      .expect(201);
+
+    const cookieHeader = fixture.admin.cookies
+      .map((cookie) => cookie.split(';', 1)[0])
+      .join('; ');
+
+    const socket = io(`${baseUrl}/realtime`, {
+      transports: ['websocket'],
+      extraHeaders: {
+        Cookie: cookieHeader,
+        'x-organization-id': organization.id,
+      },
+      autoConnect: false,
+    });
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        socket.once('connect', () => resolve());
+        socket.once('connect_error', reject);
+        socket.connect();
+      });
+
+      const eventPromise = new Promise<{
+        ticketId: string;
+        organizationId: string;
+        previousAssigneeId: string | null;
+        assigneeId: string | null;
+      }>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(
+            new Error(
+              'Timed out waiting for realtime unassigned queue removal',
+            ),
+          );
+        }, 5000);
+
+        socket.once(REALTIME_EVENTS.TICKET_UNASSIGNED_REMOVED, (payload) => {
+          clearTimeout(timeout);
+          resolve(payload);
+        });
+      });
+
+      await fixture.admin.agent
+        .patch(`/api/v1/tickets/${ticket.body.id}/assignment`)
+        .set('x-organization-id', organization.id)
+        .send({
+          assigneeId: fixture.agent.userId,
+        })
+        .expect(200);
+
+      const payload = await eventPromise;
+
+      expect(payload).toMatchObject({
+        ticketId: ticket.body.id,
+        organizationId: organization.id,
+        previousAssigneeId: null,
+        assigneeId: fixture.agent.userId,
+      });
+    } finally {
+      socket.disconnect();
+    }
+  });
+
+  it('should not broadcast an unassigned queue event when changing between assigned users', async () => {
+    const fixture = await createOrganizationTestFixture(app);
+    const { organization } = fixture;
+
+    const ticket = await fixture.requester.agent
+      .post('/api/v1/tickets')
+      .set('x-organization-id', organization.id)
+      .send({
+        title: 'Realtime assignment-to-assignment test',
+        description:
+          'Changing assigned users must not change unassigned queue membership.',
+        priority: 'MEDIUM',
+        type: 'INCIDENT',
+      })
+      .expect(201);
+
+    await fixture.admin.agent
+      .patch(`/api/v1/tickets/${ticket.body.id}/assignment`)
+      .set('x-organization-id', organization.id)
+      .send({
+        assigneeId: fixture.agent.userId,
+      })
+      .expect(200);
+
+    const cookieHeader = fixture.admin.cookies
+      .map((cookie) => cookie.split(';', 1)[0])
+      .join('; ');
+
+    const socket = io(`${baseUrl}/realtime`, {
+      transports: ['websocket'],
+      extraHeaders: {
+        Cookie: cookieHeader,
+        'x-organization-id': organization.id,
+      },
+      autoConnect: false,
+    });
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        socket.once('connect', () => resolve());
+        socket.once('connect_error', reject);
+        socket.connect();
+      });
+
+      let added = false;
+      let removed = false;
+
+      socket.once(REALTIME_EVENTS.TICKET_UNASSIGNED_ADDED, () => {
+        added = true;
+      });
+
+      socket.once(REALTIME_EVENTS.TICKET_UNASSIGNED_REMOVED, () => {
+        removed = true;
+      });
+
+      await fixture.admin.agent
+        .patch(`/api/v1/tickets/${ticket.body.id}/assignment`)
+        .set('x-organization-id', organization.id)
+        .send({
+          assigneeId: fixture.owner.userId,
+        })
+        .expect(200);
+
+      await new Promise((resolve) => setTimeout(resolve, 200));
+
+      expect(added).toBe(false);
+      expect(removed).toBe(false);
+    } finally {
+      socket.disconnect();
+    }
+  });
+
+  it('should not broadcast unassigned queue events across organizations', async () => {
+    const fixtureA = await createOrganizationTestFixture(app);
+    const fixtureB = await createOrganizationTestFixture(app);
+
+    const ticket = await fixtureA.requester.agent
+      .post('/api/v1/tickets')
+      .set('x-organization-id', fixtureA.organization.id)
+      .send({
+        title: 'Organization isolated queue event',
+        description: 'This queue event must remain inside organization A.',
+        priority: 'MEDIUM',
+        type: 'INCIDENT',
+      })
+      .expect(201);
+
+    const cookieHeaderA = fixtureA.admin.cookies
+      .map((cookie) => cookie.split(';', 1)[0])
+      .join('; ');
+
+    const cookieHeaderB = fixtureB.owner.cookies
+      .map((cookie) => cookie.split(';', 1)[0])
+      .join('; ');
+
+    const socketA = io(`${baseUrl}/realtime`, {
+      transports: ['websocket'],
+      extraHeaders: {
+        Cookie: cookieHeaderA,
+        'x-organization-id': fixtureA.organization.id,
+      },
+      autoConnect: false,
+    });
+
+    const socketB = io(`${baseUrl}/realtime`, {
+      transports: ['websocket'],
+      extraHeaders: {
+        Cookie: cookieHeaderB,
+        'x-organization-id': fixtureB.organization.id,
+      },
+      autoConnect: false,
+    });
+
+    try {
+      await Promise.all([
+        new Promise<void>((resolve, reject) => {
+          socketA.once('connect', () => resolve());
+          socketA.once('connect_error', reject);
+          socketA.connect();
+        }),
+        new Promise<void>((resolve, reject) => {
+          socketB.once('connect', () => resolve());
+          socketB.once('connect_error', reject);
+          socketB.connect();
+        }),
+      ]);
+
+      const organizationBEvents: unknown[] = [];
+
+      socketB.on(REALTIME_EVENTS.TICKET_UNASSIGNED_REMOVED, (payload) => {
+        organizationBEvents.push(payload);
+      });
+
+      const eventPromise = new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(
+            new Error(
+              'Timed out waiting for organization A queue removal event',
+            ),
+          );
+        }, 5000);
+
+        socketA.once(REALTIME_EVENTS.TICKET_UNASSIGNED_REMOVED, (payload) => {
+          clearTimeout(timeout);
+
+          expect(payload).toMatchObject({
+            ticketId: ticket.body.id,
+            organizationId: fixtureA.organization.id,
+          });
+
+          resolve();
+        });
+      });
+
+      await fixtureA.admin.agent
+        .patch(`/api/v1/tickets/${ticket.body.id}/assignment`)
+        .set('x-organization-id', fixtureA.organization.id)
+        .send({
+          assigneeId: fixtureA.agent.userId,
+        })
+        .expect(200);
+
+      await eventPromise;
+
+      await new Promise((resolve) => setTimeout(resolve, 200));
+
+      expect(organizationBEvents).toHaveLength(0);
+    } finally {
+      socketA.disconnect();
+      socketB.disconnect();
     }
   });
 });

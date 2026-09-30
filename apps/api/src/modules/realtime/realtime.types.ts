@@ -20,6 +20,8 @@ export const REALTIME_EVENTS = {
   TICKET_UPDATED: 'ticket.updated',
   TICKET_STATUS_CHANGED: 'ticket.status.changed',
   TICKET_ASSIGNEE_CHANGED: 'ticket.assignee.changed',
+  TICKET_UNASSIGNED_ADDED: 'ticket.unassigned.added',
+  TICKET_UNASSIGNED_REMOVED: 'ticket.unassigned.removed',
   TICKET_TEAM_CHANGED: 'ticket.team.changed',
 
   TICKET_COMMENT_ADDED: 'ticket.comment.added',
