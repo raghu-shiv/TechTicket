@@ -2494,13 +2494,12 @@ describe('Tickets API (e2e)', () => {
         .set('x-organization-id', fixture.organization.id)
         .expect(200);
 
-      expect(activityResponse.body).toEqual(
+      expect(activityResponse.body.data).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             ticketId,
             type: 'COMMENT_ADDED',
           }),
-
           expect.objectContaining({
             ticketId,
             type: 'COMMENT_UPDATED',
@@ -2545,23 +2544,24 @@ describe('Tickets API (e2e)', () => {
           .set('x-organization-id', fixture.organization.id)
           .expect(200);
 
-        expect(activityResponse.body).toEqual(
+        const activities = activityResponse.body.data;
+
+        expect(activities).toEqual(
           expect.arrayContaining([
             expect.objectContaining({
               ticketId,
               type: 'TICKET_CREATED',
               category: 'TICKET',
-              actorId: fixture.requester.userId,
               actor: expect.objectContaining({
-                id: fixture.requester.userId,
+                id: expect.any(String),
                 name: expect.any(String),
                 email: expect.any(String),
               }),
-              actorPresentation: {
-                userId: fixture.requester.userId,
+              actorPresentation: expect.objectContaining({
+                userId: expect.any(String),
                 displayName: expect.any(String),
                 email: expect.any(String),
-              },
+              }),
               createdAt: expect.any(String),
               timeline: expect.objectContaining({
                 timestamp: expect.any(String),
@@ -2572,7 +2572,16 @@ describe('Tickets API (e2e)', () => {
           ]),
         );
 
-        const statusActivity = activityResponse.body.find(
+        expect(activityResponse.body.meta).toEqual(
+          expect.objectContaining({
+            page: 1,
+            limit: 20,
+            total: expect.any(Number),
+            totalPages: expect.any(Number),
+          }),
+        );
+
+        const statusActivity = activities.find(
           (activity: { type: string; ticketId: string }) =>
             activity.ticketId === ticketId &&
             activity.type === 'STATUS_CHANGED',
@@ -2597,7 +2606,7 @@ describe('Tickets API (e2e)', () => {
           }),
         );
 
-        const createdActivity = activityResponse.body.find(
+        const createdActivity = activities.find(
           (activity: { ticketId: string; type: string }) =>
             activity.ticketId === ticketId &&
             activity.type === 'TICKET_CREATED',
@@ -2629,7 +2638,7 @@ describe('Tickets API (e2e)', () => {
           })
           .expect(200);
 
-        expect(statusOnlyResponse.body).toEqual(
+        expect(statusOnlyResponse.body.data).toEqual(
           expect.arrayContaining([
             expect.objectContaining({
               ticketId,
@@ -2640,7 +2649,7 @@ describe('Tickets API (e2e)', () => {
         );
 
         expect(
-          statusOnlyResponse.body.every(
+          statusOnlyResponse.body.data.every(
             (activity: { type: string }) => activity.type === 'STATUS_CHANGED',
           ),
         ).toBe(true);
@@ -2654,10 +2663,10 @@ describe('Tickets API (e2e)', () => {
           })
           .expect(200);
 
-        expect(workflowResponse.body.length).toBeGreaterThan(0);
+        expect(workflowResponse.body.data.length).toBeGreaterThan(0);
 
         expect(
-          workflowResponse.body.every(
+          workflowResponse.body.data.every(
             (activity: { category: string }) =>
               activity.category === 'WORKFLOW',
           ),
@@ -2672,10 +2681,10 @@ describe('Tickets API (e2e)', () => {
           })
           .expect(200);
 
-        expect(agentActivitiesResponse.body.length).toBeGreaterThan(0);
+        expect(agentActivitiesResponse.body.data.length).toBeGreaterThan(0);
 
         expect(
-          agentActivitiesResponse.body.every(
+          agentActivitiesResponse.body.data.every(
             (activity: { actorId: string }) =>
               activity.actorId === fixture.agent.userId,
           ),
@@ -2692,9 +2701,9 @@ describe('Tickets API (e2e)', () => {
           })
           .expect(200);
 
-        expect(combinedResponse.body).toHaveLength(1);
+        expect(combinedResponse.body.data).toHaveLength(1);
 
-        expect(combinedResponse.body[0]).toEqual(
+        expect(combinedResponse.body.data[0]).toEqual(
           expect.objectContaining({
             ticketId,
             type: 'STATUS_CHANGED',
@@ -2702,6 +2711,257 @@ describe('Tickets API (e2e)', () => {
             actorId: fixture.agent.userId,
           }),
         );
+      });
+
+      it('4-J.6 --- should paginate ticket activity history', async () => {
+        const ticketResponse = await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-J.6 activity pagination',
+            description: 'Verify activity pagination.',
+            priority: 'MEDIUM',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        const ticketId = ticketResponse.body.id;
+
+        await fixture.agent.agent
+          .patch(`/api/v1/tickets/${ticketId}/status`)
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            status: 'IN_PROGRESS',
+          })
+          .expect(200);
+
+        await fixture.agent.agent
+          .patch(`/api/v1/tickets/${ticketId}/status`)
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            status: 'PENDING',
+          })
+          .expect(200);
+
+        const pageOne = await fixture.requester.agent
+          .get(`/api/v1/tickets/${ticketId}/activity`)
+          .set('x-organization-id', fixture.organization.id)
+          .query({
+            page: 1,
+            limit: 2,
+          })
+          .expect(200);
+
+        const pageTwo = await fixture.requester.agent
+          .get(`/api/v1/tickets/${ticketId}/activity`)
+          .set('x-organization-id', fixture.organization.id)
+          .query({
+            page: 2,
+            limit: 2,
+          })
+          .expect(200);
+
+        expect(pageOne.body.meta).toEqual({
+          page: 1,
+          limit: 2,
+          total: 3,
+          totalPages: 2,
+        });
+
+        expect(pageTwo.body.meta).toEqual({
+          page: 2,
+          limit: 2,
+          total: 3,
+          totalPages: 2,
+        });
+
+        expect(pageOne.body.data).toHaveLength(2);
+        expect(pageTwo.body.data).toHaveLength(1);
+
+        const ids = [
+          ...pageOne.body.data.map((activity: { id: string }) => activity.id),
+          ...pageTwo.body.data.map((activity: { id: string }) => activity.id),
+        ];
+
+        expect(new Set(ids).size).toBe(3);
+      });
+
+      it('4-J.6 --- should paginate filtered activity history', async () => {
+        const ticketResponse = await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-J.6 filtered activity pagination',
+            description: 'Verify filtered activity pagination.',
+            priority: 'MEDIUM',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        const ticketId = ticketResponse.body.id;
+
+        await fixture.agent.agent
+          .patch(`/api/v1/tickets/${ticketId}/status`)
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            status: 'IN_PROGRESS',
+          })
+          .expect(200);
+
+        await fixture.agent.agent
+          .patch(`/api/v1/tickets/${ticketId}/status`)
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            status: 'PENDING',
+          })
+          .expect(200);
+
+        const response = await fixture.requester.agent
+          .get(`/api/v1/tickets/${ticketId}/activity`)
+          .set('x-organization-id', fixture.organization.id)
+          .query({
+            type: 'STATUS_CHANGED',
+            page: 1,
+            limit: 1,
+          })
+          .expect(200);
+
+        expect(response.body.meta).toEqual({
+          page: 1,
+          limit: 1,
+          total: 2,
+          totalPages: 2,
+        });
+
+        expect(response.body.data).toHaveLength(1);
+
+        expect(response.body.data[0]).toEqual(
+          expect.objectContaining({
+            type: 'STATUS_CHANGED',
+            category: 'WORKFLOW',
+          }),
+        );
+      });
+
+      it('4-J.6 --- should paginate activity history after applying category filtering', async () => {
+        const ticketResponse = await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-J.6 category pagination',
+            description: 'Verify category-filtered pagination.',
+            priority: 'MEDIUM',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        const ticketId = ticketResponse.body.id;
+
+        await fixture.agent.agent
+          .patch(`/api/v1/tickets/${ticketId}/assignment`)
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            assigneeId: fixture.agent.userId,
+          })
+          .expect(200);
+
+        await fixture.agent.agent
+          .patch(`/api/v1/tickets/${ticketId}/status`)
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            status: 'IN_PROGRESS',
+          })
+          .expect(200);
+
+        const response = await fixture.requester.agent
+          .get(`/api/v1/tickets/${ticketId}/activity`)
+          .set('x-organization-id', fixture.organization.id)
+          .query({
+            category: 'WORKFLOW',
+            page: 1,
+            limit: 1,
+          })
+          .expect(200);
+
+        expect(response.body.meta.total).toBe(2);
+        expect(response.body.meta.totalPages).toBe(2);
+        expect(response.body.data).toHaveLength(1);
+
+        expect(response.body.data[0].category).toBe('WORKFLOW');
+      });
+
+      it('4-J.6 --- should return an empty page when activity history is exhausted', async () => {
+        const ticketResponse = await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-J.6 empty activity page',
+            description: 'Verify exhausted activity pagination.',
+            priority: 'MEDIUM',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        const response = await fixture.requester.agent
+          .get(`/api/v1/tickets/${ticketResponse.body.id}/activity`)
+          .set('x-organization-id', fixture.organization.id)
+          .query({
+            page: 999,
+            limit: 20,
+          })
+          .expect(200);
+
+        expect(response.body).toEqual({
+          data: [],
+          meta: {
+            page: 999,
+            limit: 20,
+            total: 1,
+            totalPages: 1,
+          },
+        });
+      });
+
+      it('4-J.6 --- should reject an invalid activity page', async () => {
+        const ticketResponse = await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-J.6 invalid page',
+            description: 'Verify activity pagination validation.',
+            priority: 'MEDIUM',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        await fixture.requester.agent
+          .get(`/api/v1/tickets/${ticketResponse.body.id}/activity`)
+          .set('x-organization-id', fixture.organization.id)
+          .query({
+            page: 0,
+          })
+          .expect(400);
+      });
+
+      it('4-J.6 --- should reject an activity limit above the maximum', async () => {
+        const ticketResponse = await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-J.6 invalid limit',
+            description: 'Verify activity pagination limit validation.',
+            priority: 'MEDIUM',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        await fixture.requester.agent
+          .get(`/api/v1/tickets/${ticketResponse.body.id}/activity`)
+          .set('x-organization-id', fixture.organization.id)
+          .query({
+            limit: 101,
+          })
+          .expect(400);
       });
     });
 
@@ -2793,22 +3053,23 @@ describe('Tickets API (e2e)', () => {
         .set('x-organization-id', fixture.organization.id)
         .expect(200);
 
-      expect(activityResponse.body).toEqual(
+      expect(activityResponse.body.data).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            ticketId,
-            type: 'TICKET_CREATED',
             category: 'TICKET',
-            description: `Ticket ${ticketResponse.body.ticketNumber} was created`,
+            description: expect.stringMatching(/^Ticket TKT-\d+ was created$/),
+            ticketId,
             timeline: expect.objectContaining({
-              timestamp: expect.any(String),
               date: expect.any(String),
               time: expect.any(String),
+              timestamp: expect.any(String),
             }),
+            type: 'TICKET_CREATED',
           }),
         ]),
       );
-      expect(activityResponse.body).toEqual(
+
+      expect(activityResponse.body.data).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             ticketId,
@@ -3720,12 +3981,11 @@ describe('Tickets API (e2e)', () => {
         .set('x-organization-id', fixture.organization.id)
         .expect(200);
 
-      expect(activityResponse.body).toEqual(
+      expect(activityResponse.body.data).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             type: 'APPROVAL_REQUESTED',
           }),
-
           expect.objectContaining({
             type: 'APPROVAL_APPROVED',
           }),

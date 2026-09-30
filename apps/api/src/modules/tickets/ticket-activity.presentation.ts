@@ -241,3 +241,51 @@ export function getTicketActivityDescription(
     }
   }
 }
+
+export function getTicketActivityTypesForCategory(
+  category: TicketActivityCategory,
+): TicketActivityType[] {
+  switch (category) {
+    case 'TICKET':
+      return [
+        TicketActivityType.TICKET_CREATED,
+        TicketActivityType.TICKET_UPDATED,
+        TicketActivityType.PRIORITY_CHANGED,
+      ];
+
+    case 'WORKFLOW':
+      return [
+        TicketActivityType.STATUS_CHANGED,
+        TicketActivityType.ASSIGNEE_CHANGED,
+        TicketActivityType.TEAM_CHANGED,
+      ];
+
+    case 'COMMUNICATION':
+      return [
+        TicketActivityType.COMMENT_ADDED,
+        TicketActivityType.COMMENT_UPDATED,
+        TicketActivityType.COMMENT_DELETED,
+      ];
+
+    case 'SLA':
+      return [
+        TicketActivityType.SLA_FIRST_RESPONSE_BREACHED,
+        TicketActivityType.SLA_RESOLUTION_BREACHED,
+      ];
+
+    case 'APPROVAL':
+      return [
+        TicketActivityType.APPROVAL_REQUESTED,
+        TicketActivityType.APPROVAL_APPROVED,
+        TicketActivityType.APPROVAL_REJECTED,
+        TicketActivityType.APPROVAL_CANCELLED,
+      ];
+
+    default: {
+      const exhaustiveCheck: never = category;
+      throw new Error(
+        `Unsupported ticket activity category: ${String(exhaustiveCheck)}`,
+      );
+    }
+  }
+}

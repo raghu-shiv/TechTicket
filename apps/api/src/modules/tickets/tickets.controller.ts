@@ -224,6 +224,8 @@ export class TicketsController {
       context.organizationId,
       ticketId,
       {
+        page: query.page,
+        limit: query.limit,
         type: query.type,
         category: query.category,
         actorId: query.actorId,

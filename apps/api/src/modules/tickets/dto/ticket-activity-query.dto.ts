@@ -1,4 +1,13 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import {
+  IsEnum,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 import { TicketActivityType } from '@prisma/client';
 
 import {
@@ -8,11 +17,24 @@ import {
 
 export class TicketActivityQueryDto {
   @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page: number = 1;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit: number = 20;
+
+  @IsOptional()
   @IsEnum(TicketActivityType)
   type?: TicketActivityType;
 
   @IsOptional()
-  @IsEnum(TICKET_ACTIVITY_CATEGORIES)
+  @IsIn(TICKET_ACTIVITY_CATEGORIES)
   category?: TicketActivityCategory;
 
   @IsOptional()

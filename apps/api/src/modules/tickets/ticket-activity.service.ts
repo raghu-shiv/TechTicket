@@ -7,6 +7,7 @@ import {
   getTicketActivityDescription,
   getTicketActivityTimeline,
   getTicketActivityActorPresentation,
+  getTicketActivityTypesForCategory,
   type TicketActivityCategory,
 } from './ticket-activity.presentation.js';
 
@@ -18,6 +19,8 @@ export class TicketActivityService {
     organizationId: string,
     ticketId: string,
     filters: {
+      page?: number;
+      limit?: number;
       type?: TicketActivityType;
       category?: TicketActivityCategory;
       actorId?: string;
@@ -37,40 +40,65 @@ export class TicketActivityService {
       throw new NotFoundException('Ticket not found');
     }
 
+    const page = filters.page ?? 1;
+    const limit = filters.limit ?? 20;
+    const skip = (page - 1) * limit;
+
+    const typeFilter =
+      filters.type !== undefined || filters.category !== undefined
+        ? {
+            type: {
+              ...(filters.type !== undefined && {
+                equals: filters.type,
+              }),
+              ...(filters.category !== undefined && {
+                in: getTicketActivityTypesForCategory(filters.category),
+              }),
+            },
+          }
+        : {};
+
     const activityWhere = {
       ticketId: ticket.id,
       organizationId,
-      ...(filters.type !== undefined && {
-        type: filters.type,
-      }),
+      ...typeFilter,
       ...(filters.actorId !== undefined && {
         actorId: filters.actorId,
       }),
     };
-    const activities = await this.database.ticketActivity.findMany({
-      where: activityWhere,
-      orderBy: {
-        createdAt: 'asc',
-      },
-      select: {
-        id: true,
-        ticketId: true,
-        organizationId: true,
-        actorId: true,
-        type: true,
-        metadata: true,
-        createdAt: true,
-        actor: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
+
+    const [activities, total] = await Promise.all([
+      this.database.ticketActivity.findMany({
+        where: activityWhere,
+        skip,
+        take: limit,
+        orderBy: {
+          createdAt: 'asc',
+        },
+        select: {
+          id: true,
+          ticketId: true,
+          organizationId: true,
+          actorId: true,
+          type: true,
+          metadata: true,
+          createdAt: true,
+          actor: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
           },
         },
-      },
-    });
+      }),
 
-    const presentedActivities = activities.map((activity) => ({
+      this.database.ticketActivity.count({
+        where: activityWhere,
+      }),
+    ]);
+
+    const data = activities.map((activity) => ({
       ...activity,
       category: getTicketActivityCategory(activity.type),
       timeline: getTicketActivityTimeline(activity.createdAt),
@@ -81,11 +109,15 @@ export class TicketActivityService {
       actorPresentation: getTicketActivityActorPresentation(activity.actor),
     }));
 
-    return filters.category === undefined
-      ? presentedActivities
-      : presentedActivities.filter(
-          (activity) => activity.category === filters.category,
-        );
+    return {
+      data,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async create(input: {
