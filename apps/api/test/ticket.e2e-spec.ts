@@ -512,6 +512,289 @@ describe('Tickets API (e2e)', () => {
         ),
       ).toBe(true);
     });
+
+    describe('4-I.3 --- Dedicated unassigned queue API coverage', () => {
+      it('should expose the unassigned queue through the ticket list endpoint', async () => {
+        const response = await fixture.requester.agent
+          .get('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .query({
+            unassigned: true,
+          })
+          .expect(200);
+
+        expect(response.body).toEqual(
+          expect.objectContaining({
+            data: expect.any(Array),
+            meta: expect.objectContaining({
+              page: 1,
+              limit: 20,
+              total: expect.any(Number),
+              totalPages: expect.any(Number),
+            }),
+          }),
+        );
+
+        expect(
+          response.body.data.every(
+            (ticket: { assigneeId: string | null }) =>
+              ticket.assigneeId === null,
+          ),
+        ).toBe(true);
+      });
+
+      it('should return the expected paginated response shape for the unassigned queue', async () => {
+        await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-I.3 Queue Contract One',
+            description: 'Dedicated API coverage ticket one.',
+            priority: 'LOW',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-I.3 Queue Contract Two',
+            description: 'Dedicated API coverage ticket two.',
+            priority: 'MEDIUM',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        const response = await fixture.requester.agent
+          .get('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .query({
+            unassigned: true,
+            page: 1,
+            limit: 1,
+          })
+          .expect(200);
+
+        expect(response.body).toEqual(
+          expect.objectContaining({
+            data: expect.any(Array),
+            meta: expect.objectContaining({
+              page: 1,
+              limit: 1,
+              total: expect.any(Number),
+              totalPages: expect.any(Number),
+            }),
+          }),
+        );
+
+        expect(response.body.data.length).toBeLessThanOrEqual(1);
+
+        expect(
+          response.body.data.every(
+            (ticket: { assigneeId: string | null }) =>
+              ticket.assigneeId === null,
+          ),
+        ).toBe(true);
+      });
+
+      it('should honor the unassigned filter together with ticket status filtering', async () => {
+        const openTicket = await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-I.3 Open Unassigned Ticket',
+            description: 'Unassigned OPEN ticket for API filter coverage.',
+            priority: 'MEDIUM',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        const pendingTicket = await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-I.3 Pending Unassigned Ticket',
+            description: 'Unassigned PENDING ticket for API filter coverage.',
+            priority: 'MEDIUM',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        await fixture.agent.agent
+          .patch(`/api/v1/tickets/${pendingTicket.body.id}/status`)
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            status: 'PENDING',
+          })
+          .expect(200);
+
+        const response = await fixture.requester.agent
+          .get('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .query({
+            unassigned: true,
+            status: 'PENDING',
+          })
+          .expect(200);
+
+        expect(response.body.data).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              id: pendingTicket.body.id,
+              assigneeId: null,
+              status: 'PENDING',
+            }),
+          ]),
+        );
+
+        expect(response.body.data).not.toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              id: openTicket.body.id,
+            }),
+          ]),
+        );
+
+        expect(
+          response.body.data.every(
+            (ticket: { assigneeId: string | null; status: string }) =>
+              ticket.assigneeId === null && ticket.status === 'PENDING',
+          ),
+        ).toBe(true);
+      });
+
+      it('should honor the unassigned filter together with ticket priority filtering', async () => {
+        const lowTicket = await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-I.3 Low Priority Queue Ticket',
+            description: 'Unassigned LOW ticket.',
+            priority: 'LOW',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        const highTicket = await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-I.3 High Priority Queue Ticket',
+            description: 'Unassigned HIGH ticket.',
+            priority: 'HIGH',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        const response = await fixture.requester.agent
+          .get('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .query({
+            unassigned: true,
+            priority: 'HIGH',
+          })
+          .expect(200);
+
+        expect(response.body.data).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              id: highTicket.body.id,
+              assigneeId: null,
+              priority: 'HIGH',
+            }),
+          ]),
+        );
+
+        expect(response.body.data).not.toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              id: lowTicket.body.id,
+            }),
+          ]),
+        );
+
+        expect(
+          response.body.data.every(
+            (ticket: { assigneeId: string | null; priority: string }) =>
+              ticket.assigneeId === null && ticket.priority === 'HIGH',
+          ),
+        ).toBe(true);
+      });
+
+      it('should honor search within the unassigned queue', async () => {
+        const matchingTicket = await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-I.3 Unique VPN Queue Incident',
+            description: 'Dedicated search target for the unassigned queue.',
+            priority: 'HIGH',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-I.3 Different Queue Incident',
+            description: 'Should not match the dedicated search.',
+            priority: 'HIGH',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        const response = await fixture.requester.agent
+          .get('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .query({
+            unassigned: true,
+            search: 'Unique VPN Queue',
+          })
+          .expect(200);
+
+        expect(response.body.data).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              id: matchingTicket.body.id,
+              assigneeId: null,
+            }),
+          ]),
+        );
+
+        expect(
+          response.body.data.every(
+            (ticket: { assigneeId: string | null; id: string }) =>
+              ticket.assigneeId === null,
+          ),
+        ).toBe(true);
+      });
+
+      it('should return an empty data array when the requested unassigned page is beyond the available results', async () => {
+        const response = await fixture.requester.agent
+          .get('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .query({
+            unassigned: true,
+            page: 999,
+            limit: 20,
+          })
+          .expect(200);
+
+        expect(response.body).toEqual(
+          expect.objectContaining({
+            data: [],
+            meta: expect.objectContaining({
+              page: 999,
+              limit: 20,
+              total: expect.any(Number),
+              totalPages: expect.any(Number),
+            }),
+          }),
+        );
+      });
+    });
   });
 
   describe('PATCH /api/v1/tickets/:ticketId/assignment', () => {
