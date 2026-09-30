@@ -1,8 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import { Buffer } from 'node:buffer';
-import { INestApplication } from '@nestjs/common';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { INestApplication } from '@nestjs/common';
+import request from 'supertest';
+
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { DatabaseService } from '../src/database/database.service.js';
 import { createTestApp } from './helpers/app.helper.js';
 import {
@@ -792,6 +794,194 @@ describe('Tickets API (e2e)', () => {
               totalPages: expect.any(Number),
             }),
           }),
+        );
+      });
+    });
+
+    describe('4-I.4 --- Authorization and organization isolation', () => {
+      it('should reject unauthenticated access to the unassigned queue', async () => {
+        const response = await request(app.getHttpServer())
+          .get('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .query({
+            unassigned: true,
+          })
+          .expect(401);
+
+        expect(response.body).toMatchObject({
+          message: 'Authentication required',
+          error: 'Unauthorized',
+          statusCode: 401,
+        });
+      });
+
+      it('should reject authenticated access to the unassigned queue without organization context', async () => {
+        const response = await fixture.agent.agent
+          .get('/api/v1/tickets')
+          .query({
+            unassigned: true,
+          })
+          .expect(401);
+
+        expect(response.body).toMatchObject({
+          message: 'Organization context is required',
+          error: 'Unauthorized',
+          statusCode: 401,
+        });
+      });
+
+      it('should reject a user who is not a member of the requested organization', async () => {
+        const otherFixture = await createOrganizationTestFixture(app);
+
+        try {
+          const response = await otherFixture.agent.agent
+            .get('/api/v1/tickets')
+            .set('x-organization-id', fixture.organization.id)
+            .query({
+              unassigned: true,
+            })
+            .expect(403);
+
+          expect(response.body).toMatchObject({
+            message: 'You do not have access to this organization',
+            error: 'Forbidden',
+            statusCode: 403,
+          });
+        } finally {
+          await database.organization.delete({
+            where: {
+              id: otherFixture.organization.id,
+            },
+          });
+
+          await database.user.deleteMany({
+            where: {
+              id: {
+                in: [
+                  otherFixture.owner.userId,
+                  otherFixture.admin.userId,
+                  otherFixture.agent.userId,
+                  otherFixture.requester.userId,
+                ],
+              },
+            },
+          });
+        }
+      });
+
+      it('should not expose unassigned tickets from another organization', async () => {
+        const otherFixture = await createOrganizationTestFixture(app);
+
+        try {
+          const ownTicket = await fixture.requester.agent
+            .post('/api/v1/tickets')
+            .set('x-organization-id', fixture.organization.id)
+            .send({
+              title: '4-I.4 Own Unassigned Ticket',
+              description:
+                'Unassigned ticket belonging to the current organization.',
+              priority: 'MEDIUM',
+              type: 'INCIDENT',
+            })
+            .expect(201);
+
+          const foreignTicket = await otherFixture.requester.agent
+            .post('/api/v1/tickets')
+            .set('x-organization-id', otherFixture.organization.id)
+            .send({
+              title: '4-I.4 Foreign Unassigned Ticket',
+              description:
+                'Unassigned ticket belonging to another organization.',
+              priority: 'MEDIUM',
+              type: 'INCIDENT',
+            })
+            .expect(201);
+
+          const response = await fixture.agent.agent
+            .get('/api/v1/tickets')
+            .set('x-organization-id', fixture.organization.id)
+            .query({
+              unassigned: true,
+            })
+            .expect(200);
+
+          expect(response.body.data).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                id: ownTicket.body.id,
+                organizationId: fixture.organization.id,
+                assigneeId: null,
+              }),
+            ]),
+          );
+
+          expect(response.body.data).not.toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                id: foreignTicket.body.id,
+                organizationId: otherFixture.organization.id,
+              }),
+            ]),
+          );
+
+          expect(
+            response.body.data.every(
+              (ticket: { organizationId: string; assigneeId: string | null }) =>
+                ticket.organizationId === fixture.organization.id &&
+                ticket.assigneeId === null,
+            ),
+          ).toBe(true);
+        } finally {
+          await database.organization.delete({
+            where: {
+              id: otherFixture.organization.id,
+            },
+          });
+
+          await database.user.deleteMany({
+            where: {
+              id: {
+                in: [
+                  otherFixture.owner.userId,
+                  otherFixture.admin.userId,
+                  otherFixture.agent.userId,
+                  otherFixture.requester.userId,
+                ],
+              },
+            },
+          });
+        }
+      });
+
+      it('should allow an authenticated organization member to access the unassigned queue', async () => {
+        const ticket = await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-I.4 Member Queue Access',
+            description:
+              'Unassigned ticket used to verify organization member access.',
+            priority: 'LOW',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        const response = await fixture.requester.agent
+          .get('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .query({
+            unassigned: true,
+          })
+          .expect(200);
+
+        expect(response.body.data).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              id: ticket.body.id,
+              organizationId: fixture.organization.id,
+              assigneeId: null,
+            }),
+          ]),
         );
       });
     });
