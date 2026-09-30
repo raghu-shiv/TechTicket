@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Prisma, TicketActivityType } from '@prisma/client';
 
 import { DatabaseService } from '../../database/database.service';
@@ -10,10 +11,42 @@ import {
   getTicketActivityTypesForCategory,
   type TicketActivityCategory,
 } from './ticket-activity.presentation.js';
+import { TICKET_EVENTS } from './ticket-events';
+
+export interface TicketActivityCreatedEvent {
+  id: string;
+  ticketId: string;
+  organizationId: string;
+  actorId: string | null;
+  type: TicketActivityType;
+  metadata: Prisma.JsonValue;
+  createdAt: Date;
+
+  actor: {
+    id: string;
+    name: string;
+    email: string;
+  } | null;
+
+  category: TicketActivityCategory;
+
+  description: string;
+
+  timeline: {
+    date: string;
+    time: string;
+    timestamp: string;
+  };
+
+  actorPresentation: ReturnType<typeof getTicketActivityActorPresentation>;
+}
 
 @Injectable()
 export class TicketActivityService {
-  constructor(private readonly database: DatabaseService) {}
+  constructor(
+    private readonly database: DatabaseService,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
   async findAll(
     organizationId: string,
@@ -98,16 +131,7 @@ export class TicketActivityService {
       }),
     ]);
 
-    const data = activities.map((activity) => ({
-      ...activity,
-      category: getTicketActivityCategory(activity.type),
-      timeline: getTicketActivityTimeline(activity.createdAt),
-      description: getTicketActivityDescription(
-        activity.type,
-        activity.metadata as Record<string, unknown> | null,
-      ),
-      actorPresentation: getTicketActivityActorPresentation(activity.actor),
-    }));
+    const data = activities.map((activity) => this.present(activity));
 
     return {
       data,
@@ -126,8 +150,9 @@ export class TicketActivityService {
     actorId?: string | null;
     type: TicketActivityType;
     metadata?: Prisma.InputJsonValue;
-  }) {
-    return this.database.ticketActivity.create({
+    createdAt?: Date;
+  }): Promise<TicketActivityCreatedEvent> {
+    const activity = await this.database.ticketActivity.create({
       data: {
         ticketId: input.ticketId,
         organizationId: input.organizationId,
@@ -136,7 +161,62 @@ export class TicketActivityService {
         ...(input.metadata !== undefined && {
           metadata: input.metadata,
         }),
+        ...(input.createdAt !== undefined && {
+          createdAt: input.createdAt,
+        }),
+      },
+      select: {
+        id: true,
+        ticketId: true,
+        organizationId: true,
+        actorId: true,
+        type: true,
+        metadata: true,
+        createdAt: true,
+        actor: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
       },
     });
+
+    const presentedActivity = this.present(activity);
+
+    this.eventEmitter.emit(TICKET_EVENTS.ACTIVITY_CREATED, presentedActivity);
+
+    return presentedActivity;
+  }
+
+  present(activity: {
+    id: string;
+    ticketId: string;
+    organizationId: string;
+    actorId: string | null;
+    type: TicketActivityType;
+    metadata: Prisma.JsonValue;
+    createdAt: Date;
+    actor: {
+      id: string;
+      name: string;
+      email: string;
+    } | null;
+  }): TicketActivityCreatedEvent {
+    return {
+      ...activity,
+
+      category: getTicketActivityCategory(activity.type),
+
+      timeline: getTicketActivityTimeline(activity.createdAt),
+
+      description: getTicketActivityDescription(
+        activity.type,
+        activity.metadata as Record<string, unknown> | null,
+      ),
+
+      actorPresentation: getTicketActivityActorPresentation(activity.actor),
+    };
   }
 }

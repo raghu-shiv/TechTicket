@@ -402,4 +402,47 @@ describe('RealtimeTicketEventsService', () => {
       },
     ]);
   });
+
+  it('should broadcast ticket activity creation to organization and ticket rooms', async () => {
+    const event = {
+      id: 'activity-1',
+      ticketId: 'ticket-1',
+      organizationId: 'org-1',
+      actorId: 'user-1',
+      type: 'STATUS_CHANGED',
+      metadata: {
+        from: 'OPEN',
+        to: 'IN_PROGRESS',
+      },
+      createdAt: new Date(),
+      actor: {
+        id: 'user-1',
+        name: 'Test User',
+        email: 'test@example.com',
+      },
+    };
+
+    eventEmitter.emit(TICKET_EVENTS.ACTIVITY_CREATED, event);
+
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(broadcaster.broadcast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: REALTIME_EVENTS.TICKET_ACTIVITY_CREATED,
+        organizationId: 'org-1',
+        payload: event,
+        targets: [
+          {
+            type: 'organization',
+            organizationId: 'org-1',
+          },
+          {
+            type: 'ticket',
+            organizationId: 'org-1',
+            ticketId: 'ticket-1',
+          },
+        ],
+      }),
+    );
+  });
 });

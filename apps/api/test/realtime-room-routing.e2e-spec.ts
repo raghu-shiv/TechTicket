@@ -13,6 +13,7 @@ import {
   REALTIME_ROOMS,
 } from '../src/modules/realtime/realtime.types.js';
 import { TicketsService } from '../src/modules/tickets/tickets.service.js';
+import { TicketActivityService } from '../src/modules/tickets/ticket-activity.service.js';
 
 describe('Realtime room routing (e2e)', () => {
   let app: INestApplication;
@@ -294,6 +295,152 @@ describe('Realtime room routing (e2e)', () => {
       ).toBe(false);
     } finally {
       socket.disconnect();
+    }
+  });
+
+  it('should deliver ticket activity history events to subscribed ticket sockets', async () => {
+    const fixture = await createOrganizationTestFixture(app);
+
+    const ticketsService = app.get(TicketsService);
+
+    const ticket = await ticketsService.create(
+      {
+        userId: fixture.owner.userId,
+        organizationId: fixture.organization.id,
+        role: fixture.owner.role,
+      },
+      {
+        title: 'Realtime history test',
+        description: 'Verify realtime activity delivery.',
+      },
+    );
+
+    const socket = createSocket(fixture.owner.cookies, fixture.organization.id);
+
+    try {
+      await connectSocket(socket);
+
+      const realtimeService = app.get(RealtimeService);
+      const gateway = app.get(RealtimeGateway);
+
+      const connectedSocket = realtimeService
+        .getNamespace()
+        .sockets.get(socket.id);
+
+      expect(connectedSocket).toBeDefined();
+
+      if (!connectedSocket) {
+        throw new Error('Connected socket was not found');
+      }
+
+      await gateway.joinTicketRoom(connectedSocket, ticket.id);
+
+      const activityEvent = new Promise<{
+        ticketId: string;
+        type: string;
+        category: string;
+        description: string;
+      }>((resolve) => {
+        socket.once(REALTIME_EVENTS.TICKET_ACTIVITY_CREATED, resolve);
+      });
+
+      await ticketsService.updateStatus(
+        {
+          userId: fixture.owner.userId,
+          organizationId: fixture.organization.id,
+          role: fixture.owner.role,
+        },
+        ticket.id,
+        'IN_PROGRESS',
+      );
+
+      const event = await activityEvent;
+
+      expect(event).toEqual(
+        expect.objectContaining({
+          ticketId: ticket.id,
+          type: 'STATUS_CHANGED',
+          category: 'WORKFLOW',
+          description: 'Status changed from OPEN to IN_PROGRESS',
+        }),
+      );
+    } finally {
+      socket.disconnect();
+    }
+  });
+
+  it('should not deliver ticket activity events to another organization', async () => {
+    const fixtureA = await createOrganizationTestFixture(app);
+    const fixtureB = await createOrganizationTestFixture(app);
+
+    const ticketsService = app.get(TicketsService);
+
+    const ticketA = await ticketsService.create(
+      {
+        userId: fixtureA.owner.userId,
+        organizationId: fixtureA.organization.id,
+        role: fixtureA.owner.role,
+      },
+      {
+        title: 'Org A realtime history',
+        description: 'Organization A ticket.',
+      },
+    );
+
+    const socketA = createSocket(
+      fixtureA.owner.cookies,
+      fixtureA.organization.id,
+    );
+
+    const socketB = createSocket(
+      fixtureB.owner.cookies,
+      fixtureB.organization.id,
+    );
+
+    try {
+      await Promise.all([connectSocket(socketA), connectSocket(socketB)]);
+
+      const realtimeService = app.get(RealtimeService);
+      const gateway = app.get(RealtimeGateway);
+
+      const connectedA = realtimeService.getNamespace().sockets.get(socketA.id);
+
+      const connectedB = realtimeService.getNamespace().sockets.get(socketB.id);
+
+      expect(connectedA).toBeDefined();
+      expect(connectedB).toBeDefined();
+
+      if (!connectedA || !connectedB) {
+        throw new Error('Connected sockets were not found');
+      }
+
+      await gateway.joinTicketRoom(connectedA, ticketA.id);
+
+      let organizationBReceived = false;
+
+      socketB.once(REALTIME_EVENTS.TICKET_ACTIVITY_CREATED, () => {
+        organizationBReceived = true;
+      });
+
+      const activityService = app.get(TicketActivityService);
+
+      await activityService.create({
+        ticketId: ticketA.id,
+        organizationId: fixtureA.organization.id,
+        actorId: fixtureA.owner.userId,
+        type: 'STATUS_CHANGED',
+        metadata: {
+          from: 'OPEN',
+          to: 'IN_PROGRESS',
+        },
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      expect(organizationBReceived).toBe(false);
+    } finally {
+      socketA.disconnect();
+      socketB.disconnect();
     }
   });
 });

@@ -10,6 +10,7 @@ import type {
 import type { RealtimeBroadcastTarget } from './realtime-event.types';
 import { RealtimeEventBroadcaster } from './realtime-event.broadcaster';
 import { REALTIME_EVENTS } from './realtime.types';
+import type { TicketActivityCreatedEvent } from '../tickets/ticket-activity.service';
 
 interface TicketDomainEvent {
   ticketId: string;
@@ -210,6 +211,26 @@ export class RealtimeTicketEventsService {
   @OnEvent(TICKET_EVENTS.COMMENT_DELETED)
   handleCommentDeleted(event: TicketCommentNotificationEvent): void {
     this.broadcastCommentEvent(REALTIME_EVENTS.TICKET_COMMENT_DELETED, event);
+  }
+
+  @OnEvent(TICKET_EVENTS.ACTIVITY_CREATED)
+  handleActivityCreated(event: TicketActivityCreatedEvent): void {
+    this.realtimeEventBroadcaster.broadcast({
+      event: REALTIME_EVENTS.TICKET_ACTIVITY_CREATED,
+      organizationId: event.organizationId,
+      payload: event,
+      targets: [
+        {
+          type: 'organization',
+          organizationId: event.organizationId,
+        },
+        {
+          type: 'ticket',
+          organizationId: event.organizationId,
+          ticketId: event.ticketId,
+        },
+      ],
+    });
   }
 
   private broadcastCommentEvent(

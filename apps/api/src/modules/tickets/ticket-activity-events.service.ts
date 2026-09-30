@@ -3,6 +3,7 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { TicketActivityType } from '@prisma/client';
 
 import { DatabaseService } from '../../database/database.service';
+import { TicketActivityService } from './ticket-activity.service';
 
 interface SlaEscalationEvent {
   escalationId: string;
@@ -14,7 +15,10 @@ interface SlaEscalationEvent {
 
 @Injectable()
 export class TicketActivityEventsService {
-  constructor(private readonly database: DatabaseService) {}
+  constructor(
+    private readonly database: DatabaseService,
+    private readonly ticketActivityService: TicketActivityService,
+  ) {}
 
   @OnEvent('ticket.sla.first_response_breached')
   async handleFirstResponseBreach(event: SlaEscalationEvent): Promise<void> {
@@ -35,18 +39,16 @@ export class TicketActivityEventsService {
       return;
     }
 
-    await this.database.ticketActivity.create({
-      data: {
-        ticketId: event.ticketId,
-        organizationId: sla.ticket.organizationId,
-        actorId: null,
-        type: TicketActivityType.SLA_FIRST_RESPONSE_BREACHED,
-        metadata: {
-          escalationId: event.escalationId,
-          ticketSlaId: event.ticketSlaId,
-        },
-        createdAt: event.occurredAt,
+    await this.ticketActivityService.create({
+      ticketId: event.ticketId,
+      organizationId: sla.ticket.organizationId,
+      actorId: null,
+      type: TicketActivityType.SLA_FIRST_RESPONSE_BREACHED,
+      metadata: {
+        escalationId: event.escalationId,
+        ticketSlaId: event.ticketSlaId,
       },
+      createdAt: event.occurredAt,
     });
   }
 
@@ -69,18 +71,16 @@ export class TicketActivityEventsService {
       return;
     }
 
-    await this.database.ticketActivity.create({
-      data: {
-        ticketId: event.ticketId,
-        organizationId: sla.ticket.organizationId,
-        actorId: null,
-        type: TicketActivityType.SLA_RESOLUTION_BREACHED,
-        metadata: {
-          escalationId: event.escalationId,
-          ticketSlaId: event.ticketSlaId,
-        },
-        createdAt: event.occurredAt,
+    await this.ticketActivityService.create({
+      ticketId: event.ticketId,
+      organizationId: sla.ticket.organizationId,
+      actorId: null,
+      type: TicketActivityType.SLA_RESOLUTION_BREACHED,
+      metadata: {
+        escalationId: event.escalationId,
+        ticketSlaId: event.ticketSlaId,
       },
+      createdAt: event.occurredAt,
     });
   }
 }

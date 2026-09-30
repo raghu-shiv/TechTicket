@@ -2,6 +2,13 @@ import { Injectable, Logger, type OnModuleDestroy } from '@nestjs/common';
 
 import type { Namespace, Socket } from 'socket.io';
 
+import {
+  getTicketActivityActorPresentation,
+  getTicketActivityCategory,
+  getTicketActivityDescription,
+  getTicketActivityTimeline,
+} from '../tickets/ticket-activity.presentation';
+
 @Injectable()
 export class RealtimeService implements OnModuleDestroy {
   private readonly logger = new Logger(RealtimeService.name);
@@ -40,5 +47,42 @@ export class RealtimeService implements OnModuleDestroy {
     this.logger.log('Realtime Socket.IO service shutting down');
 
     this.namespace = null;
+  }
+
+  handleActivityCreated(event: TicketActivityCreatedEvent): void {
+    const payload = {
+      id: event.id,
+      ticketId: event.ticketId,
+      organizationId: event.organizationId,
+      actorId: event.actorId,
+      type: event.type,
+      metadata: event.metadata,
+      createdAt: event.createdAt,
+      category: getTicketActivityCategory(event.type),
+      timeline: getTicketActivityTimeline(event.createdAt),
+      description: getTicketActivityDescription(
+        event.type,
+        event.metadata as Record<string, unknown> | null,
+      ),
+      actorPresentation: getTicketActivityActorPresentation(event.actor),
+      actor: event.actor,
+    };
+
+    this.realtimeEventBroadcaster.broadcast({
+      event: REALTIME_EVENTS.TICKET_ACTIVITY_CREATED,
+      organizationId: event.organizationId,
+      payload,
+      targets: [
+        {
+          type: 'organization',
+          organizationId: event.organizationId,
+        },
+        {
+          type: 'ticket',
+          organizationId: event.organizationId,
+          ticketId: event.ticketId,
+        },
+      ],
+    });
   }
 }

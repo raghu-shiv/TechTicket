@@ -8,6 +8,7 @@ export const TICKET_EVENTS = {
   COMMENT_ADDED: 'ticket.comment.added',
   COMMENT_UPDATED: 'ticket.comment.updated',
   COMMENT_DELETED: 'ticket.comment.deleted',
+  ACTIVITY_CREATED: 'ticket.activity.created',
   SLA_FIRST_RESPONSE_BREACHED: 'ticket.sla.first_response_breached',
   SLA_RESOLUTION_BREACHED: 'ticket.sla.resolution_breached',
 } as const;

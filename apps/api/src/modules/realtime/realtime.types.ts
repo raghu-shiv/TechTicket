@@ -27,6 +27,7 @@ export const REALTIME_EVENTS = {
   TICKET_COMMENT_ADDED: 'ticket.comment.added',
   TICKET_COMMENT_UPDATED: 'ticket.comment.updated',
   TICKET_COMMENT_DELETED: 'ticket.comment.deleted',
+  TICKET_ACTIVITY_CREATED: 'ticket.activity.created',
 
   APPROVAL_REQUESTED: 'approval.requested',
   APPROVAL_APPROVED: 'approval.approved',
