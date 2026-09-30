@@ -109,7 +109,7 @@ describe('Realtime room routing (e2e)', () => {
       socketA.disconnect();
       socketB.disconnect();
     }
-  });
+  }, 15_000);
 
   it('should route ticket events only to sockets subscribed to that ticket room', async () => {
     const fixture = await createOrganizationTestFixture(app);

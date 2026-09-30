@@ -12,7 +12,7 @@ approval workflows.
 foundations, notifications, approval workflow, secure realtime/WebSocket
 organization and ticket rooms, realtime domain event broadcasting,
 realtime security/event tests, hardening, ticket regression testing,
-and Phase 4-G/4-H full verification are implemented and verified.**
+and Phase 4-G/4-H/4-I full verification are implemented and verified.**
 
 Phase 4-H Realtime / WebSockets is **COMPLETE AND VERIFIED**. The next
 implementation milestone is **Phase 4-I — Unassigned Queue**, followed
@@ -266,6 +266,54 @@ Full API result:
 108/108 tests passed
 ```
 
+## Phase 4-I — Unassigned Queue Checkpoint
+
+**COMPLETE AND VERIFIED**
+
+The unassigned queue builds on the existing ticket assignment model (`assigneeId = null`) without introducing a separate queue data model.
+
+Completed milestones:
+
+- 4-I.1 — Define unassigned queue behavior
+- 4-I.2 — Verify current unassigned ticket filtering
+- 4-I.3 — Dedicated unassigned-queue API coverage
+- 4-I.4 — Authorization and organization-isolation coverage
+- 4-I.5 — Sorting/pagination/filter interaction coverage
+- 4-I.6 — Assignment transition coverage
+- 4-I.7 — Realtime queue membership changes
+- 4-I.8 — Full verification
+
+Queue membership transitions are verified as:
+
+```text
+UNASSIGNED → assign → removed from unassigned queue
+ASSIGNED   → unassign → added to unassigned queue
+```
+
+Final verification:
+
+```text
+E2E test files       17/17 passed
+E2E tests            199/199 passed
+Unit/integration     9/9 passed
+Lint                 0 warnings / 0 errors
+Production build     SUCCESS
+```
+
+## Phase 4-J — Ticket History Refinement
+
+**NEXT**
+
+Planned scope:
+
+- Activity categorization
+- Timeline metadata
+- Human-readable event descriptions
+- Actor presentation
+- History filtering
+- Pagination
+- Realtime history integration
+
 ## Technology Stack
 
 ### Backend
@@ -370,10 +418,11 @@ docker compose exec api npm run build
 ### Latest Verification
 
 ``` text
-E2E test files       16/16 passed
-E2E tests            151/151 passed
+E2E test files       17/17 passed
+E2E tests            199/199 passed
+Unit/integration     9/9 passed
 Lint                 0 warnings / 0 errors
-Production build     0 errors
+Production build     SUCCESS
 ```
 
 Current E2E files:
@@ -437,8 +486,23 @@ test/ticket.e2e-spec.ts
     -   Realtime tests (4-H.6) --- **COMPLETE AND VERIFIED**
     -   Hardening (4-H.7) --- **COMPLETE AND VERIFIED**
     -   Full verification (4-H.8) --- **COMPLETE AND VERIFIED**
--   Unassigned queue (4-I) --- **NEXT**
--   Ticket history refinement (4-J) --- **PLANNED**
+-   Unassigned queue (4-I) --- **COMPLETE AND VERIFIED**
+    -   4-I.1 --- Define unassigned queue behavior --- **COMPLETE**
+    -   4-I.2 --- Verify current unassigned ticket filtering --- **COMPLETE**
+    -   4-I.3 --- Dedicated unassigned-queue API coverage --- **COMPLETE**
+    -   4-I.4 --- Authorization and organization-isolation coverage --- **COMPLETE**
+    -   4-I.5 --- Sorting/pagination/filter interaction coverage --- **COMPLETE**
+    -   4-I.6 --- Assignment transition coverage --- **COMPLETE**
+    -   4-I.7 --- Realtime queue membership changes --- **COMPLETE**
+    -   4-I.8 --- Full verification --- **COMPLETE AND VERIFIED**
+-   Ticket history refinement (4-J) --- **NEXT**
+    -   Activity categorization --- **PLANNED**
+    -   Timeline metadata --- **PLANNED**
+    -   Human-readable event descriptions --- **PLANNED**
+    -   Actor presentation --- **PLANNED**
+    -   History filtering --- **PLANNED**
+    -   Pagination --- **PLANNED**
+    -   Realtime history integration --- **PLANNED**
 
 ### Phase 5 --- Productivity
 
@@ -485,7 +549,7 @@ test/ticket.e2e-spec.ts
 
 ## Current Project Checkpoint
 
-``` text
+```text
 Authentication                    COMPLETE
 Organization context              COMPLETE
 Ticket CRUD                       COMPLETE
@@ -513,12 +577,9 @@ Full API E2E regression           COMPLETE AND VERIFIED
 Lint                              COMPLETE AND VERIFIED
 Production build                  COMPLETE AND VERIFIED
 Phase 4-G                         COMPLETE AND VERIFIED
-Realtime / WebSockets (4-H.3)     COMPLETE AND VERIFIED
-Ticket rooms (4-H.4)              COMPLETE AND VERIFIED
-Domain event broadcasting (4-H.5) COMPLETE AND VERIFIED
-Realtime tests (4-H.6)             NEXT
-Realtime hardening (4-H.7)         PLANNED
-Full verification (4-H.8)          PLANNED
+Phase 4-H Realtime / WebSockets   COMPLETE AND VERIFIED
+Phase 4-I Unassigned Queue        COMPLETE AND VERIFIED
+Phase 4-J Ticket History          NEXT
 ```
 
 ## Next Development Direction
