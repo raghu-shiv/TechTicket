@@ -1403,6 +1403,261 @@ describe('Tickets API (e2e)', () => {
         });
       });
     });
+
+    describe('4-I.6 --- Assignment transition coverage', () => {
+      it('should transition an unassigned ticket into an assigned state', async () => {
+        const createResponse = await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-I.6 Assign Transition',
+            description:
+              'Ticket used to verify unassigned to assigned transition.',
+            priority: 'MEDIUM',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        const ticketId = createResponse.body.id;
+
+        expect(createResponse.body.assigneeId).toBeNull();
+
+        const assignmentResponse = await fixture.agent.agent
+          .patch(`/api/v1/tickets/${ticketId}/assignment`)
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            assigneeId: fixture.agent.userId,
+          })
+          .expect(200);
+
+        expect(assignmentResponse.body).toEqual(
+          expect.objectContaining({
+            id: ticketId,
+            organizationId: fixture.organization.id,
+            assigneeId: fixture.agent.userId,
+          }),
+        );
+
+        const ticketResponse = await fixture.agent.agent
+          .get(`/api/v1/tickets/${ticketId}`)
+          .set('x-organization-id', fixture.organization.id)
+          .expect(200);
+
+        expect(ticketResponse.body).toEqual(
+          expect.objectContaining({
+            id: ticketId,
+            organizationId: fixture.organization.id,
+            assigneeId: fixture.agent.userId,
+          }),
+        );
+      });
+
+      it('should transition an assigned ticket into an unassigned state', async () => {
+        const createResponse = await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-I.6 Unassign Transition',
+            description:
+              'Ticket used to verify assigned to unassigned transition.',
+            priority: 'MEDIUM',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        const ticketId = createResponse.body.id;
+
+        await fixture.agent.agent
+          .patch(`/api/v1/tickets/${ticketId}/assignment`)
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            assigneeId: fixture.agent.userId,
+          })
+          .expect(200);
+
+        const unassignmentResponse = await fixture.agent.agent
+          .patch(`/api/v1/tickets/${ticketId}/assignment`)
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            assigneeId: null,
+          })
+          .expect(200);
+
+        expect(unassignmentResponse.body).toEqual(
+          expect.objectContaining({
+            id: ticketId,
+            organizationId: fixture.organization.id,
+            assigneeId: null,
+          }),
+        );
+
+        const ticketResponse = await fixture.agent.agent
+          .get(`/api/v1/tickets/${ticketId}`)
+          .set('x-organization-id', fixture.organization.id)
+          .expect(200);
+
+        expect(ticketResponse.body).toEqual(
+          expect.objectContaining({
+            id: ticketId,
+            organizationId: fixture.organization.id,
+            assigneeId: null,
+          }),
+        );
+      });
+
+      it('should allow a ticket to cycle from unassigned to assigned and back to unassigned', async () => {
+        const createResponse = await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-I.6 Assignment Cycle',
+            description:
+              'Ticket used to verify repeated assignment transitions.',
+            priority: 'HIGH',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        const ticketId = createResponse.body.id;
+
+        expect(createResponse.body.assigneeId).toBeNull();
+
+        const firstAssignment = await fixture.agent.agent
+          .patch(`/api/v1/tickets/${ticketId}/assignment`)
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            assigneeId: fixture.agent.userId,
+          })
+          .expect(200);
+
+        expect(firstAssignment.body.assigneeId).toBe(fixture.agent.userId);
+
+        const unassignment = await fixture.agent.agent
+          .patch(`/api/v1/tickets/${ticketId}/assignment`)
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            assigneeId: null,
+          })
+          .expect(200);
+
+        expect(unassignment.body.assigneeId).toBeNull();
+
+        const secondAssignment = await fixture.agent.agent
+          .patch(`/api/v1/tickets/${ticketId}/assignment`)
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            assigneeId: fixture.agent.userId,
+          })
+          .expect(200);
+
+        expect(secondAssignment.body.assigneeId).toBe(fixture.agent.userId);
+
+        const finalUnassignment = await fixture.agent.agent
+          .patch(`/api/v1/tickets/${ticketId}/assignment`)
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            assigneeId: null,
+          })
+          .expect(200);
+
+        expect(finalUnassignment.body.assigneeId).toBeNull();
+
+        const finalTicket = await fixture.agent.agent
+          .get(`/api/v1/tickets/${ticketId}`)
+          .set('x-organization-id', fixture.organization.id)
+          .expect(200);
+
+        expect(finalTicket.body.assigneeId).toBeNull();
+      });
+
+      it('should remove and restore a ticket from the unassigned queue across assignment transitions', async () => {
+        const createResponse = await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-I.6 Queue Transition',
+            description:
+              'Ticket used to verify queue membership across assignment transitions.',
+            priority: 'HIGH',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        const ticketId = createResponse.body.id;
+
+        // Initial state: unassigned → must be in the queue.
+        const initialQueue = await fixture.agent.agent
+          .get('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .query({
+            unassigned: true,
+            search: '4-I.6 Queue Transition',
+          })
+          .expect(200);
+
+        expect(initialQueue.body.data).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              id: ticketId,
+              assigneeId: null,
+            }),
+          ]),
+        );
+
+        // Transition: unassigned → assigned.
+        await fixture.agent.agent
+          .patch(`/api/v1/tickets/${ticketId}/assignment`)
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            assigneeId: fixture.agent.userId,
+          })
+          .expect(200);
+
+        const assignedQueue = await fixture.agent.agent
+          .get('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .query({
+            unassigned: true,
+            search: '4-I.6 Queue Transition',
+          })
+          .expect(200);
+
+        expect(assignedQueue.body.data).not.toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              id: ticketId,
+            }),
+          ]),
+        );
+
+        // Transition: assigned → unassigned.
+        await fixture.agent.agent
+          .patch(`/api/v1/tickets/${ticketId}/assignment`)
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            assigneeId: null,
+          })
+          .expect(200);
+
+        const restoredQueue = await fixture.agent.agent
+          .get('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .query({
+            unassigned: true,
+            search: '4-I.6 Queue Transition',
+          })
+          .expect(200);
+
+        expect(restoredQueue.body.data).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              id: ticketId,
+              assigneeId: null,
+            }),
+          ]),
+        );
+      });
+    });
   });
 
   describe('PATCH /api/v1/tickets/:ticketId/assignment', () => {
