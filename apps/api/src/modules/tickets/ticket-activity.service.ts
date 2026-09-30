@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, TicketActivityType } from '@prisma/client';
 
 import { DatabaseService } from '../../database/database.service';
+import { getTicketActivityCategory } from './ticket-activity.presentation.js';
 
 @Injectable()
 export class TicketActivityService {
@@ -22,7 +23,7 @@ export class TicketActivityService {
       throw new NotFoundException('Ticket not found');
     }
 
-    return this.database.ticketActivity.findMany({
+    const activities = await this.database.ticketActivity.findMany({
       where: {
         ticketId: ticket.id,
         organizationId,
@@ -47,6 +48,11 @@ export class TicketActivityService {
         },
       },
     });
+
+    return activities.map((activity) => ({
+      ...activity,
+      category: getTicketActivityCategory(activity.type),
+    }));
   }
 
   async create(input: {

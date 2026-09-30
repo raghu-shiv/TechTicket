@@ -2657,6 +2657,51 @@ describe('Tickets API (e2e)', () => {
       );
     });
 
+    describe('4-J --- Ticket History Refinement', () => {
+      it('4-J.1 --- should expose derived activity categories', async () => {
+        const ticketResponse = await fixture.requester.agent
+          .post('/api/v1/tickets')
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            title: '4-J.1 activity categorization',
+            description: 'Verify derived activity categories.',
+            priority: 'MEDIUM',
+            type: 'INCIDENT',
+          })
+          .expect(201);
+
+        const ticketId = ticketResponse.body.id;
+
+        await fixture.admin.agent
+          .patch(`/api/v1/tickets/${ticketId}/assignment`)
+          .set('x-organization-id', fixture.organization.id)
+          .send({
+            assigneeId: fixture.agent.userId,
+          })
+          .expect(200);
+
+        const activityResponse = await fixture.requester.agent
+          .get(`/api/v1/tickets/${ticketId}/activity`)
+          .set('x-organization-id', fixture.organization.id)
+          .expect(200);
+
+        expect(activityResponse.body).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              ticketId,
+              type: 'TICKET_CREATED',
+              category: 'TICKET',
+            }),
+            expect.objectContaining({
+              ticketId,
+              type: 'ASSIGNEE_CHANGED',
+              category: 'WORKFLOW',
+            }),
+          ]),
+        );
+      });
+    });
+
     it('should delete a comment and record the deletion activity', async () => {
       const ticketResponse = await fixture.requester.agent
 
