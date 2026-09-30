@@ -11,6 +11,22 @@ export const TICKET_ACTIVITY_CATEGORIES = [
 export type TicketActivityCategory =
   (typeof TICKET_ACTIVITY_CATEGORIES)[number];
 
+export interface TicketActivityTimelineMetadata {
+  timestamp: string;
+  date: string;
+  time: string;
+}
+
+export function getTicketActivityTimeline(
+  createdAt: Date,
+): TicketActivityTimelineMetadata {
+  return {
+    timestamp: createdAt.toISOString(),
+    date: createdAt.toISOString().slice(0, 10),
+    time: createdAt.toISOString().slice(11, 19),
+  };
+}
+
 export function getTicketActivityCategory(
   type: TicketActivityType,
 ): TicketActivityCategory {

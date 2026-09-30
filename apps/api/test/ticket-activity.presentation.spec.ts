@@ -1,7 +1,10 @@
 import { TicketActivityType } from '@prisma/client';
 import { describe, expect, it } from 'vitest';
 
-import { getTicketActivityCategory } from '../src/modules/tickets/ticket-activity.presentation.js';
+import {
+  getTicketActivityCategory,
+  getTicketActivityTimeline,
+} from '../src/modules/tickets/ticket-activity.presentation.js';
 
 describe('Ticket activity categorization', () => {
   it('categorizes ticket activities as TICKET', () => {
@@ -72,5 +75,25 @@ describe('Ticket activity categorization', () => {
     expect(
       getTicketActivityCategory(TicketActivityType.APPROVAL_CANCELLED),
     ).toBe('APPROVAL');
+  });
+});
+
+describe('Ticket activity timeline metadata', () => {
+  it('should derive stable timeline metadata from createdAt', () => {
+    const createdAt = new Date('2026-09-30T09:30:15.421Z');
+
+    expect(getTicketActivityTimeline(createdAt)).toEqual({
+      timestamp: '2026-09-30T09:30:15.421Z',
+      date: '2026-09-30',
+      time: '09:30:15',
+    });
+  });
+
+  it('should preserve the canonical activity timestamp', () => {
+    const createdAt = new Date('2026-01-15T22:05:09.999Z');
+
+    const timeline = getTicketActivityTimeline(createdAt);
+
+    expect(timeline.timestamp).toBe(createdAt.toISOString());
   });
 });

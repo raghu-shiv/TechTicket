@@ -2691,13 +2691,34 @@ describe('Tickets API (e2e)', () => {
               ticketId,
               type: 'TICKET_CREATED',
               category: 'TICKET',
-            }),
-            expect.objectContaining({
-              ticketId,
-              type: 'ASSIGNEE_CHANGED',
-              category: 'WORKFLOW',
+              createdAt: expect.any(String),
+              timeline: expect.objectContaining({
+                timestamp: expect.any(String),
+                date: expect.any(String),
+                time: expect.any(String),
+              }),
             }),
           ]),
+        );
+
+        const createdActivity = activityResponse.body.find(
+          (activity: { ticketId: string; type: string }) =>
+            activity.ticketId === ticketId &&
+            activity.type === 'TICKET_CREATED',
+        );
+
+        expect(createdActivity).toBeDefined();
+
+        expect(createdActivity.timeline.timestamp).toBe(
+          createdActivity.createdAt,
+        );
+
+        expect(createdActivity.timeline.date).toBe(
+          createdActivity.createdAt.slice(0, 10),
+        );
+
+        expect(createdActivity.timeline.time).toBe(
+          createdActivity.createdAt.slice(11, 19),
         );
       });
     });
