@@ -16,6 +16,7 @@ import { PermissionsModule } from './common/permissions/permissions.module';
 import { BullModule } from '@nestjs/bullmq';
 import { ApprovalsModule } from './modules/approvals/approvals.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
+import { SavedFilterModule } from './modules/saved-filters/saved-filter.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { RealtimeModule } from './modules/realtime/realtime.module';
     MembersModule,
     TeamsModule,
     TicketsModule,
+    SavedFilterModule,
     NotificationsModule,
   ],
 })

@@ -5,7 +5,6 @@ import { validate } from 'class-validator';
 
 import {
   CreateSavedFilterDto,
-  SavedFilterDefinitionDto,
 } from '../src/modules/saved-filters/dto/create-saved-filter.dto';
 
 describe('SavedFilter DTO validation', () => {
