@@ -1,4 +1,8 @@
-import type { TicketListParams, TicketListResponse } from "@/types/tickets";
+import type {
+  Ticket,
+  TicketListParams,
+  TicketListResponse,
+} from "@/types/tickets";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api/v1";
@@ -60,4 +64,41 @@ export async function getTickets(
   }
 
   return response.json() as Promise<TicketListResponse>;
+}
+
+export async function getTicket(
+  organizationId: string,
+  ticketId: string,
+): Promise<Ticket> {
+  const response = await fetch(`${API_BASE_URL}/tickets/${ticketId}`, {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      Accept: "application/json",
+      "x-organization-id": organizationId,
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    let message = "Failed to fetch ticket";
+
+    try {
+      const error = (await response.json()) as {
+        message?: string | string[];
+      };
+
+      if (Array.isArray(error.message)) {
+        message = error.message.join(", ");
+      } else if (error.message) {
+        message = error.message;
+      }
+    } catch {
+      // Keep the default error message when the response is not JSON.
+    }
+
+    throw new Error(message);
+  }
+
+  return response.json() as Promise<Ticket>;
 }
