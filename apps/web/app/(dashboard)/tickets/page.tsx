@@ -8,12 +8,14 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUp,
+  Filter,
   Inbox,
   RotateCcw,
   Search,
   Ticket as TicketIcon,
   UserRound,
   UsersRound,
+  X,
 } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui";
@@ -33,6 +35,10 @@ import type {
   TicketStatus,
   TicketType,
 } from "@/types/tickets";
+
+const DEFAULT_SORT_BY: TicketSortField = "updatedAt";
+const DEFAULT_SORT_ORDER = "desc" as const;
+const DEFAULT_PAGE_SIZE = 20;
 
 const statusConfig: Record<
   TicketStatus,
@@ -171,11 +177,9 @@ function TicketRow({ ticket }: { ticket: Ticket }) {
     >
       <div className="grid gap-4 px-5 py-4 lg:grid-cols-[minmax(220px,1.5fr)_140px_120px_180px_140px] lg:items-center">
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="shrink-0 text-xs font-medium text-muted-foreground">
-              {ticket.ticketNumber}
-            </span>
-          </div>
+          <span className="text-xs font-medium text-muted-foreground">
+            {ticket.ticketNumber}
+          </span>
 
           <p className="mt-1 truncate text-sm font-medium">{ticket.title}</p>
 
@@ -267,7 +271,7 @@ function FilterSelect({
   children: React.ReactNode;
 }) {
   return (
-    <label className="flex min-w-0 flex-1 flex-col gap-1.5">
+    <label className="flex min-w-0 flex-col gap-1.5">
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
 
       <select
@@ -278,6 +282,26 @@ function FilterSelect({
         {children}
       </select>
     </label>
+  );
+}
+
+function ActiveFilter({
+  label,
+  onRemove,
+}: {
+  label: string;
+  onRemove: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onRemove}
+      className="inline-flex items-center gap-1.5 rounded-full border bg-background px-2.5 py-1 text-xs font-medium transition-colors hover:bg-muted"
+      aria-label={`Remove ${label} filter`}
+    >
+      <span>{label}</span>
+      <X className="size-3.5 text-muted-foreground" />
+    </button>
   );
 }
 
@@ -338,8 +362,29 @@ function TicketsContent() {
 
   const organizationId = organizationsQuery.data?.[0]?.organizationId;
 
+  /*
+   * --------------------------------------------------------------------------
+   * URL STATE
+   * --------------------------------------------------------------------------
+   *
+   * The URL remains the single source of truth for the ticket library.
+   *
+   * Examples:
+   *
+   * /tickets
+   * /tickets?status=OPEN
+   * /tickets?priority=URGENT
+   * /tickets?unassigned=true
+   * /tickets?search=database
+   * /tickets?status=OPEN&priority=HIGH&page=2
+   *
+   * This makes filters bookmarkable, shareable and refresh-safe.
+   */
+
   const pageParam = searchParams.get("page");
+
   const page = Math.max(1, Number(pageParam ?? "1") || 1);
+
   const searchParam = searchParams.get("search") ?? "";
   const statusParam = searchParams.get("status");
   const priorityParam = searchParams.get("priority");
@@ -347,6 +392,12 @@ function TicketsContent() {
   const unassignedParam = searchParams.get("unassigned");
   const sortByParam = searchParams.get("sortBy");
   const sortOrderParam = searchParams.get("sortOrder");
+
+  /*
+   * --------------------------------------------------------------------------
+   * NORMALIZED FILTER STATE
+   * --------------------------------------------------------------------------
+   */
 
   const status = getInitialValue(
     statusParam,
@@ -369,16 +420,22 @@ function TicketsContent() {
   const sortBy = getInitialValue(
     sortByParam,
     sortOptions.map((option) => option.value),
-    "updatedAt",
+    DEFAULT_SORT_BY,
   );
 
   const sortOrder = getInitialValue(
     sortOrderParam,
     ["asc", "desc"] as const,
-    "desc",
+    DEFAULT_SORT_ORDER,
   );
 
   const unassigned = unassignedParam === "true";
+
+  /*
+   * --------------------------------------------------------------------------
+   * URL UPDATE HELPER
+   * --------------------------------------------------------------------------
+   */
 
   const updateUrl = useCallback(
     (
@@ -401,6 +458,11 @@ function TicketsContent() {
         params.set(key, String(value));
       });
 
+      /*
+       * Any filter/sort change starts from page one.
+       *
+       * Pagination itself calls this helper with resetPage=false.
+       */
       if (resetPage) {
         params.delete("page");
       }
@@ -414,13 +476,16 @@ function TicketsContent() {
     [pathname, router, searchParams],
   );
 
+  /*
+   * --------------------------------------------------------------------------
+   * FILTER HANDLERS
+   * --------------------------------------------------------------------------
+   */
+
   const handleSearchChange = (value: string) => {
-    updateUrl(
-      {
-        search: value.trim() || null,
-      },
-      true,
-    );
+    updateUrl({
+      search: value.trim() || null,
+    });
   };
 
   const handleStatusChange = (value: string) => {
@@ -464,16 +529,33 @@ function TicketsContent() {
     );
   };
 
+  /*
+   * --------------------------------------------------------------------------
+   * CLEAR FILTERS
+   * --------------------------------------------------------------------------
+   *
+   * Search/status/priority/type/unassigned are cleared.
+   *
+   * Sorting remains at the useful default:
+   * updatedAt DESC
+   */
+
   const clearFilters = () => {
     const params = new URLSearchParams();
 
-    params.set("sortBy", "updatedAt");
-    params.set("sortOrder", "desc");
+    params.set("sortBy", DEFAULT_SORT_BY);
+    params.set("sortOrder", DEFAULT_SORT_ORDER);
 
     router.replace(`${pathname}?${params.toString()}`, {
       scroll: false,
     });
   };
+
+  /*
+   * --------------------------------------------------------------------------
+   * PAGINATION
+   * --------------------------------------------------------------------------
+   */
 
   const handlePageChange = (nextPage: number) => {
     const totalPages = ticketsQuery.data?.meta.totalPages ?? 1;
@@ -497,17 +579,76 @@ function TicketsContent() {
     });
   };
 
-  const hasFilters =
-    Boolean(searchParam) ||
-    Boolean(statusParam) ||
-    Boolean(priorityParam) ||
-    Boolean(typeParam) ||
-    unassignedParam === "true";
+  /*
+   * --------------------------------------------------------------------------
+   * ACTIVE FILTERS
+   * --------------------------------------------------------------------------
+   */
+
+  const activeFilters = useMemo(() => {
+    const filters: Array<{
+      key: string;
+      label: string;
+    }> = [];
+
+    if (searchParam) {
+      filters.push({
+        key: "search",
+        label: `Search: ${searchParam}`,
+      });
+    }
+
+    if (status) {
+      filters.push({
+        key: "status",
+        label: `Status: ${
+          statusOptions.find((option) => option.value === status)?.label ??
+          status
+        }`,
+      });
+    }
+
+    if (priority) {
+      filters.push({
+        key: "priority",
+        label: `Priority: ${
+          priorityOptions.find((option) => option.value === priority)?.label ??
+          priority
+        }`,
+      });
+    }
+
+    if (type) {
+      filters.push({
+        key: "type",
+        label: `Type: ${
+          typeOptions.find((option) => option.value === type)?.label ?? type
+        }`,
+      });
+    }
+
+    if (unassigned) {
+      filters.push({
+        key: "unassigned",
+        label: "Unassigned only",
+      });
+    }
+
+    return filters;
+  }, [searchParam, status, priority, type, unassigned]);
+
+  const hasFilters = activeFilters.length > 0;
+
+  /*
+   * --------------------------------------------------------------------------
+   * API QUERY
+   * --------------------------------------------------------------------------
+   */
 
   const ticketParams = useMemo(
     () => ({
       page,
-      limit: 20,
+      limit: DEFAULT_PAGE_SIZE,
       search: searchParam || undefined,
       status: status || undefined,
       priority: priority || undefined,
@@ -520,7 +661,14 @@ function TicketsContent() {
   );
 
   const ticketsQuery = useTickets(organizationId, ticketParams);
+
   const tickets = ticketsQuery.data?.data ?? [];
+
+  /*
+   * --------------------------------------------------------------------------
+   * ORGANIZATION STATES
+   * --------------------------------------------------------------------------
+   */
 
   if (organizationsQuery.isLoading) {
     return <LoadingState label="Loading workspace..." />;
@@ -557,6 +705,12 @@ function TicketsContent() {
     );
   }
 
+  /*
+   * --------------------------------------------------------------------------
+   * PAGE
+   * --------------------------------------------------------------------------
+   */
+
   return (
     <div>
       <PageHeader
@@ -565,131 +719,181 @@ function TicketsContent() {
       />
 
       <div className="mt-6 space-y-4">
-        {/* Search */}
+        {/* ------------------------------------------------------------------ */}
+        {/* FILTER TOOLBAR                                                     */}
+        {/* ------------------------------------------------------------------ */}
+
         <Card>
-          <CardContent className="p-4">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <CardContent className="p-4 sm:p-5">
+            <div className="flex flex-col gap-4">
+              {/* Toolbar heading */}
+              <div className="flex items-center gap-2">
+                <div className="flex size-8 items-center justify-center rounded-md bg-muted">
+                  <Filter className="size-4 text-muted-foreground" />
+                </div>
 
-              <input
-                type="search"
-                value={searchParam}
-                onChange={(event) => handleSearchChange(event.target.value)}
-                placeholder="Search ticket number, title, or description..."
-                className="h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:ring-2 focus:ring-ring"
-              />
-            </div>
+                <div>
+                  <p className="text-sm font-medium">Filter tickets</p>
 
-            {/* Filters */}
-            <div className="mt-4 flex flex-col gap-3 md:flex-row">
-              <FilterSelect
-                label="Status"
-                value={status}
-                onChange={handleStatusChange}
-              >
-                <option value="">All statuses</option>
-
-                {statusOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </FilterSelect>
-
-              <FilterSelect
-                label="Priority"
-                value={priority}
-                onChange={handlePriorityChange}
-              >
-                <option value="">All priorities</option>
-
-                {priorityOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </FilterSelect>
-
-              <FilterSelect
-                label="Type"
-                value={type}
-                onChange={handleTypeChange}
-              >
-                <option value="">All types</option>
-
-                {typeOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </FilterSelect>
-
-              <FilterSelect
-                label="Sort by"
-                value={sortBy}
-                onChange={handleSortChange}
-              >
-                {sortOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </FilterSelect>
-
-              <div className="flex min-w-[120px] flex-col gap-1.5">
-                <span className="text-xs font-medium text-muted-foreground">
-                  Order
-                </span>
-
-                <button
-                  type="button"
-                  onClick={toggleSortOrder}
-                  className="flex h-9 items-center justify-center gap-2 rounded-md border border-input bg-background px-3 text-sm transition-colors hover:bg-muted"
-                  aria-label={`Sort ${sortOrder === "asc" ? "descending" : "ascending"}`}
-                >
-                  {sortOrder === "asc" ? (
-                    <>
-                      <ArrowUp className="size-4" />
-                      Ascending
-                    </>
-                  ) : (
-                    <>
-                      <ArrowDown className="size-4" />
-                      Descending
-                    </>
-                  )}
-                </button>
+                  <p className="text-xs text-muted-foreground">
+                    Refine the ticket list without leaving the page.
+                  </p>
+                </div>
               </div>
-            </div>
 
-            {/* Additional filter actions */}
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
-              <label className="flex cursor-pointer items-center gap-2 text-sm">
+              {/* Search */}
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+
                 <input
-                  type="checkbox"
-                  checked={unassigned}
-                  onChange={handleUnassignedChange}
-                  className="size-4 rounded border-input"
+                  type="search"
+                  value={searchParam}
+                  onChange={(event) => handleSearchChange(event.target.value)}
+                  placeholder="Search ticket number, title, or description..."
+                  aria-label="Search tickets"
+                  className="h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:ring-2 focus:ring-ring"
                 />
+              </div>
 
-                <span>Unassigned tickets only</span>
-              </label>
-
-              {hasFilters && (
-                <button
-                  type="button"
-                  onClick={clearFilters}
-                  className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+              {/* Select filters */}
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                <FilterSelect
+                  label="Status"
+                  value={status}
+                  onChange={handleStatusChange}
                 >
-                  <RotateCcw className="size-4" />
-                  Clear filters
-                </button>
+                  <option value="">All statuses</option>
+
+                  {statusOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </FilterSelect>
+
+                <FilterSelect
+                  label="Priority"
+                  value={priority}
+                  onChange={handlePriorityChange}
+                >
+                  <option value="">All priorities</option>
+
+                  {priorityOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </FilterSelect>
+
+                <FilterSelect
+                  label="Type"
+                  value={type}
+                  onChange={handleTypeChange}
+                >
+                  <option value="">All types</option>
+
+                  {typeOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </FilterSelect>
+
+                <FilterSelect
+                  label="Sort by"
+                  value={sortBy}
+                  onChange={handleSortChange}
+                >
+                  {sortOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </FilterSelect>
+
+                <div className="flex min-w-0 flex-col gap-1.5">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Order
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={toggleSortOrder}
+                    className="flex h-9 items-center justify-center gap-2 rounded-md border border-input bg-background px-3 text-sm transition-colors hover:bg-muted"
+                    aria-label={
+                      "Sort " +
+                      (sortOrder === "asc" ? "descending" : "ascending")
+                    }
+                  >
+                    {sortOrder === "asc" ? (
+                      <ArrowUp className="size-4" />
+                    ) : (
+                      <ArrowDown className="size-4" />
+                    )}
+
+                    <span>
+                      {sortOrder === "asc" ? "Ascending" : "Descending"}
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Secondary actions */}
+              <div className="flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+                <label className="flex cursor-pointer items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={unassigned}
+                    onChange={handleUnassignedChange}
+                    className="size-4 rounded border-input"
+                  />
+
+                  <span>Unassigned tickets only</span>
+                </label>
+
+                {hasFilters && (
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    <RotateCcw className="size-4" />
+                    Clear filters
+                  </button>
+                )}
+              </div>
+
+              {/* Active filters */}
+              {hasFilters && (
+                <div
+                  className="flex flex-wrap items-center gap-2 border-t pt-4"
+                  aria-label="Active filters"
+                >
+                  <span className="mr-1 text-xs font-medium text-muted-foreground">
+                    Active filters:
+                  </span>
+
+                  {activeFilters.map((filter) => (
+                    <ActiveFilter
+                      key={filter.key}
+                      label={filter.label}
+                      onRemove={() =>
+                        updateUrl({
+                          [filter.key]: null,
+                        })
+                      }
+                    />
+                  ))}
+                </div>
               )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Results */}
+        {/* ------------------------------------------------------------------ */}
+        {/* RESULTS                                                            */}
+        {/* ------------------------------------------------------------------ */}
+
         {ticketsQuery.isLoading ? (
           <LoadingState label="Loading tickets..." />
         ) : ticketsQuery.isError ? (
@@ -704,7 +908,7 @@ function TicketsContent() {
           />
         ) : (
           <>
-            <div className="flex items-center justify-between gap-4 text-sm text-muted-foreground">
+            <div className="flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-2">
                 <TicketIcon className="size-4" />
 
