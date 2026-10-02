@@ -5,6 +5,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useMemo } from "react";
 import {
   ArrowDown,
+  ArrowLeft,
+  ArrowRight,
   ArrowUp,
   Inbox,
   RotateCcw,
@@ -279,6 +281,54 @@ function FilterSelect({
   );
 }
 
+function TicketPagination({
+  page,
+  totalPages,
+  onPageChange,
+}: {
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) {
+  if (totalPages <= 1) {
+    return null;
+  }
+
+  const canGoPrevious = page > 1;
+  const canGoNext = page < totalPages;
+
+  return (
+    <div className="flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-sm text-muted-foreground">
+        Page <span className="font-medium text-foreground">{page}</span> of{" "}
+        <span className="font-medium text-foreground">{totalPages}</span>
+      </p>
+
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          disabled={!canGoPrevious}
+          onClick={() => onPageChange(page - 1)}
+          className="inline-flex h-9 items-center gap-2 rounded-md border border-input bg-background px-3 text-sm transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
+        >
+          <ArrowLeft className="size-4" />
+          Previous
+        </button>
+
+        <button
+          type="button"
+          disabled={!canGoNext}
+          onClick={() => onPageChange(page + 1)}
+          className="inline-flex h-9 items-center gap-2 rounded-md border border-input bg-background px-3 text-sm transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
+        >
+          Next
+          <ArrowRight className="size-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function TicketsContent() {
   const router = useRouter();
   const pathname = usePathname();
@@ -288,6 +338,8 @@ function TicketsContent() {
 
   const organizationId = organizationsQuery.data?.[0]?.organizationId;
 
+  const pageParam = searchParams.get("page");
+  const page = Math.max(1, Number(pageParam ?? "1") || 1);
   const searchParam = searchParams.get("search") ?? "";
   const statusParam = searchParams.get("status");
   const priorityParam = searchParams.get("priority");
@@ -423,6 +475,28 @@ function TicketsContent() {
     });
   };
 
+  const handlePageChange = (nextPage: number) => {
+    const totalPages = ticketsQuery.data?.meta.totalPages ?? 1;
+
+    if (nextPage < 1 || nextPage > totalPages || nextPage === page) {
+      return;
+    }
+
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (nextPage === 1) {
+      params.delete("page");
+    } else {
+      params.set("page", String(nextPage));
+    }
+
+    const queryString = params.toString();
+
+    router.replace(queryString ? `${pathname}?${queryString}` : pathname, {
+      scroll: false,
+    });
+  };
+
   const hasFilters =
     Boolean(searchParam) ||
     Boolean(statusParam) ||
@@ -432,7 +506,7 @@ function TicketsContent() {
 
   const ticketParams = useMemo(
     () => ({
-      page: Number(searchParams.get("page") ?? "1"),
+      page,
       limit: 20,
       search: searchParam || undefined,
       status: status || undefined,
@@ -442,16 +516,7 @@ function TicketsContent() {
       sortBy,
       sortOrder,
     }),
-    [
-      searchParam,
-      status,
-      priority,
-      type,
-      unassigned,
-      sortBy,
-      sortOrder,
-      searchParams,
-    ],
+    [page, searchParam, status, priority, type, unassigned, sortBy, sortOrder],
   );
 
   const ticketsQuery = useTickets(organizationId, ticketParams);
@@ -660,7 +725,15 @@ function TicketsContent() {
                 }
               />
             ) : (
-              <TicketTable tickets={tickets} />
+              <>
+                <TicketTable tickets={tickets} />
+
+                <TicketPagination
+                  page={ticketsQuery.data?.meta.page ?? page}
+                  totalPages={ticketsQuery.data?.meta.totalPages ?? 1}
+                  onPageChange={handlePageChange}
+                />
+              </>
             )}
           </>
         )}
