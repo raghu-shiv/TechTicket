@@ -21,12 +21,12 @@ export default function ForgotPasswordPage() {
         <h1 className="text-2xl font-semibold">Reset your password</h1>
 
         <p className="mt-1 text-sm text-muted-foreground">
-          Enter your email and we'll send you a password reset link.
+          Enter your email and we&apos;ll send you a password reset link.
         </p>
 
         {submitted ? (
           <div className="mt-6 rounded-lg bg-primary/10 p-4 text-sm text-primary">
-            If an account exists for this email, you'll receive reset
+            If an account exists for this email, you&apos;ll receive reset
             instructions.
           </div>
         ) : (
