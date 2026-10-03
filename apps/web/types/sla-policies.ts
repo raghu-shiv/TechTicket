@@ -19,3 +19,19 @@ export interface SlaPolicy {
 }
 
 export type SlaPoliciesResponse = SlaPolicy[];
+
+export interface SlaPolicyTargetInput {
+  priority: SlaPriority;
+  firstResponseMinutes: number;
+  resolutionMinutes: number;
+}
+
+export interface CreateSlaPolicyInput {
+  name: string;
+  targets: SlaPolicyTargetInput[];
+}
+
+export interface UpdateSlaPolicyInput {
+  name?: string;
+  targets?: SlaPolicyTargetInput[];
+}

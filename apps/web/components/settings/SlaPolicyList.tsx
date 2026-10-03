@@ -1,9 +1,11 @@
 "use client";
 
-import { Clock3, ShieldCheck } from "lucide-react";
+import { useState } from "react";
+import { Clock3, Edit3, Plus, ShieldCheck } from "lucide-react";
 
 import {
   Badge,
+  Button,
   Card,
   CardContent,
   CardDescription,
@@ -11,6 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui";
 import { EmptyState, ErrorState, LoadingState } from "@/components/shared";
+import { SlaPolicyForm } from "@/components/settings/SlaPolicyForm";
 import { useSlaPolicies } from "@/hooks/use-sla-policies";
 import { useOrganizations } from "@/hooks/use-organizations";
 import type {
@@ -78,6 +81,7 @@ function PolicyTargetRow({ target }: { target: SlaPolicyTarget }) {
 
       <div className="flex items-center gap-2 text-sm">
         <Clock3 className="size-4 text-muted-foreground" />
+
         <span>
           First response:{" "}
           <span className="font-medium">
@@ -96,24 +100,37 @@ function PolicyTargetRow({ target }: { target: SlaPolicyTarget }) {
   );
 }
 
-function SlaPolicyCard({ policy }: { policy: SlaPolicy }) {
+function SlaPolicyCard({
+  policy,
+  onEdit,
+}: {
+  policy: SlaPolicy;
+  onEdit: (policy: SlaPolicy) => void;
+}) {
   const targets = sortTargets(policy.targets);
 
   return (
     <Card>
       <CardHeader>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
-            <CardTitle>{policy.name}</CardTitle>
+            <div className="flex flex-wrap items-center gap-2">
+              <CardTitle>{policy.name}</CardTitle>
+
+              <Badge variant={policy.isActive ? "success" : "secondary"}>
+                {policy.isActive ? "Active" : "Inactive"}
+              </Badge>
+            </div>
 
             <CardDescription className="mt-1">
               {policy.targets.length} priority targets
             </CardDescription>
           </div>
 
-          <Badge variant={policy.isActive ? "success" : "secondary"}>
-            {policy.isActive ? "Active" : "Inactive"}
-          </Badge>
+          <Button variant="outline" size="sm" onClick={() => onEdit(policy)}>
+            <Edit3 className="size-4" />
+            Edit
+          </Button>
         </div>
       </CardHeader>
 
@@ -135,6 +152,9 @@ function SlaPolicyCard({ policy }: { policy: SlaPolicy }) {
 }
 
 export function SlaPolicyList() {
+  const [isCreating, setIsCreating] = useState(false);
+  const [editingPolicyId, setEditingPolicyId] = useState<string | null>(null);
+
   const organizationsQuery = useOrganizations();
 
   const organizationId = organizationsQuery.data?.[0]?.organizationId;
@@ -189,21 +209,75 @@ export function SlaPolicyList() {
 
   const policies = policiesQuery.data ?? [];
 
-  if (policies.length === 0) {
-    return (
-      <EmptyState
-        icon={ShieldCheck}
-        title="No SLA policies"
-        description="No SLA policies have been configured for this workspace yet."
-      />
-    );
+  const editingPolicy = editingPolicyId
+    ? policies.find((policy) => policy.id === editingPolicyId)
+    : undefined;
+
+  function handleCreateSuccess() {
+    setIsCreating(false);
+  }
+
+  function handleEditSuccess() {
+    setEditingPolicyId(null);
   }
 
   return (
     <div className="space-y-4">
-      {policies.map((policy) => (
-        <SlaPolicyCard key={policy.id} policy={policy} />
-      ))}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-sm font-semibold">Configured policies</h2>
+
+          <p className="text-xs text-muted-foreground">
+            SLA policies define first-response and resolution targets.
+          </p>
+        </div>
+
+        {!isCreating && !editingPolicyId && (
+          <Button onClick={() => setIsCreating(true)}>
+            <Plus className="size-4" />
+            Create SLA Policy
+          </Button>
+        )}
+      </div>
+
+      {isCreating && (
+        <SlaPolicyForm
+          organizationId={organizationId}
+          onCancel={() => setIsCreating(false)}
+          onSuccess={handleCreateSuccess}
+        />
+      )}
+
+      {editingPolicy && (
+        <SlaPolicyForm
+          key={editingPolicy.id}
+          organizationId={organizationId}
+          policy={editingPolicy}
+          onCancel={() => setEditingPolicyId(null)}
+          onSuccess={handleEditSuccess}
+        />
+      )}
+
+      {policies.length === 0 && !isCreating ? (
+        <EmptyState
+          icon={ShieldCheck}
+          title="No SLA policies"
+          description="No SLA policies have been configured for this workspace yet."
+        />
+      ) : (
+        <div className="space-y-4">
+          {policies.map((policy) => (
+            <SlaPolicyCard
+              key={policy.id}
+              policy={policy}
+              onEdit={(selectedPolicy) => {
+                setIsCreating(false);
+                setEditingPolicyId(selectedPolicy.id);
+              }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

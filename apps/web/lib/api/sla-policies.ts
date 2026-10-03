@@ -1,4 +1,9 @@
-import type { SlaPoliciesResponse, SlaPolicy } from "@/types/sla-policies";
+import type {
+  CreateSlaPolicyInput,
+  SlaPoliciesResponse,
+  SlaPolicy,
+  UpdateSlaPolicyInput,
+} from "@/types/sla-policies";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api/v1";
@@ -20,7 +25,7 @@ async function getErrorMessage(
       return error.message;
     }
   } catch {
-    // Keep the fallback message.
+    // Keep fallback.
   }
 
   return fallback;
@@ -29,6 +34,7 @@ async function getErrorMessage(
 function buildHeaders(organizationId: string): HeadersInit {
   return {
     Accept: "application/json",
+    "Content-Type": "application/json",
     "x-organization-id": organizationId,
   };
 }
@@ -66,6 +72,47 @@ export async function getSlaPolicy(
   if (!response.ok) {
     throw new Error(
       await getErrorMessage(response, "Failed to fetch SLA policy"),
+    );
+  }
+
+  return response.json() as Promise<SlaPolicy>;
+}
+
+export async function createSlaPolicy(
+  organizationId: string,
+  input: CreateSlaPolicyInput,
+): Promise<SlaPolicy> {
+  const response = await fetch(`${API_BASE_URL}/sla-policies`, {
+    method: "POST",
+    credentials: "include",
+    headers: buildHeaders(organizationId),
+    body: JSON.stringify(input),
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(response, "Failed to create SLA policy"),
+    );
+  }
+
+  return response.json() as Promise<SlaPolicy>;
+}
+
+export async function updateSlaPolicy(
+  organizationId: string,
+  policyId: string,
+  input: UpdateSlaPolicyInput,
+): Promise<SlaPolicy> {
+  const response = await fetch(`${API_BASE_URL}/sla-policies/${policyId}`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: buildHeaders(organizationId),
+    body: JSON.stringify(input),
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(response, "Failed to update SLA policy"),
     );
   }
 

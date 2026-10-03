@@ -1,8 +1,18 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { getSlaPolicies, getSlaPolicy } from "@/lib/api/sla-policies";
+import {
+  createSlaPolicy,
+  getSlaPolicies,
+  getSlaPolicy,
+  updateSlaPolicy,
+} from "@/lib/api/sla-policies";
+import type {
+  CreateSlaPolicyInput,
+  SlaPolicy,
+  UpdateSlaPolicyInput,
+} from "@/types/sla-policies";
 
 export const slaPolicyQueryKeys = {
   all: ["sla-policies"] as const,
@@ -55,5 +65,91 @@ export function useSlaPolicy(
     },
 
     enabled: Boolean(organizationId && policyId),
+  });
+}
+
+export function useCreateSlaPolicy(organizationId: string | undefined) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: CreateSlaPolicyInput) => {
+      if (!organizationId) {
+        throw new Error("Organization context is required");
+      }
+
+      return createSlaPolicy(organizationId, input);
+    },
+
+    onSuccess: (policy) => {
+      if (!organizationId) {
+        return;
+      }
+
+      queryClient.setQueryData<SlaPolicy[]>(
+        slaPolicyQueryKeys.list(organizationId),
+        (current) => {
+          if (!current) {
+            return [policy];
+          }
+
+          return [...current, policy];
+        },
+      );
+
+      queryClient.setQueryData(
+        slaPolicyQueryKeys.detail(organizationId, policy.id),
+        policy,
+      );
+
+      queryClient.invalidateQueries({
+        queryKey: slaPolicyQueryKeys.list(organizationId),
+      });
+    },
+  });
+}
+
+export function useUpdateSlaPolicy(organizationId: string | undefined) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      policyId,
+      input,
+    }: {
+      policyId: string;
+      input: UpdateSlaPolicyInput;
+    }) => {
+      if (!organizationId) {
+        throw new Error("Organization context is required");
+      }
+
+      return updateSlaPolicy(organizationId, policyId, input);
+    },
+
+    onSuccess: (policy) => {
+      if (!organizationId) {
+        return;
+      }
+
+      queryClient.setQueryData(
+        slaPolicyQueryKeys.detail(organizationId, policy.id),
+        policy,
+      );
+
+      queryClient.setQueryData<SlaPolicy[]>(
+        slaPolicyQueryKeys.list(organizationId),
+        (current) => {
+          if (!current) {
+            return [policy];
+          }
+
+          return current.map((item) => (item.id === policy.id ? policy : item));
+        },
+      );
+
+      queryClient.invalidateQueries({
+        queryKey: slaPolicyQueryKeys.list(organizationId),
+      });
+    },
   });
 }
