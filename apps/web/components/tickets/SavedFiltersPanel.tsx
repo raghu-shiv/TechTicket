@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Bookmark, Pencil, Plus, Trash2 } from "lucide-react";
+import { AlertCircle, Bookmark, Pencil, Plus, Trash2 } from "lucide-react";
 
 import {
   useCreateSavedFilter,
@@ -28,13 +28,28 @@ interface SavedFiltersPanelProps {
 interface DeleteConfirmationProps {
   savedFilter: SavedFilter | null;
   isDeleting: boolean;
+  errorMessage?: string;
   onCancel: () => void;
   onConfirm: () => void;
+}
+
+function getMutationErrorMessage(error: unknown, fallback: string): string {
+  if (
+    error &&
+    typeof error === "object" &&
+    "message" in error &&
+    typeof error.message === "string"
+  ) {
+    return error.message;
+  }
+
+  return fallback;
 }
 
 function DeleteConfirmation({
   savedFilter,
   isDeleting,
+  errorMessage,
   onCancel,
   onConfirm,
 }: DeleteConfirmationProps) {
@@ -75,6 +90,17 @@ function DeleteConfirmation({
             ? This action cannot be undone.
           </p>
         </div>
+
+        {errorMessage ? (
+          <div
+            role="alert"
+            className="mb-4 flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          >
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+
+            <span>{errorMessage}</span>
+          </div>
+        ) : null}
 
         <div className="flex justify-end gap-2">
           <button
@@ -125,23 +151,54 @@ export function SavedFiltersPanel({
 
   const canSaveCurrentFilters = hasSavedFilterCriteria(currentFilters);
 
+  const createError = createSavedFilter.isError
+    ? getMutationErrorMessage(
+        createSavedFilter.error,
+        "Unable to save the filter.",
+      )
+    : null;
+
+  const updateError = updateSavedFilter.isError
+    ? getMutationErrorMessage(
+        updateSavedFilter.error,
+        "Unable to update the filter.",
+      )
+    : null;
+
+  const deleteError = deleteSavedFilter.isError
+    ? getMutationErrorMessage(
+        deleteSavedFilter.error,
+        "Unable to delete the filter.",
+      )
+    : null;
+
+  const isSaving = createSavedFilter.isPending || updateSavedFilter.isPending;
+
   function handleCreate() {
+    createSavedFilter.reset();
+    updateSavedFilter.reset();
+
     setEditingSavedFilter(null);
     setDialogOpen(true);
   }
 
   function handleEdit(savedFilter: SavedFilter) {
+    createSavedFilter.reset();
+    updateSavedFilter.reset();
+
     setEditingSavedFilter(savedFilter);
     setDialogOpen(true);
   }
 
   function handleCloseDialog() {
-    if (createSavedFilter.isPending || updateSavedFilter.isPending) {
+    if (isSaving) {
       return;
     }
 
     setDialogOpen(false);
     setEditingSavedFilter(null);
+    createSavedFilter.reset();
+    updateSavedFilter.reset();
   }
 
   function handleSave(input: {
@@ -149,6 +206,9 @@ export function SavedFiltersPanel({
     description?: string;
     filters: SavedFilterDefinition;
   }) {
+    createSavedFilter.reset();
+    updateSavedFilter.reset();
+
     if (editingSavedFilter) {
       updateSavedFilter.mutate(
         {
@@ -174,6 +234,7 @@ export function SavedFiltersPanel({
   }
 
   function handleDelete(savedFilter: SavedFilter) {
+    deleteSavedFilter.reset();
     setDeletingSavedFilter(savedFilter);
   }
 
@@ -183,6 +244,7 @@ export function SavedFiltersPanel({
     }
 
     setDeletingSavedFilter(null);
+    deleteSavedFilter.reset();
   }
 
   function handleConfirmDelete() {
@@ -196,8 +258,6 @@ export function SavedFiltersPanel({
       },
     });
   }
-
-  const isSaving = createSavedFilter.isPending || updateSavedFilter.isPending;
 
   return (
     <>
@@ -230,6 +290,16 @@ export function SavedFiltersPanel({
             Save current filters
           </button>
         </div>
+
+        {createError ? (
+          <div
+            role="alert"
+            className="flex items-start gap-2 border-b bg-destructive/10 px-4 py-3 text-sm text-destructive"
+          >
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{createError}</span>
+          </div>
+        ) : null}
 
         <div className="p-4">
           {isLoading ? (
@@ -309,6 +379,16 @@ export function SavedFiltersPanel({
         </div>
       </section>
 
+      {updateError ? (
+        <div
+          role="alert"
+          className="mt-2 flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+        >
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>{updateError}</span>
+        </div>
+      ) : null}
+
       <SavedFilterDialog
         key={editingSavedFilter ? `edit-${editingSavedFilter.id}` : "create"}
         open={dialogOpen}
@@ -324,6 +404,7 @@ export function SavedFiltersPanel({
       <DeleteConfirmation
         savedFilter={deletingSavedFilter}
         isDeleting={deleteSavedFilter.isPending}
+        errorMessage={deleteError ?? undefined}
         onCancel={handleCancelDelete}
         onConfirm={handleConfirmDelete}
       />
