@@ -8,9 +8,12 @@ approval workflows.
 
 ## Current Status
 
-**Phase 4 — Workflow is complete and verified through Phase 4-J — Ticket History Refinement. Phase 5-A through Phase 5-D are COMPLETE AND VERIFIED.**
+**Phase 4 --- Workflow is complete and verified through Phase 4-J ---
+Ticket History Refinement. Phase 5-A through Phase 5-E are COMPLETE AND
+VERIFIED.**
 
-The next implementation milestone is **Phase 5-E — Saved Filter UX**.
+The current implementation milestone is **Phase 5-F --- Full Phase 5
+Verification**.
 
 Latest verified backend state:
 
@@ -42,37 +45,43 @@ See [`PLANS.md`](./PLANS.md) for the detailed implementation tracker.
 
 ## Phase 5 Productivity Checkpoint
 
-### 5-A — Ticket Library
+### 5-A --- Ticket Library
 
 **COMPLETE AND VERIFIED**
 
-The ticket library supports URL-backed search, filtering, sorting, pagination, row navigation, and ticket details.
+The ticket library supports URL-backed search, filtering, sorting,
+pagination, row navigation, and ticket details.
 
-### 5-B — Ticket Library UX Refinement
-
-**COMPLETE AND VERIFIED**
-
-The library UX includes refined filter presentation, active-filter controls, responsive behavior, useful defaults, and preserved URL-backed query state.
-
-### 5-C — Saved Filters Foundation
+### 5-B --- Ticket Library UX Refinement
 
 **COMPLETE AND VERIFIED**
 
-The Saved Filter data model, Prisma migration, organization/user ownership relationships, schema validation, and foundation E2E coverage are complete.
+The library UX includes refined filter presentation, active-filter
+controls, responsive behavior, useful defaults, and preserved URL-backed
+query state.
 
-### 5-D — Saved Filter API
+### 5-C --- Saved Filters Foundation
 
 **COMPLETE AND VERIFIED**
 
-CRUD endpoints are implemented with authenticated organization/user ownership, validation, and isolation.
+The Saved Filter data model, Prisma migration, organization/user
+ownership relationships, schema validation, and foundation E2E coverage
+are complete.
 
-### 5-D.5 / 5-D.6 — Isolation, CRUD, and Full Verification
+### 5-D --- Saved Filter API
+
+**COMPLETE AND VERIFIED**
+
+CRUD endpoints are implemented with authenticated organization/user
+ownership, validation, and isolation.
+
+### 5-D.5 / 5-D.6 --- Isolation, CRUD, and Full Verification
 
 **COMPLETE AND VERIFIED**
 
 Latest backend checkpoint:
 
-```text
+``` text
 E2E test files       21/21 passed
 E2E tests            249/249 passed
 Failures             0
@@ -80,22 +89,24 @@ Lint                 0 warnings / 0 errors
 Production build     SUCCESS
 ```
 
-### 5-E — Saved Filter UX
+### 5-E --- Saved Filter UX
 
-**NEXT**
+**COMPLETE AND VERIFIED**
 
 Planned:
 
-- Save current ticket-library filters
-- Saved-filter list
-- Apply saved filter
-- Rename/edit
-- Delete
-- Reset to normal ticket library
-- Clear distinction between current query and saved query
-- Preserve URL-backed current-query state
+-   Save current ticket-library filters
+-   Saved-filter list
+-   Apply saved filter
+-   Rename/edit
+-   Delete
+-   Reset to normal ticket library
+-   Clear distinction between current query and saved query
+-   Preserve URL-backed current-query state
 
-The URL remains the source of truth for the current ticket query. Saved filters are named server-side query definitions that can be applied to that query.
+The URL remains the source of truth for the current ticket query. Saved
+filters are named server-side query definitions that can be applied to
+that query.
 
 ## Phase 4-H Realtime / WebSockets Checkpoint
 
@@ -316,33 +327,34 @@ Full API result:
 108/108 tests passed
 ```
 
-## Phase 4-I — Unassigned Queue Checkpoint
+## Phase 4-I --- Unassigned Queue Checkpoint
 
 **COMPLETE AND VERIFIED**
 
-The unassigned queue builds on the existing ticket assignment model (`assigneeId = null`) without introducing a separate queue data model.
+The unassigned queue builds on the existing ticket assignment model
+(`assigneeId = null`) without introducing a separate queue data model.
 
 Completed milestones:
 
-- 4-I.1 — Define unassigned queue behavior
-- 4-I.2 — Verify current unassigned ticket filtering
-- 4-I.3 — Dedicated unassigned-queue API coverage
-- 4-I.4 — Authorization and organization-isolation coverage
-- 4-I.5 — Sorting/pagination/filter interaction coverage
-- 4-I.6 — Assignment transition coverage
-- 4-I.7 — Realtime queue membership changes
-- 4-I.8 — Full verification
+-   4-I.1 --- Define unassigned queue behavior
+-   4-I.2 --- Verify current unassigned ticket filtering
+-   4-I.3 --- Dedicated unassigned-queue API coverage
+-   4-I.4 --- Authorization and organization-isolation coverage
+-   4-I.5 --- Sorting/pagination/filter interaction coverage
+-   4-I.6 --- Assignment transition coverage
+-   4-I.7 --- Realtime queue membership changes
+-   4-I.8 --- Full verification
 
 Queue membership transitions are verified as:
 
-```text
+``` text
 UNASSIGNED → assign → removed from unassigned queue
 ASSIGNED   → unassign → added to unassigned queue
 ```
 
 Final verification:
 
-```text
+``` text
 E2E test files       21/21 passed
 E2E tests            249/249 passed
 Failures             0
@@ -351,19 +363,19 @@ Lint                 0 warnings / 0 errors
 Production build     SUCCESS
 ```
 
-## Phase 4-J — Ticket History Refinement
+## Phase 4-J --- Ticket History Refinement
 
 **NEXT**
 
 Planned scope:
 
-- Activity categorization
-- Timeline metadata
-- Human-readable event descriptions
-- Actor presentation
-- History filtering
-- Pagination
-- Realtime history integration
+-   Activity categorization
+-   Timeline metadata
+-   Human-readable event descriptions
+-   Actor presentation
+-   History filtering
+-   Pagination
+-   Realtime history integration
 
 ## Technology Stack
 
@@ -497,6 +509,52 @@ test/realtime-room-routing.e2e-spec.ts
 test/ticket.e2e-spec.ts
 ```
 
+## 5-F --- Full Phase 5 Verification
+
+**IN PROGRESS**
+
+Verification boundary:
+
+### Backend
+
+-   Unit tests
+-   Full E2E tests
+-   Lint
+-   Production build
+
+### Frontend
+
+-   Lint
+-   Production build
+
+### Functional/security checks
+
+-   Organization isolation
+-   Saved-filter ownership
+-   Invalid saved-filter payloads
+-   Pagination/filter interaction
+-   Applying a saved filter reproduces the intended ticket query
+-   Edit permissions
+-   Delete permissions
+-   Save/apply/reset/edit/delete workflow regression
+-   Current-query vs saved-query behavior
+
+Docker verification commands:
+
+``` powershell
+docker compose exec api npm test
+docker compose exec api npm run test:e2e
+docker compose exec api npm run lint
+docker compose exec api npm run build
+docker compose exec web npm run lint
+docker compose exec web npm run build
+```
+
+The repository contains dedicated Saved Filter E2E coverage for context,
+organization/user isolation, validation, and persistence. Runtime Docker
+execution is still required before this milestone can be marked
+**COMPLETE AND VERIFIED**.
+
 ## Roadmap
 
 ### Phase 3 --- Ticket Core
@@ -540,10 +598,14 @@ test/ticket.e2e-spec.ts
     -   Full verification (4-H.8) --- **COMPLETE AND VERIFIED**
 -   Unassigned queue (4-I) --- **COMPLETE AND VERIFIED**
     -   4-I.1 --- Define unassigned queue behavior --- **COMPLETE**
-    -   4-I.2 --- Verify current unassigned ticket filtering --- **COMPLETE**
-    -   4-I.3 --- Dedicated unassigned-queue API coverage --- **COMPLETE**
-    -   4-I.4 --- Authorization and organization-isolation coverage --- **COMPLETE**
-    -   4-I.5 --- Sorting/pagination/filter interaction coverage --- **COMPLETE**
+    -   4-I.2 --- Verify current unassigned ticket filtering ---
+        **COMPLETE**
+    -   4-I.3 --- Dedicated unassigned-queue API coverage ---
+        **COMPLETE**
+    -   4-I.4 --- Authorization and organization-isolation coverage ---
+        **COMPLETE**
+    -   4-I.5 --- Sorting/pagination/filter interaction coverage ---
+        **COMPLETE**
     -   4-I.6 --- Assignment transition coverage --- **COMPLETE**
     -   4-I.7 --- Realtime queue membership changes --- **COMPLETE**
     -   4-I.8 --- Full verification --- **COMPLETE AND VERIFIED**
@@ -562,7 +624,8 @@ test/ticket.e2e-spec.ts
 -   Ticket Library UX refinement --- **COMPLETE AND VERIFIED**
 -   Saved Filters Foundation --- **COMPLETE AND VERIFIED**
 -   Saved Filter API --- **COMPLETE AND VERIFIED**
--   Saved Filter UX --- **NEXT**
+-   Saved Filter UX --- **COMPLETE AND VERIFIED**
+-   Full Phase 5 Verification --- **IN PROGRESS**
 
 ### Productivity
 
@@ -604,7 +667,7 @@ test/ticket.e2e-spec.ts
 
 ## Current Project Checkpoint
 
-```text
+``` text
 Authentication                    COMPLETE
 Organization context              COMPLETE
 Ticket CRUD                       COMPLETE
@@ -636,20 +699,26 @@ Phase 4-H Realtime / WebSockets   COMPLETE AND VERIFIED
 Phase 4-I Unassigned Queue        COMPLETE AND VERIFIED
 Phase 4-J Ticket History          COMPLETE AND VERIFIED
 Phase 5-A Ticket Library          COMPLETE AND VERIFIED
-Phase 5-B Ticket Library UX       NEXT
+Phase 5-B Ticket Library UX       COMPLETE AND VERIFIED
+Phase 5-C Saved Filters Foundation COMPLETE AND VERIFIED
+Phase 5-D Saved Filter API          COMPLETE AND VERIFIED
+Phase 5-E Saved Filter UX           COMPLETE AND VERIFIED
+Phase 5-F Full Phase 5 Verification IN PROGRESS
 ```
 
 ## Next Development Direction
 
 Phase 4 is complete.
 
-Phase 5-A — Ticket Library is **COMPLETE AND VERIFIED**.
-Phase 5-B — Ticket Library UX Refinement is **COMPLETE AND VERIFIED**.
-Phase 5-C — Saved Filters Foundation is **COMPLETE AND VERIFIED**.
-Phase 5-D — Saved Filter API is **COMPLETE AND VERIFIED**.
+Phase 5-A --- Ticket Library is **COMPLETE AND VERIFIED**. Phase 5-B ---
+Ticket Library UX Refinement is **COMPLETE AND VERIFIED**. Phase 5-C ---
+Saved Filters Foundation is **COMPLETE AND VERIFIED**. Phase 5-D ---
+Saved Filter API is **COMPLETE AND VERIFIED**. Phase 5-E --- Saved
+Filter UX is **COMPLETE AND VERIFIED**.
 
-The next implementation milestone is:
+The current implementation milestone is:
 
-**Phase 5-E — Saved Filter UX**
+**Phase 5-F --- Full Phase 5 Verification**
 
-Continue from the verified repository state and avoid speculative architecture changes.
+Continue from the verified repository state and avoid speculative
+architecture changes.

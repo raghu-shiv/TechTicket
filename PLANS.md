@@ -12,19 +12,24 @@ feature.
 
 ### Status: COMPLETE AND VERIFIED
 
-Phase 4 is complete through Phase 4-J — Ticket History Refinement. Phase 5-A — Ticket Library is now complete and verified, including ticket-list filtering, sorting, pagination, row navigation, ticket details, API E2E regression, frontend lint, and frontend production build.
+Phase 4 is complete through Phase 4-J --- Ticket History Refinement.
+Phase 5-A --- Ticket Library is now complete and verified, including
+ticket-list filtering, sorting, pagination, row navigation, ticket
+details, API E2E regression, frontend lint, and frontend production
+build.
 
 Current roadmap:
 
-- Phase 5-A --- Ticket Library: **COMPLETE AND VERIFIED**
-- Phase 5-B --- Ticket Library UX Refinement: **COMPLETE AND VERIFIED**
-- Phase 5-C --- Saved Filters Foundation: **COMPLETE AND VERIFIED**
-- Phase 5-D --- Saved Filter API: **COMPLETE AND VERIFIED**
-- Phase 5-E --- Saved Filter UX: **NEXT**
-- Phase 5-F --- Full Phase 5 Verification: **PLANNED**
-- Phase 6 --- SLA: **PLANNED**
-- Phase 7 --- Analytics: **PLANNED**
-- Phase 8 --- Production Hardening: **PLANNED**
+-   Phase 5-A --- Ticket Library: **COMPLETE AND VERIFIED**
+-   Phase 5-B --- Ticket Library UX Refinement: **COMPLETE AND
+    VERIFIED**
+-   Phase 5-C --- Saved Filters Foundation: **COMPLETE AND VERIFIED**
+-   Phase 5-D --- Saved Filter API: **COMPLETE AND VERIFIED**
+-   Phase 5-E --- Saved Filter UX: **COMPLETE AND VERIFIED**
+-   Phase 5-F --- Full Phase 5 Verification: **IN PROGRESS**
+-   Phase 6 --- SLA: **PLANNED**
+-   Phase 7 --- Analytics: **PLANNED**
+-   Phase 8 --- Production Hardening: **PLANNED**
 
 # Phase 3 --- Ticket Core
 
@@ -719,63 +724,65 @@ final documentation checkpoint.
 -   CI/CD
 -   Production Docker
 
-# Phase 5 — Productivity
+# Phase 5 --- Productivity
 
-## 5-A — Ticket Library
+## 5-A --- Ticket Library
 
 **Status: COMPLETE AND VERIFIED**
 
 Completed:
 
-- 5-A.1 — Ticket Library API/client contract
-- 5-A.2 — `/tickets` page
-- 5-A.3 — Filtering + sorting
-- 5-A.4 — Pagination
-- 5-A.5 — Ticket-row navigation
-- 5-A.6 — E2E/API/frontend verification
+-   5-A.1 --- Ticket Library API/client contract
+-   5-A.2 --- `/tickets` page
+-   5-A.3 --- Filtering + sorting
+-   5-A.4 --- Pagination
+-   5-A.5 --- Ticket-row navigation
+-   5-A.6 --- E2E/API/frontend verification
 
 Verification:
 
-```text
+``` text
 API E2E              17/17 files passed
 API E2E tests        211/211 passed
 Web lint             PASS
 Web production build PASS
 ```
 
-Frontend manual verification included `/tickets`, ticket-row navigation to `/tickets/:id`, ticket detail rendering, back navigation, direct URL loading, and controlled invalid-ticket handling.
+Frontend manual verification included `/tickets`, ticket-row navigation
+to `/tickets/:id`, ticket detail rendering, back navigation, direct URL
+loading, and controlled invalid-ticket handling.
 
-## 5-B — Ticket Library UX Refinement
+## 5-B --- Ticket Library UX Refinement
 
 **Status: COMPLETE AND VERIFIED**
 
 Completed:
 
-- Refined ticket-list information hierarchy
-- Search/filter presentation
-- Active-filter controls
-- Responsive behavior
-- Useful defaults
-- URL-backed filtering, sorting, and pagination
-- Existing UI primitive reuse
+-   Refined ticket-list information hierarchy
+-   Search/filter presentation
+-   Active-filter controls
+-   Responsive behavior
+-   Useful defaults
+-   URL-backed filtering, sorting, and pagination
+-   Existing UI primitive reuse
 
-## 5-C — Saved Filters Foundation
+## 5-C --- Saved Filters Foundation
 
 **Status: COMPLETE AND VERIFIED**
 
 Implemented and verified:
 
-- `SavedFilter` Prisma model
-- Organization/user ownership relationships
-- `20261002185115_add_saved_filters` migration
-- Prisma client generation
-- Schema validation
-- API build/lint
-- Foundation E2E coverage
+-   `SavedFilter` Prisma model
+-   Organization/user ownership relationships
+-   `20261002185115_add_saved_filters` migration
+-   Prisma client generation
+-   Schema validation
+-   API build/lint
+-   Foundation E2E coverage
 
 Conceptual model:
 
-```text
+``` text
 id
 organizationId
 userId
@@ -786,11 +793,11 @@ createdAt
 updatedAt
 ```
 
-## 5-D — Saved Filter API
+## 5-D --- Saved Filter API
 
 **Status: COMPLETE AND VERIFIED**
 
-```text
+``` text
 POST  /api/v1/saved-filters
 GET   /api/v1/saved-filters
 GET   /api/v1/saved-filters/:id
@@ -800,26 +807,28 @@ DELETE /api/v1/saved-filters/:id
 
 Completed:
 
-- 5-D.1 — API contract and DTO validation
-- 5-D.2 — Saved Filter service
-- 5-D.3 — Saved Filter controller
-- 5-D.4 — Authentication and organization context
-- 5-D.5 — E2E isolation/CRUD
-- 5-D.6 — Full verification
+-   5-D.1 --- API contract and DTO validation
+-   5-D.2 --- Saved Filter service
+-   5-D.3 --- Saved Filter controller
+-   5-D.4 --- Authentication and organization context
+-   5-D.5 --- E2E isolation/CRUD
+-   5-D.6 --- Full verification
 
-### 5-D.5 — E2E isolation/CRUD
+### 5-D.5 --- E2E isolation/CRUD
 
 **COMPLETE AND VERIFIED**
 
-Verified same-user/same-organization access, different-user isolation, organization boundaries, create/update/delete behavior, list ownership isolation, and server-derived ownership.
+Verified same-user/same-organization access, different-user isolation,
+organization boundaries, create/update/delete behavior, list ownership
+isolation, and server-derived ownership.
 
-### 5-D.6 — Full Verification
+### 5-D.6 --- Full Verification
 
 **COMPLETE AND VERIFIED**
 
 Latest checkpoint:
 
-```text
+``` text
 API E2E test files   21/21 passed
 API E2E tests        249/249 passed
 Failures             0
@@ -827,25 +836,25 @@ API lint             0 warnings / 0 errors
 API production build SUCCESS
 ```
 
-## 5-E — Saved Filter UX
+## 5-E --- Saved Filter UX
 
-**Status: NEXT**
+**Status: COMPLETE AND VERIFIED**
 
 Planned scope:
 
-- Save current ticket-library filters
-- Saved-filter list
-- Apply a saved filter to the current ticket library
-- Rename/edit saved filters
-- Delete saved filters
-- Reset back to the normal ticket library
-- Clear visual distinction between the current query and saved query
-- Preserve URL-backed filtering, sorting, and pagination
-- Reuse the existing Saved Filter API and UI primitives
+-   Save current ticket-library filters
+-   Saved-filter list
+-   Apply a saved filter to the current ticket library
+-   Rename/edit saved filters
+-   Delete saved filters
+-   Reset back to the normal ticket library
+-   Clear visual distinction between the current query and saved query
+-   Preserve URL-backed filtering, sorting, and pagination
+-   Reuse the existing Saved Filter API and UI primitives
 
 Design boundary:
 
-```text
+``` text
 Current URL query
       |
       v
@@ -863,22 +872,77 @@ Saved-filter list
       +---- Delete
 ```
 
-The URL remains the source of truth for the current ticket query. A saved filter is a named server-side query definition that can be applied to that query; it is not a competing client-side source of truth.
+The URL remains the source of truth for the current ticket query. A
+saved filter is a named server-side query definition that can be applied
+to that query; it is not a competing client-side source of truth.
 
-## 5-F — Full Phase 5 Verification
+## 5-F --- Full Phase 5 Verification
 
-**Status: PLANNED**
+**Status: IN PROGRESS**
 
-- Ticket library regression
-- Saved-filter API regression
-- Saved-filter UX regression
-- Organization isolation
-- User ownership
-- API E2E
-- Frontend lint
-- Frontend production build
-- Current-query vs saved-query behavior
-- Save/apply/reset/edit/delete workflows
+Verification boundary:
+
+### Backend
+
+-   Unit tests
+-   Full E2E tests
+-   Lint
+-   Production build
+
+### Frontend
+
+-   Lint
+-   Production build
+
+### Functional/security verification
+
+-   Organization isolation
+-   Saved-filter ownership
+-   Invalid saved-filter payloads
+-   Pagination/filter interaction
+-   Applying a saved filter reproduces the intended ticket query
+-   Edit permissions
+-   Delete permissions
+-   Save/apply/reset/edit/delete workflow regression
+-   Current-query vs saved-query behavior
+
+Repository inspection confirms dedicated Saved Filter E2E coverage for
+context, organization/user isolation, invalid payload validation, and
+persistence.
+
+Backend scripts:
+
+``` text
+npm test
+npm run test:e2e
+npm run lint
+npm run build
+```
+
+Frontend scripts:
+
+``` text
+npm run lint
+npm run build
+```
+
+Runtime Docker execution is still required before 5-F can be marked
+**COMPLETE AND VERIFIED**. No GitHub Actions workflow run is currently
+available to substitute for that execution checkpoint.
+
+Required Docker verification commands:
+
+``` powershell
+docker compose exec api npm test
+docker compose exec api npm run test:e2e
+docker compose exec api npm run lint
+docker compose exec api npm run build
+docker compose exec web npm run lint
+docker compose exec web npm run build
+```
+
+After these commands pass, the functional/security checks above must
+also be recorded before closing Phase 5-F.
 
 # Engineering Rules
 
@@ -902,7 +966,7 @@ For each remaining feature:
 
 # Current Project Checkpoint
 
-```text
+``` text
 Authentication                    COMPLETE
 Organization context              COMPLETE
 Ticket CRUD                       COMPLETE
@@ -935,12 +999,13 @@ Phase 5-A Ticket Library          COMPLETE AND VERIFIED
 Phase 5-B Ticket Library UX       COMPLETE AND VERIFIED
 Phase 5-C Saved Filters Foundation COMPLETE AND VERIFIED
 Phase 5-D Saved Filter API         COMPLETE AND VERIFIED
-Phase 5-E Saved Filter UX          NEXT
+Phase 5-E Saved Filter UX          COMPLETE AND VERIFIED
+Phase 5-F Full Phase 5 Verification IN PROGRESS
 ```
 
 # Latest Verification Commands
 
-```powershell
+``` powershell
 docker compose exec api npm run test:e2e
 docker compose exec api npm run lint
 docker compose exec api npm run build
@@ -950,7 +1015,7 @@ docker compose exec web npm run build
 
 Latest API E2E verification:
 
-```text
+``` text
 E2E test files       21/21 passed
 E2E tests            249/249 passed
 Failures             0
@@ -958,22 +1023,42 @@ Failures             0
 
 Latest frontend verification:
 
-```text
+``` text
 Lint                 PASS
 Production build     SUCCESS
+```
+
+## Phase 5-F Verification Checklist
+
+``` text
+Backend unit tests              PENDING RUNTIME EXECUTION
+Backend E2E tests               PENDING RUNTIME EXECUTION
+Backend lint                    PENDING RUNTIME EXECUTION
+Backend production build        PENDING RUNTIME EXECUTION
+Frontend lint                   PENDING RUNTIME EXECUTION
+Frontend production build       PENDING RUNTIME EXECUTION
+
+Organization isolation          COVERAGE PRESENT / RUNTIME PENDING
+Saved-filter ownership          COVERAGE PRESENT / RUNTIME PENDING
+Invalid filter payloads         COVERAGE PRESENT / RUNTIME PENDING
+Pagination/filter interaction   REGRESSION TARGET / RUNTIME PENDING
+Saved-filter query reproduction REGRESSION TARGET / RUNTIME PENDING
+Edit permissions                REGRESSION TARGET / RUNTIME PENDING
+Delete permissions              REGRESSION TARGET / RUNTIME PENDING
 ```
 
 # Next Development Direction
 
 Phase 4 is complete.
 
-Phase 5-A — Ticket Library is **COMPLETE AND VERIFIED**.
-Phase 5-B — Ticket Library UX Refinement is **COMPLETE AND VERIFIED**.
-Phase 5-C — Saved Filters Foundation is **COMPLETE AND VERIFIED**.
-Phase 5-D — Saved Filter API is **COMPLETE AND VERIFIED**.
+Phase 5-A --- Ticket Library is **COMPLETE AND VERIFIED**. Phase 5-B ---
+Ticket Library UX Refinement is **COMPLETE AND VERIFIED**. Phase 5-C ---
+Saved Filters Foundation is **COMPLETE AND VERIFIED**. Phase 5-D ---
+Saved Filter API is **COMPLETE AND VERIFIED**.
 
-The next implementation milestone is:
+The current implementation milestone is:
 
-**Phase 5-E — Saved Filter UX**
+**Phase 5-F --- Full Phase 5 Verification**
 
-Continue from the verified repository state and avoid speculative architecture changes.
+Continue from the verified repository state and avoid speculative
+architecture changes.
