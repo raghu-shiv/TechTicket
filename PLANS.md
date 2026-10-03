@@ -8,9 +8,9 @@ feature.
 
 # Current Phase
 
-## Phase 5 --- Productivity Checkpoint
+## Phase 6 --- SLA
 
-### Status: COMPLETE AND VERIFIED
+### Status: IN PROGRESS — Phase 6-A COMPLETE AND VERIFIED
 
 Phase 4 is complete through Phase 4-J --- Ticket History Refinement.
 Phase 5-A --- Ticket Library is now complete and verified, including
@@ -27,7 +27,7 @@ Current roadmap:
 -   Phase 5-D --- Saved Filter API: **COMPLETE AND VERIFIED**
 -   Phase 5-E --- Saved Filter UX: **COMPLETE AND VERIFIED**
 -   Phase 5-F --- Full Phase 5 Verification: **COMPLETE AND VERIFIED**
--   Phase 6 --- SLA: **NEXT**
+-   Phase 6 --- SLA: **IN PROGRESS — 6-A COMPLETE AND VERIFIED**
 -   Phase 7 --- Analytics: **PLANNED**
 -   Phase 8 --- Production Hardening: **PLANNED**
 
@@ -1029,38 +1029,179 @@ Delete permissions              PASS
 
 # Phase 6 — SLA
 
+**Status: IN PROGRESS — Phase 6-A COMPLETE AND VERIFIED**
+
+Phase 3-H established the underlying SLA automation foundation. Phase 6
+focuses on the product-level SLA experience and operational workflow.
+
+## 6-A — SLA Policy Management
+
+**Status: COMPLETE AND VERIFIED**
+
+Implemented and verified:
+
+- 6-A.1 — SLA Foundation Audit & API Contract
+- 6-A.2 — SLA Policy API Test Coverage & Contract Hardening
+- 6-A.3 — SLA Policy Lifecycle Semantics
+- 6-A.4 — Frontend SLA Policy Management Shell
+- 6-A.5 — Policy Create/Edit + Target Editing
+- 6-A.6 — Activation/Deactivation UX
+- 6-A.7 — Frontend Authorization & Organization Isolation
+- 6-A.8 — SLA Policy Delete UX
+- 6-A Verification — Full Phase 6-A verification
+
+Verified policy lifecycle:
+
+```text
+Create → INACTIVE
+Activate → ACTIVE
+Deactivate → INACTIVE
+Delete → INACTIVE policies only
+```
+
+Authorization:
+
+```text
+View policies:
+REQUESTER ✓
+AGENT     ✓
+ADMIN     ✓
+OWNER     ✓
+
+Manage policies:
+REQUESTER —
+AGENT     —
+ADMIN     ✓
+OWNER     ✓
+```
+
+Management operations include:
+
+- Create
+- Edit
+- Target editing
+- Activate
+- Deactivate
+- Delete
+- Lifecycle confirmation
+- Pending/error states
+- Organization isolation
+- Frontend authorization-aware UX
+- Backend authorization as the authoritative security boundary
+
+Delete behavior is explicitly verified:
+
+- ADMIN can delete inactive policies
+- OWNER can delete inactive policies
+- Active policies cannot be deleted until deactivated
+- REQUESTER and AGENT cannot delete policies
+- Cross-organization deletion is rejected
+
+Phase 6-A verification completed successfully across:
+
+- Frontend lint
+- Frontend TypeScript
+- Frontend production build
+- SLA Policy E2E
+- Full backend E2E
+- Backend lint
+- Backend production build
+- Manual policy lifecycle workflow
+- Manual role/authorization workflow
+- Manual delete workflow
+
+## 6-B — Ticket SLA Timer Experience
+
 **Status: NEXT**
 
-Phase 3-H established the underlying SLA automation foundation. Phase 6 now focuses on the product-level SLA experience and operational workflow:
+Scope:
 
-- SLA policies
-- SLA timers
-- SLA warnings
-- SLA breaches
-- SLA dashboard
+- Expose existing Ticket SLA snapshot data cleanly to the frontend
+- First-response timer
+- Resolution timer
+- Remaining-time / elapsed-time presentation
+- Breached state presentation
+- Ticket detail integration
+- Library/list SLA indicators where appropriate
 
 Implementation boundary:
 
-- Inspect and reuse the existing SLA policy, snapshot, due-time, breach, escalation, audit, and realtime foundations.
-- Do not duplicate existing SLA domain models or automation without a concrete requirement.
-- Preserve organization scoping and existing authorization boundaries.
-- Define warning thresholds and dashboard metrics from the project requirements/SOP before implementation; do not invent business rules.
-- Verify each SLA milestone with focused tests, regression E2E coverage, lint, and build before moving forward.
+- Reuse the existing `TicketSla` snapshot and due-time data.
+- Do not introduce duplicate SLA timer or SLA snapshot models.
+- Preserve the snapshot semantics captured when the ticket is created.
+- Keep organization scoping and existing ticket authorization unchanged.
+- Derive presentation state from existing SLA timestamps and breach fields.
+- Do not invent SLA warning thresholds in 6-B; warnings belong to 6-C and require defined business rules.
+- Keep timer presentation deterministic and testable.
+- Verify API contract, frontend behavior, lint, TypeScript, build, and regression E2E before moving to 6-C.
+
+## 6-C — SLA Warnings
+
+**Status: PLANNED**
+
+Scope:
+
+- Warning thresholds
+- Warning-state presentation
+- Ticket-level warning indicators
+- Realtime warning updates where required
+
+Warning thresholds must be defined from the project requirements/SOP before implementation. Do not invent warning business rules.
+
+## 6-D — SLA Breach Operations
+
+**Status: PLANNED**
+
+Scope:
+
+- Breach-state operational UX
+- Existing breach/escalation integration
+- Realtime breach presentation
+- Operational follow-up workflows
+
+Reuse the existing SLA breach detection, escalation, audit, and realtime foundations.
+
+## 6-E — SLA Dashboard
+
+**Status: PLANNED**
+
+Scope:
+
+- SLA performance metrics
+- First-response compliance
+- Resolution compliance
+- Breach metrics
+- Policy-level operational reporting
+
+Dashboard metrics and definitions must be established from the project requirements/SOP before implementation.
+
+## 6-F — Full SLA Verification
+
+**Status: PLANNED**
+
+Final Phase 6 verification boundary:
+
+- Backend unit/integration tests
+- Focused SLA E2E
+- Full backend E2E
+- Frontend lint
+- Frontend TypeScript
+- Frontend production build
+- SLA workflow verification
+- Organization isolation
+- Authorization
+- Realtime SLA behavior
+- Final documentation checkpoint
 
 # Next Development Direction
 
 Phase 4 is complete.
-
-Phase 5-A --- Ticket Library is **COMPLETE AND VERIFIED**. Phase 5-B ---
-Ticket Library UX Refinement is **COMPLETE AND VERIFIED**. Phase 5-C ---
-Saved Filters Foundation is **COMPLETE AND VERIFIED**. Phase 5-D ---
-Saved Filter API is **COMPLETE AND VERIFIED**. Phase 5-E --- Saved Filter UX
-is **COMPLETE AND VERIFIED**. Phase 5-F --- Full Phase 5 Verification is
-**COMPLETE AND VERIFIED**.
+Phase 5-A through Phase 5-F are **COMPLETE AND VERIFIED**.
+Phase 6-A — SLA Policy Management is **COMPLETE AND VERIFIED**.
 
 The next implementation milestone is:
 
-**Phase 6 --- SLA**
+**6-B — Ticket SLA Timer Experience**
 
 Continue from the verified repository state and avoid speculative
 architecture changes.
