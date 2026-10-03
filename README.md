@@ -9,11 +9,9 @@ approval workflows.
 ## Current Status
 
 **Phase 4 --- Workflow is complete and verified through Phase 4-J ---
-Ticket History Refinement. Phase 5-A through Phase 5-E are COMPLETE AND
-VERIFIED.**
+Ticket History Refinement. Phase 5-A through Phase 5-F are COMPLETE AND VERIFIED.**
 
-The current implementation milestone is **Phase 5-F --- Full Phase 5
-Verification**.
+The next implementation milestone is **Phase 6 --- SLA**.
 
 Latest verified backend state:
 
@@ -107,6 +105,50 @@ Planned:
 The URL remains the source of truth for the current ticket query. Saved
 filters are named server-side query definitions that can be applied to
 that query.
+
+### 5-F --- Full Phase 5 Verification
+
+**COMPLETE AND VERIFIED**
+
+Final verification:
+
+``` text
+Backend unit tests      3/3 test files, 29/29 tests passed
+Backend E2E             21/21 test files, 249/249 tests passed
+Backend lint            0 warnings / 0 errors
+Backend build           SUCCESS
+Frontend lint           PASS
+Frontend build          SUCCESS
+Failures                0
+```
+
+Verified functional/security coverage includes organization isolation,
+saved-filter ownership, invalid payloads, pagination/filter interaction,
+saved-filter query reproduction, edit permissions, delete permissions,
+and save/apply/reset/edit/delete workflow regression.
+
+Phase 5 — Productivity is COMPLETE AND VERIFIED.
+
+
+### 5-F — Full Phase 5 Verification
+
+**COMPLETE AND VERIFIED**
+
+Final verification:
+
+```text
+Backend unit tests      3/3 test files, 29/29 tests passed
+Backend E2E             21/21 test files, 249/249 tests passed
+Backend lint            0 warnings / 0 errors
+Backend build           SUCCESS
+Frontend lint           PASS
+Frontend build          SUCCESS
+Failures                0
+```
+
+Verified functional/security coverage includes organization isolation, saved-filter ownership, invalid payloads, pagination/filter interaction, saved-filter query application, and edit/delete permissions.
+
+Phase 5 — Productivity is complete and verified.
 
 ## Phase 4-H Realtime / WebSockets Checkpoint
 
@@ -555,6 +597,23 @@ organization/user isolation, validation, and persistence. Runtime Docker
 execution is still required before this milestone can be marked
 **COMPLETE AND VERIFIED**.
 
+## Phase 6 --- SLA
+
+**NEXT**
+
+- SLA policies
+- SLA timers
+- SLA warnings
+- SLA breaches
+- SLA dashboard
+
+Phase 3-H already provides the underlying SLA automation foundation.
+Phase 6 focuses on the product-level SLA experience and operational
+workflow. Reuse the existing SLA policy, snapshot, due-time, breach,
+escalation, audit, and realtime foundations rather than duplicating them.
+Warning thresholds and dashboard metrics must be defined from the
+project requirements/SOP before implementation.
+
 ## Roadmap
 
 ### Phase 3 --- Ticket Core
@@ -625,7 +684,7 @@ execution is still required before this milestone can be marked
 -   Saved Filters Foundation --- **COMPLETE AND VERIFIED**
 -   Saved Filter API --- **COMPLETE AND VERIFIED**
 -   Saved Filter UX --- **COMPLETE AND VERIFIED**
--   Full Phase 5 Verification --- **IN PROGRESS**
+-   Full Phase 5 Verification --- **COMPLETE AND VERIFIED**
 
 ### Productivity
 
@@ -703,10 +762,30 @@ Phase 5-B Ticket Library UX       COMPLETE AND VERIFIED
 Phase 5-C Saved Filters Foundation COMPLETE AND VERIFIED
 Phase 5-D Saved Filter API          COMPLETE AND VERIFIED
 Phase 5-E Saved Filter UX           COMPLETE AND VERIFIED
-Phase 5-F Full Phase 5 Verification IN PROGRESS
+Phase 5-F Full Phase 5 Verification COMPLETE AND VERIFIED
 ```
 
-## Next Development Direction
+## Phase 6 — SLA
+
+**Status: NEXT**
+
+Phase 3-H established the underlying SLA automation foundation. Phase 6 now focuses on the product-level SLA experience and operational workflow:
+
+- SLA policies
+- SLA timers
+- SLA warnings
+- SLA breaches
+- SLA dashboard
+
+Implementation boundary:
+
+- Inspect and reuse the existing SLA policy, snapshot, due-time, breach, escalation, audit, and realtime foundations.
+- Do not duplicate existing SLA domain models or automation without a concrete requirement.
+- Preserve organization scoping and existing authorization boundaries.
+- Define warning thresholds and dashboard metrics from the project requirements/SOP before implementation; do not invent business rules.
+- Verify each SLA milestone with focused tests, regression E2E coverage, lint, and build before moving forward.
+
+# Next Development Direction
 
 Phase 4 is complete.
 
@@ -716,9 +795,9 @@ Saved Filters Foundation is **COMPLETE AND VERIFIED**. Phase 5-D ---
 Saved Filter API is **COMPLETE AND VERIFIED**. Phase 5-E --- Saved
 Filter UX is **COMPLETE AND VERIFIED**.
 
-The current implementation milestone is:
+The next implementation milestone is:
 
-**Phase 5-F --- Full Phase 5 Verification**
+**Phase 6 --- SLA**
 
 Continue from the verified repository state and avoid speculative
 architecture changes.

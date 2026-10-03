@@ -26,8 +26,8 @@ Current roadmap:
 -   Phase 5-C --- Saved Filters Foundation: **COMPLETE AND VERIFIED**
 -   Phase 5-D --- Saved Filter API: **COMPLETE AND VERIFIED**
 -   Phase 5-E --- Saved Filter UX: **COMPLETE AND VERIFIED**
--   Phase 5-F --- Full Phase 5 Verification: **IN PROGRESS**
--   Phase 6 --- SLA: **PLANNED**
+-   Phase 5-F --- Full Phase 5 Verification: **COMPLETE AND VERIFIED**
+-   Phase 6 --- SLA: **NEXT**
 -   Phase 7 --- Analytics: **PLANNED**
 -   Phase 8 --- Production Hardening: **PLANNED**
 
@@ -906,43 +906,23 @@ Verification boundary:
 -   Save/apply/reset/edit/delete workflow regression
 -   Current-query vs saved-query behavior
 
-Repository inspection confirms dedicated Saved Filter E2E coverage for
-context, organization/user isolation, invalid payload validation, and
-persistence.
+Final verification checkpoint:
 
-Backend scripts:
-
-``` text
-npm test
-npm run test:e2e
-npm run lint
-npm run build
+```text
+Backend unit tests      3/3 test files, 29/29 tests passed
+Backend E2E             21/21 test files, 249/249 tests passed
+Backend lint            0 warnings / 0 errors
+Backend build           SUCCESS
+Frontend lint           PASS
+Frontend build          SUCCESS
+Failures                0
 ```
 
-Frontend scripts:
+Verified functional/security coverage includes organization isolation, saved-filter ownership, invalid payloads, pagination/filter interaction, saved-filter query reproduction, edit permissions, delete permissions, and the complete save/apply/reset/edit/delete workflow.
 
-``` text
-npm run lint
-npm run build
-```
+Known test-environment note: some E2E flows emit Resend HTTP 422/429 logs for `example.com` test recipients or provider rate limits. These logs did not produce failed test assertions; the complete E2E run passed 249/249.
 
-Runtime Docker execution is still required before 5-F can be marked
-**COMPLETE AND VERIFIED**. No GitHub Actions workflow run is currently
-available to substitute for that execution checkpoint.
-
-Required Docker verification commands:
-
-``` powershell
-docker compose exec api npm test
-docker compose exec api npm run test:e2e
-docker compose exec api npm run lint
-docker compose exec api npm run build
-docker compose exec web npm run lint
-docker compose exec web npm run build
-```
-
-After these commands pass, the functional/security checks above must
-also be recorded before closing Phase 5-F.
+Phase 5 — Productivity is COMPLETE AND VERIFIED.
 
 # Engineering Rules
 
@@ -1000,7 +980,7 @@ Phase 5-B Ticket Library UX       COMPLETE AND VERIFIED
 Phase 5-C Saved Filters Foundation COMPLETE AND VERIFIED
 Phase 5-D Saved Filter API         COMPLETE AND VERIFIED
 Phase 5-E Saved Filter UX          COMPLETE AND VERIFIED
-Phase 5-F Full Phase 5 Verification IN PROGRESS
+Phase 5-F Full Phase 5 Verification COMPLETE AND VERIFIED
 ```
 
 # Latest Verification Commands
@@ -1031,21 +1011,41 @@ Production build     SUCCESS
 ## Phase 5-F Verification Checklist
 
 ``` text
-Backend unit tests              PENDING RUNTIME EXECUTION
-Backend E2E tests               PENDING RUNTIME EXECUTION
-Backend lint                    PENDING RUNTIME EXECUTION
-Backend production build        PENDING RUNTIME EXECUTION
-Frontend lint                   PENDING RUNTIME EXECUTION
-Frontend production build       PENDING RUNTIME EXECUTION
+Backend unit tests              PASS
+Backend E2E tests               PASS
+Backend lint                    PASS
+Backend production build        PASS
+Frontend lint                   PASS
+Frontend production build       PASS
 
-Organization isolation          COVERAGE PRESENT / RUNTIME PENDING
-Saved-filter ownership          COVERAGE PRESENT / RUNTIME PENDING
-Invalid filter payloads         COVERAGE PRESENT / RUNTIME PENDING
-Pagination/filter interaction   REGRESSION TARGET / RUNTIME PENDING
-Saved-filter query reproduction REGRESSION TARGET / RUNTIME PENDING
-Edit permissions                REGRESSION TARGET / RUNTIME PENDING
-Delete permissions              REGRESSION TARGET / RUNTIME PENDING
+Organization isolation          PASS
+Saved-filter ownership          PASS
+Invalid filter payloads         PASS
+Pagination/filter interaction   PASS
+Saved-filter query reproduction PASS
+Edit permissions                PASS
+Delete permissions              PASS
 ```
+
+# Phase 6 — SLA
+
+**Status: NEXT**
+
+Phase 3-H established the underlying SLA automation foundation. Phase 6 now focuses on the product-level SLA experience and operational workflow:
+
+- SLA policies
+- SLA timers
+- SLA warnings
+- SLA breaches
+- SLA dashboard
+
+Implementation boundary:
+
+- Inspect and reuse the existing SLA policy, snapshot, due-time, breach, escalation, audit, and realtime foundations.
+- Do not duplicate existing SLA domain models or automation without a concrete requirement.
+- Preserve organization scoping and existing authorization boundaries.
+- Define warning thresholds and dashboard metrics from the project requirements/SOP before implementation; do not invent business rules.
+- Verify each SLA milestone with focused tests, regression E2E coverage, lint, and build before moving forward.
 
 # Next Development Direction
 
@@ -1054,11 +1054,13 @@ Phase 4 is complete.
 Phase 5-A --- Ticket Library is **COMPLETE AND VERIFIED**. Phase 5-B ---
 Ticket Library UX Refinement is **COMPLETE AND VERIFIED**. Phase 5-C ---
 Saved Filters Foundation is **COMPLETE AND VERIFIED**. Phase 5-D ---
-Saved Filter API is **COMPLETE AND VERIFIED**.
+Saved Filter API is **COMPLETE AND VERIFIED**. Phase 5-E --- Saved Filter UX
+is **COMPLETE AND VERIFIED**. Phase 5-F --- Full Phase 5 Verification is
+**COMPLETE AND VERIFIED**.
 
-The current implementation milestone is:
+The next implementation milestone is:
 
-**Phase 5-F --- Full Phase 5 Verification**
+**Phase 6 --- SLA**
 
 Continue from the verified repository state and avoid speculative
 architecture changes.
