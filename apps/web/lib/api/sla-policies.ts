@@ -2,6 +2,7 @@ import type {
   CreateSlaPolicyInput,
   SlaPoliciesResponse,
   SlaPolicy,
+  SlaPolicyLifecycleResponse,
   UpdateSlaPolicyInput,
 } from "@/types/sla-policies";
 
@@ -117,4 +118,48 @@ export async function updateSlaPolicy(
   }
 
   return response.json() as Promise<SlaPolicy>;
+}
+
+export async function activateSlaPolicy(
+  organizationId: string,
+  policyId: string,
+): Promise<SlaPolicyLifecycleResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/sla-policies/${policyId}/activate`,
+    {
+      method: "POST",
+      credentials: "include",
+      headers: buildHeaders(organizationId),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(response, "Failed to activate SLA policy"),
+    );
+  }
+
+  return response.json() as Promise<SlaPolicyLifecycleResponse>;
+}
+
+export async function deactivateSlaPolicy(
+  organizationId: string,
+  policyId: string,
+): Promise<SlaPolicyLifecycleResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/sla-policies/${policyId}/deactivate`,
+    {
+      method: "POST",
+      credentials: "include",
+      headers: buildHeaders(organizationId),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(response, "Failed to deactivate SLA policy"),
+    );
+  }
+
+  return response.json() as Promise<SlaPolicyLifecycleResponse>;
 }

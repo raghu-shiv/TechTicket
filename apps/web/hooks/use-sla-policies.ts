@@ -3,7 +3,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
+  activateSlaPolicy,
   createSlaPolicy,
+  deactivateSlaPolicy,
   getSlaPolicies,
   getSlaPolicy,
   updateSlaPolicy,
@@ -149,6 +151,72 @@ export function useUpdateSlaPolicy(organizationId: string | undefined) {
 
       queryClient.invalidateQueries({
         queryKey: slaPolicyQueryKeys.list(organizationId),
+      });
+    },
+  });
+}
+
+export function useSlaPolicyLifecycle(organizationId: string | undefined) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      policyId,
+      action,
+    }: {
+      policyId: string;
+      action: "activate" | "deactivate";
+    }) => {
+      if (!organizationId) {
+        throw new Error("Organization context is required");
+      }
+
+      if (action === "activate") {
+        return activateSlaPolicy(organizationId, policyId);
+      }
+
+      return deactivateSlaPolicy(organizationId, policyId);
+    },
+
+    onSuccess: (policy) => {
+      if (!organizationId) {
+        return;
+      }
+
+      /*
+       * The lifecycle endpoints intentionally return a reduced
+       * policy representation without targets.
+       *
+       * Therefore update the cached list's lifecycle state while
+       * also invalidating it so the complete policy representation
+       * is refetched from the server.
+       */
+      queryClient.setQueryData<SlaPolicy[]>(
+        slaPolicyQueryKeys.list(organizationId),
+        (current) => {
+          if (!current) {
+            return current;
+          }
+
+          return current.map((item) =>
+            item.id === policy.id
+              ? {
+                  ...item,
+                  name: policy.name,
+                  isActive: policy.isActive,
+                  updatedAt: policy.updatedAt,
+                }
+              : item,
+          );
+        },
+      );
+
+      queryClient.invalidateQueries({
+        queryKey: slaPolicyQueryKeys.list(organizationId),
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: slaPolicyQueryKeys.detail(organizationId, policy.id),
       });
     },
   });

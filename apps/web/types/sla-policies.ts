@@ -35,3 +35,11 @@ export interface UpdateSlaPolicyInput {
   name?: string;
   targets?: SlaPolicyTargetInput[];
 }
+
+export interface SlaPolicyLifecycleResponse {
+  id: string;
+  name: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
