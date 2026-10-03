@@ -11,23 +11,24 @@ import {
   hasSavedFilterCriteria,
   searchParamsToSavedFilter,
 } from "@/lib/saved-filters";
-import type { SavedFilterDefinition } from "@/types/saved-filters";
+import type { SavedFilterDefinition, SavedFilter } from "@/types/saved-filters";
 
 import { SavedFilterDialog } from "./SavedFilterDialog";
 
 interface SavedFiltersPanelProps {
   organizationId: string | undefined;
   searchParams: URLSearchParams;
+  onApply: (savedFilter: SavedFilter) => void;
 }
 
 export function SavedFiltersPanel({
   organizationId,
   searchParams,
+  onApply,
 }: SavedFiltersPanelProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const { data, isLoading, isError } = useSavedFilters(organizationId);
-
   const createSavedFilter = useCreateSavedFilter(organizationId);
 
   const currentFilters = searchParamsToSavedFilter(searchParams);
@@ -88,9 +89,11 @@ export function SavedFiltersPanel({
           ) : data?.items.length ? (
             <div className="space-y-2">
               {data.items.map((savedFilter) => (
-                <div
+                <button
                   key={savedFilter.id}
-                  className="rounded-md border px-3 py-2"
+                  type="button"
+                  onClick={() => onApply(savedFilter)}
+                  className="block w-full rounded-md border px-3 py-2 text-left transition hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                   <p className="text-sm font-medium">{savedFilter.name}</p>
 
@@ -99,7 +102,7 @@ export function SavedFiltersPanel({
                       {savedFilter.description}
                     </p>
                   ) : null}
-                </div>
+                </button>
               ))}
             </div>
           ) : (
@@ -127,19 +130,7 @@ export function SavedFiltersPanel({
         open={dialogOpen}
         filters={currentFilters}
         isSaving={createSavedFilter.isPending}
-        error={
-          createSavedFilter.isError
-            ? createSavedFilter.error instanceof Error
-              ? createSavedFilter.error.message
-              : "Failed to save filter."
-            : undefined
-        }
-        onClose={() => {
-          if (!createSavedFilter.isPending) {
-            createSavedFilter.reset();
-            setDialogOpen(false);
-          }
-        }}
+        onClose={() => setDialogOpen(false)}
         onSave={handleSave}
       />
     </>

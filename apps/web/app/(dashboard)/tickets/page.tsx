@@ -27,6 +27,7 @@ import {
 } from "@/components/shared";
 import { Badge } from "@/components/ui/badge";
 import { SavedFiltersPanel } from "@/components/tickets/SavedFiltersPanel";
+import { savedFilterToSearchParams } from "@/lib/saved-filters";
 import { useOrganizations } from "@/hooks/use-organizations";
 import { useTickets } from "@/hooks/use-tickets";
 import type {
@@ -723,6 +724,17 @@ function TicketsContent() {
         <SavedFiltersPanel
           organizationId={organizationId}
           searchParams={new URLSearchParams(searchParams.toString())}
+          onApply={(savedFilter) => {
+            const params = savedFilterToSearchParams(savedFilter.filters);
+            const queryString = params.toString();
+
+            router.replace(
+              queryString ? `${pathname}?${queryString}` : pathname,
+              {
+                scroll: false,
+              },
+            );
+          }}
         />
         {/* ------------------------------------------------------------------ */}
         {/* FILTER TOOLBAR                                                     */}
