@@ -1,0 +1,73 @@
+import type { SlaPoliciesResponse, SlaPolicy } from "@/types/sla-policies";
+
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api/v1";
+
+async function getErrorMessage(
+  response: Response,
+  fallback: string,
+): Promise<string> {
+  try {
+    const error = (await response.json()) as {
+      message?: string | string[];
+    };
+
+    if (Array.isArray(error.message)) {
+      return error.message.join(", ");
+    }
+
+    if (error.message) {
+      return error.message;
+    }
+  } catch {
+    // Keep the fallback message.
+  }
+
+  return fallback;
+}
+
+function buildHeaders(organizationId: string): HeadersInit {
+  return {
+    Accept: "application/json",
+    "x-organization-id": organizationId,
+  };
+}
+
+export async function getSlaPolicies(
+  organizationId: string,
+): Promise<SlaPoliciesResponse> {
+  const response = await fetch(`${API_BASE_URL}/sla-policies`, {
+    method: "GET",
+    credentials: "include",
+    headers: buildHeaders(organizationId),
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(response, "Failed to fetch SLA policies"),
+    );
+  }
+
+  return response.json() as Promise<SlaPoliciesResponse>;
+}
+
+export async function getSlaPolicy(
+  organizationId: string,
+  policyId: string,
+): Promise<SlaPolicy> {
+  const response = await fetch(`${API_BASE_URL}/sla-policies/${policyId}`, {
+    method: "GET",
+    credentials: "include",
+    headers: buildHeaders(organizationId),
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(response, "Failed to fetch SLA policy"),
+    );
+  }
+
+  return response.json() as Promise<SlaPolicy>;
+}
