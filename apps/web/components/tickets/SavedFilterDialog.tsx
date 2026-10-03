@@ -6,9 +6,11 @@ import type { SavedFilterDefinition } from "@/types/saved-filters";
 
 interface SavedFilterDialogProps {
   open: boolean;
+  mode?: "create" | "edit";
+  initialName?: string;
+  initialDescription?: string | null;
   filters: SavedFilterDefinition;
   isSaving: boolean;
-  error?: string;
   onClose: () => void;
   onSave: (input: {
     name: string;
@@ -19,14 +21,16 @@ interface SavedFilterDialogProps {
 
 export function SavedFilterDialog({
   open,
+  mode = "create",
+  initialName = "",
+  initialDescription = "",
   filters,
   isSaving,
-  error,
   onClose,
   onSave,
 }: SavedFilterDialogProps) {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const [name, setName] = useState(initialName);
+  const [description, setDescription] = useState(initialDescription ?? "");
 
   if (!open) {
     return null;
@@ -49,6 +53,8 @@ export function SavedFilterDialog({
     });
   }
 
+  const isEdit = mode === "edit";
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
@@ -63,27 +69,19 @@ export function SavedFilterDialog({
         className="w-full max-w-md rounded-lg border bg-background p-6 shadow-xl"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="save-filter-dialog-title"
+        aria-labelledby="saved-filter-dialog-title"
       >
         <div className="mb-5">
-          <h2 id="save-filter-dialog-title" className="text-lg font-semibold">
-            Save current filters
+          <h2 id="saved-filter-dialog-title" className="text-lg font-semibold">
+            {isEdit ? "Edit saved filter" : "Save current filters"}
           </h2>
 
           <p className="mt-1 text-sm text-muted-foreground">
-            Save the current ticket search and filter configuration for later
-            use.
+            {isEdit
+              ? "Update the name or description of this saved filter."
+              : "Save the current ticket search and filter configuration for later use."}
           </p>
         </div>
-
-        {error ? (
-          <div
-            role="alert"
-            className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-          >
-            {error}
-          </div>
-        ) : null}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -142,7 +140,13 @@ export function SavedFilterDialog({
               disabled={!name.trim() || isSaving}
               className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isSaving ? "Saving..." : "Save filter"}
+              {isSaving
+                ? isEdit
+                  ? "Saving..."
+                  : "Saving..."
+                : isEdit
+                  ? "Save changes"
+                  : "Save filter"}
             </button>
           </div>
         </form>
