@@ -26,6 +26,7 @@ import {
   PageHeader,
 } from "@/components/shared";
 import { Badge } from "@/components/ui/badge";
+import { SavedFiltersPanel } from "@/components/tickets/SavedFiltersPanel";
 import { useOrganizations } from "@/hooks/use-organizations";
 import { useTickets } from "@/hooks/use-tickets";
 import type {
@@ -719,6 +720,10 @@ function TicketsContent() {
       />
 
       <div className="mt-6 space-y-4">
+        <SavedFiltersPanel
+          organizationId={organizationId}
+          searchParams={new URLSearchParams(searchParams.toString())}
+        />
         {/* ------------------------------------------------------------------ */}
         {/* FILTER TOOLBAR                                                     */}
         {/* ------------------------------------------------------------------ */}
