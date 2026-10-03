@@ -254,7 +254,7 @@ describe('SLA Policy API (e2e)', () => {
         expect.objectContaining({
           id: expect.any(String),
           name: 'Create SLA Policy',
-          isActive: true,
+          isActive: false,
           createdAt: expect.any(String),
           updatedAt: expect.any(String),
           targets: expect.any(Array),
@@ -272,10 +272,10 @@ describe('SLA Policy API (e2e)', () => {
       ).toEqual([...priorities].sort());
     });
 
-    it('should create new policies as active according to the current implementation', async () => {
-      const response = await createPolicy('Active By Default');
+    it('should create new policies as inactive', async () => {
+      const response = await createPolicy('Inactive By Default');
 
-      expect(response.body.isActive).toBe(true);
+      expect(response.body.isActive).toBe(false);
     });
 
     it('should reject duplicate policy names within the organization', async () => {
@@ -355,11 +355,30 @@ describe('SLA Policy API (e2e)', () => {
         .send(payload)
         .expect(400);
     });
+
+    it('should allow multiple inactive policies in the same organization', async () => {
+      const first = await createPolicy('Inactive Policy One');
+      const second = await createPolicy('Inactive Policy Two');
+
+      expect(first.body.isActive).toBe(false);
+      expect(second.body.isActive).toBe(false);
+
+      const response = await organizationHeaders(
+        owner().get('/api/v1/sla-policies'),
+      ).expect(200);
+
+      expect(response.body).toHaveLength(2);
+      expect(
+        response.body.every((policy: SlaPolicyResponse) => !policy.isActive),
+      ).toBe(true);
+    });
   });
 
   describe('PATCH /api/v1/sla-policies/:policyId', () => {
     it('should update the policy name while the policy is active', async () => {
       const created = await createPolicy('Original Name');
+
+      await activatePolicy(created.body.id);
 
       const response = await organizationHeaders(
         owner().patch(`/api/v1/sla-policies/${created.body.id}`),
@@ -377,6 +396,7 @@ describe('SLA Policy API (e2e)', () => {
 
     it('should reject target changes while the policy is active', async () => {
       const created = await createPolicy('Active Target Protection');
+      await activatePolicy(created.body.id);
 
       await organizationHeaders(
         owner().patch(`/api/v1/sla-policies/${created.body.id}`),
@@ -391,10 +411,10 @@ describe('SLA Policy API (e2e)', () => {
         .expect(409);
     });
 
-    it('should allow target changes after the policy is deactivated', async () => {
+    it('should allow target changes while the policy is inactive', async () => {
       const created = await createPolicy('Inactive Target Update');
 
-      await deactivatePolicy(created.body.id);
+      expect(created.body.isActive).toBe(false);
 
       const response = await organizationHeaders(
         owner().patch(`/api/v1/sla-policies/${created.body.id}`),
@@ -434,6 +454,7 @@ describe('SLA Policy API (e2e)', () => {
     it('should deactivate an active policy', async () => {
       const created = await createPolicy('Deactivate Policy');
 
+      await activatePolicy(created.body.id);
       const response = await deactivatePolicy(created.body.id);
 
       expect(response.body).toEqual(
@@ -450,8 +471,6 @@ describe('SLA Policy API (e2e)', () => {
     it('should reject deactivation when the policy is already inactive', async () => {
       const created = await createPolicy('Already Inactive');
 
-      await deactivatePolicy(created.body.id);
-
       await organizationHeaders(
         owner().post(`/api/v1/sla-policies/${created.body.id}/deactivate`),
       ).expect(400);
@@ -462,6 +481,7 @@ describe('SLA Policy API (e2e)', () => {
     it('should reactivate a previously deactivated policy', async () => {
       const created = await createPolicy('Reactivate Policy');
 
+      await activatePolicy(created.body.id);
       await deactivatePolicy(created.body.id);
 
       const response = await activatePolicy(created.body.id);
@@ -480,28 +500,79 @@ describe('SLA Policy API (e2e)', () => {
     it('should reject activation when the policy is already active', async () => {
       const created = await createPolicy('Already Active');
 
+      await activatePolicy(created.body.id);
+
       await organizationHeaders(
         owner().post(`/api/v1/sla-policies/${created.body.id}/activate`),
       ).expect(400);
     });
 
-    it('should currently reject activation of an already-active second policy', async () => {
-      const first = await createPolicy('First Active Policy');
-      const second = await createPolicy('Second Active Policy');
+    it('should allow only one active policy per organization', async () => {
+      const first = await createPolicy('First SLA Policy');
+      const second = await createPolicy('Second SLA Policy');
 
-      expect(first.body.isActive).toBe(true);
-      expect(second.body.isActive).toBe(true);
+      expect(first.body.isActive).toBe(false);
+      expect(second.body.isActive).toBe(false);
+
+      await activatePolicy(first.body.id);
 
       await organizationHeaders(
         owner().post(`/api/v1/sla-policies/${second.body.id}/activate`),
-      ).expect(400);
+      ).expect(409);
+
+      const secondDetails = await organizationHeaders(
+        owner().get(`/api/v1/sla-policies/${second.body.id}`),
+      ).expect(200);
+
+      expect(secondDetails.body.isActive).toBe(false);
+    });
+
+    it('should support the full inactive → active → inactive → active lifecycle', async () => {
+      const created = await createPolicy('Lifecycle Policy');
+
+      expect(created.body.isActive).toBe(false);
+
+      const activated = await activatePolicy(created.body.id);
+
+      expect(activated.body.isActive).toBe(true);
+
+      const deactivated = await deactivatePolicy(created.body.id);
+
+      expect(deactivated.body.isActive).toBe(false);
+
+      const reactivated = await activatePolicy(created.body.id);
+
+      expect(reactivated.body.isActive).toBe(true);
+    });
+
+    it('should allow another policy to become active after the current policy is deactivated', async () => {
+      const first = await createPolicy('Primary SLA Policy');
+      const second = await createPolicy('Replacement SLA Policy');
+
+      await activatePolicy(first.body.id);
+
+      await organizationHeaders(
+        owner().post(`/api/v1/sla-policies/${second.body.id}/activate`),
+      ).expect(409);
+
+      await deactivatePolicy(first.body.id);
+
+      const activated = await activatePolicy(second.body.id);
+
+      expect(activated.body).toEqual(
+        expect.objectContaining({
+          id: second.body.id,
+          name: 'Replacement SLA Policy',
+          isActive: true,
+        }),
+      );
     });
   });
 
   describe('DELETE /api/v1/sla-policies/:policyId', () => {
     it('should reject deletion while the policy is active', async () => {
       const created = await createPolicy('Active Delete Protection');
-
+      await activatePolicy(created.body.id);
       await organizationHeaders(
         owner().delete(`/api/v1/sla-policies/${created.body.id}`),
       ).expect(409);
@@ -510,7 +581,7 @@ describe('SLA Policy API (e2e)', () => {
     it('should delete an inactive policy', async () => {
       const created = await createPolicy('Delete Inactive Policy');
 
-      await deactivatePolicy(created.body.id);
+      expect(created.body.isActive).toBe(false);
 
       await organizationHeaders(
         owner().delete(`/api/v1/sla-policies/${created.body.id}`),

@@ -374,7 +374,7 @@ model SlaPolicy {
   id             String  @id @default(cuid())
   organizationId String
   name           String
-  isActive       Boolean @default(true)
+  isActive       Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

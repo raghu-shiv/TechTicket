@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { TicketPriority } from '@prisma/client';
+import { Prisma, TicketPriority } from '@prisma/client';
 
 import { DatabaseService } from '../../database/database.service';
 import type { OrganizationContext } from '../../common/organization/organization.types';
@@ -132,6 +132,7 @@ export class SlaPolicyService {
       data: {
         organizationId: context.organizationId,
         name,
+        isActive: false,
         targets: {
           create: input.targets.map((target) => ({
             priority: target.priority,
@@ -314,21 +315,34 @@ export class SlaPolicyService {
       );
     }
 
-    return this.database.slaPolicy.update({
-      where: {
-        id: policy.id,
-      },
-      data: {
-        isActive: true,
-      },
-      select: {
-        id: true,
-        name: true,
-        isActive: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+    try {
+      return await this.database.slaPolicy.update({
+        where: {
+          id: policy.id,
+        },
+        data: {
+          isActive: true,
+        },
+        select: {
+          id: true,
+          name: true,
+          isActive: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException(
+          'Another SLA policy is already active for this organization',
+        );
+      }
+
+      throw error;
+    }
   }
 
   async deactivate(context: OrganizationContext, policyId: string) {
