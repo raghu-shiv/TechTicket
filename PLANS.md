@@ -17,10 +17,10 @@ Phase 4 is complete through Phase 4-J — Ticket History Refinement. Phase 5-A �
 Current roadmap:
 
 - Phase 5-A --- Ticket Library: **COMPLETE AND VERIFIED**
-- Phase 5-B --- Ticket Library UX Refinement: **NEXT**
-- Phase 5-C --- Saved Filters Foundation: **PLANNED**
-- Phase 5-D --- Saved Filter API: **PLANNED**
-- Phase 5-E --- Saved Filter UX: **PLANNED**
+- Phase 5-B --- Ticket Library UX Refinement: **COMPLETE AND VERIFIED**
+- Phase 5-C --- Saved Filters Foundation: **COMPLETE AND VERIFIED**
+- Phase 5-D --- Saved Filter API: **COMPLETE AND VERIFIED**
+- Phase 5-E --- Saved Filter UX: **NEXT**
 - Phase 5-F --- Full Phase 5 Verification: **PLANNED**
 - Phase 6 --- SLA: **PLANNED**
 - Phase 7 --- Analytics: **PLANNED**
@@ -747,23 +747,31 @@ Frontend manual verification included `/tickets`, ticket-row navigation to `/tic
 
 ## 5-B — Ticket Library UX Refinement
 
-**Status: NEXT**
+**Status: COMPLETE AND VERIFIED**
 
-Planned scope:
+Completed:
 
-- Improve ticket-list information hierarchy
-- Refine search and filter presentation
-- Improve pagination/result-count presentation
-- Improve loading, empty, and error states
-- Improve responsive behavior
-- Refine ticket-detail information hierarchy where useful
-- Preserve URL-backed filtering, sorting, and pagination
-- Reuse existing UI primitives
-- Avoid speculative dependencies or architecture changes
+- Refined ticket-list information hierarchy
+- Search/filter presentation
+- Active-filter controls
+- Responsive behavior
+- Useful defaults
+- URL-backed filtering, sorting, and pagination
+- Existing UI primitive reuse
 
 ## 5-C — Saved Filters Foundation
 
-**Status: PLANNED**
+**Status: COMPLETE AND VERIFIED**
+
+Implemented and verified:
+
+- `SavedFilter` Prisma model
+- Organization/user ownership relationships
+- `20261002185115_add_saved_filters` migration
+- Prisma client generation
+- Schema validation
+- API build/lint
+- Foundation E2E coverage
 
 Conceptual model:
 
@@ -780,7 +788,7 @@ updatedAt
 
 ## 5-D — Saved Filter API
 
-**Status: PLANNED**
+**Status: COMPLETE AND VERIFIED**
 
 ```text
 POST  /api/v1/saved-filters
@@ -790,28 +798,87 @@ PATCH /api/v1/saved-filters/:id
 DELETE /api/v1/saved-filters/:id
 ```
 
+Completed:
+
+- 5-D.1 — API contract and DTO validation
+- 5-D.2 — Saved Filter service
+- 5-D.3 — Saved Filter controller
+- 5-D.4 — Authentication and organization context
+- 5-D.5 — E2E isolation/CRUD
+- 5-D.6 — Full verification
+
+### 5-D.5 — E2E isolation/CRUD
+
+**COMPLETE AND VERIFIED**
+
+Verified same-user/same-organization access, different-user isolation, organization boundaries, create/update/delete behavior, list ownership isolation, and server-derived ownership.
+
+### 5-D.6 — Full Verification
+
+**COMPLETE AND VERIFIED**
+
+Latest checkpoint:
+
+```text
+API E2E test files   21/21 passed
+API E2E tests        249/249 passed
+Failures             0
+API lint             0 warnings / 0 errors
+API production build SUCCESS
+```
+
 ## 5-E — Saved Filter UX
 
-**Status: PLANNED**
+**Status: NEXT**
+
+Planned scope:
 
 - Save current ticket-library filters
-- List saved filters
-- Apply saved filters
-- Rename/update saved filters
+- Saved-filter list
+- Apply a saved filter to the current ticket library
+- Rename/edit saved filters
 - Delete saved filters
+- Reset back to the normal ticket library
+- Clear visual distinction between the current query and saved query
+- Preserve URL-backed filtering, sorting, and pagination
+- Reuse the existing Saved Filter API and UI primitives
+
+Design boundary:
+
+```text
+Current URL query
+      |
+      v
+Ticket Library current query
+      |
+      +---- Save current query ----> Saved Filter API
+      +---- Apply saved filter ---> URL query
+      +---- Reset ---------------> normal /tickets query
+
+Saved Filter API
+      |
+      v
+Saved-filter list
+      +---- Rename/edit
+      +---- Delete
+```
+
+The URL remains the source of truth for the current ticket query. A saved filter is a named server-side query definition that can be applied to that query; it is not a competing client-side source of truth.
 
 ## 5-F — Full Phase 5 Verification
 
 **Status: PLANNED**
 
 - Ticket library regression
-- Saved-filter API
-- Saved-filter UX
+- Saved-filter API regression
+- Saved-filter UX regression
 - Organization isolation
 - User ownership
 - API E2E
 - Frontend lint
 - Frontend production build
+- Current-query vs saved-query behavior
+- Save/apply/reset/edit/delete workflows
 
 # Engineering Rules
 
@@ -865,7 +932,10 @@ Phase 4-H Realtime / WebSockets   COMPLETE AND VERIFIED
 Phase 4-I Unassigned Queue        COMPLETE AND VERIFIED
 Phase 4-J Ticket History          COMPLETE AND VERIFIED
 Phase 5-A Ticket Library          COMPLETE AND VERIFIED
-Phase 5-B Ticket Library UX       NEXT
+Phase 5-B Ticket Library UX       COMPLETE AND VERIFIED
+Phase 5-C Saved Filters Foundation COMPLETE AND VERIFIED
+Phase 5-D Saved Filter API         COMPLETE AND VERIFIED
+Phase 5-E Saved Filter UX          NEXT
 ```
 
 # Latest Verification Commands
@@ -881,8 +951,9 @@ docker compose exec web npm run build
 Latest API E2E verification:
 
 ```text
-E2E test files       17/17 passed
-E2E tests            211/211 passed
+E2E test files       21/21 passed
+E2E tests            249/249 passed
+Failures             0
 ```
 
 Latest frontend verification:
@@ -896,10 +967,13 @@ Production build     SUCCESS
 
 Phase 4 is complete.
 
-Phase 5-A Ticket Library is now **COMPLETE AND VERIFIED**.
+Phase 5-A — Ticket Library is **COMPLETE AND VERIFIED**.
+Phase 5-B — Ticket Library UX Refinement is **COMPLETE AND VERIFIED**.
+Phase 5-C — Saved Filters Foundation is **COMPLETE AND VERIFIED**.
+Phase 5-D — Saved Filter API is **COMPLETE AND VERIFIED**.
 
 The next implementation milestone is:
 
-**Phase 5-B — Ticket Library UX Refinement**
+**Phase 5-E — Saved Filter UX**
 
 Continue from the verified repository state and avoid speculative architecture changes.

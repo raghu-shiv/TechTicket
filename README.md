@@ -8,9 +8,9 @@ approval workflows.
 
 ## Current Status
 
-**Phase 4 — Workflow is complete and verified through Phase 4-J — Ticket History Refinement. Phase 5-A — Ticket Library is COMPLETE AND VERIFIED.**
+**Phase 4 — Workflow is complete and verified through Phase 4-J — Ticket History Refinement. Phase 5-A through Phase 5-D are COMPLETE AND VERIFIED.**
 
-The next implementation milestone is **Phase 5-B — Ticket Library UX Refinement**.
+The next implementation milestone is **Phase 5-E — Saved Filter UX**.
 
 Latest verified backend state:
 
@@ -39,6 +39,63 @@ Latest verified backend state:
 -   Focused realtime event-to-room routing E2E coverage
 
 See [`PLANS.md`](./PLANS.md) for the detailed implementation tracker.
+
+## Phase 5 Productivity Checkpoint
+
+### 5-A — Ticket Library
+
+**COMPLETE AND VERIFIED**
+
+The ticket library supports URL-backed search, filtering, sorting, pagination, row navigation, and ticket details.
+
+### 5-B — Ticket Library UX Refinement
+
+**COMPLETE AND VERIFIED**
+
+The library UX includes refined filter presentation, active-filter controls, responsive behavior, useful defaults, and preserved URL-backed query state.
+
+### 5-C — Saved Filters Foundation
+
+**COMPLETE AND VERIFIED**
+
+The Saved Filter data model, Prisma migration, organization/user ownership relationships, schema validation, and foundation E2E coverage are complete.
+
+### 5-D — Saved Filter API
+
+**COMPLETE AND VERIFIED**
+
+CRUD endpoints are implemented with authenticated organization/user ownership, validation, and isolation.
+
+### 5-D.5 / 5-D.6 — Isolation, CRUD, and Full Verification
+
+**COMPLETE AND VERIFIED**
+
+Latest backend checkpoint:
+
+```text
+E2E test files       21/21 passed
+E2E tests            249/249 passed
+Failures             0
+Lint                 0 warnings / 0 errors
+Production build     SUCCESS
+```
+
+### 5-E — Saved Filter UX
+
+**NEXT**
+
+Planned:
+
+- Save current ticket-library filters
+- Saved-filter list
+- Apply saved filter
+- Rename/edit
+- Delete
+- Reset to normal ticket library
+- Clear distinction between current query and saved query
+- Preserve URL-backed current-query state
+
+The URL remains the source of truth for the current ticket query. Saved filters are named server-side query definitions that can be applied to that query.
 
 ## Phase 4-H Realtime / WebSockets Checkpoint
 
@@ -286,8 +343,9 @@ ASSIGNED   → unassign → added to unassigned queue
 Final verification:
 
 ```text
-E2E test files       17/17 passed
-E2E tests            199/199 passed
+E2E test files       21/21 passed
+E2E tests            249/249 passed
+Failures             0
 Unit/integration     9/9 passed
 Lint                 0 warnings / 0 errors
 Production build     SUCCESS
@@ -411,8 +469,9 @@ docker compose exec api npm run build
 ### Latest Verification
 
 ``` text
-E2E test files       17/17 passed
-E2E tests            199/199 passed
+E2E test files       21/21 passed
+E2E tests            249/249 passed
+Failures             0
 Unit/integration     9/9 passed
 Lint                 0 warnings / 0 errors
 Production build     SUCCESS
@@ -499,8 +558,11 @@ test/ticket.e2e-spec.ts
 
 ### Phase 5 --- Productivity
 
--   Ticket library --- **PLANNED**
--   Saved filters --- **PLANNED**
+-   Ticket library --- **COMPLETE AND VERIFIED**
+-   Ticket Library UX refinement --- **COMPLETE AND VERIFIED**
+-   Saved Filters Foundation --- **COMPLETE AND VERIFIED**
+-   Saved Filter API --- **COMPLETE AND VERIFIED**
+-   Saved Filter UX --- **NEXT**
 
 ### Productivity
 
@@ -581,10 +643,13 @@ Phase 5-B Ticket Library UX       NEXT
 
 Phase 4 is complete.
 
-Phase 5-A Ticket Library is **COMPLETE AND VERIFIED**.
+Phase 5-A — Ticket Library is **COMPLETE AND VERIFIED**.
+Phase 5-B — Ticket Library UX Refinement is **COMPLETE AND VERIFIED**.
+Phase 5-C — Saved Filters Foundation is **COMPLETE AND VERIFIED**.
+Phase 5-D — Saved Filter API is **COMPLETE AND VERIFIED**.
 
 The next implementation milestone is:
 
-**Phase 5-B — Ticket Library UX Refinement**
+**Phase 5-E — Saved Filter UX**
 
 Continue from the verified repository state and avoid speculative architecture changes.
