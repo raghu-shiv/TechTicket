@@ -163,3 +163,27 @@ export async function deactivateSlaPolicy(
 
   return response.json() as Promise<SlaPolicyLifecycleResponse>;
 }
+
+export interface DeleteSlaPolicyResponse {
+  success: true;
+  policyId: string;
+}
+
+export async function deleteSlaPolicy(
+  organizationId: string,
+  policyId: string,
+): Promise<DeleteSlaPolicyResponse> {
+  const response = await fetch(`${API_BASE_URL}/sla-policies/${policyId}`, {
+    method: "DELETE",
+    credentials: "include",
+    headers: buildHeaders(organizationId),
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(response, "Failed to delete SLA policy"),
+    );
+  }
+
+  return response.json() as Promise<DeleteSlaPolicyResponse>;
+}

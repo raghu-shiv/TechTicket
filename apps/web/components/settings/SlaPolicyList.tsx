@@ -7,8 +7,9 @@ import {
   Edit3,
   Loader2,
   Plus,
-  ShieldCheck,
   Power,
+  ShieldCheck,
+  Trash2,
   XCircle,
 } from "lucide-react";
 
@@ -24,6 +25,7 @@ import {
 import { EmptyState, ErrorState, LoadingState } from "@/components/shared";
 import { SlaPolicyForm } from "@/components/settings/SlaPolicyForm";
 import {
+  useDeleteSlaPolicy,
   useSlaPolicies,
   useSlaPolicyLifecycle,
 } from "@/hooks/use-sla-policies";
@@ -122,8 +124,13 @@ interface SlaPolicyCardProps {
     policy: SlaPolicy,
     action: "activate" | "deactivate",
   ) => void;
+  onDelete: (policy: SlaPolicy) => void;
   isLifecyclePending: boolean;
+  isDeletePending: boolean;
   lifecycleError: string | null;
+  deleteError: string | null;
+  deleteConfirmation: boolean;
+  onCancelDeleteConfirmation: () => void;
   confirmation:
     | {
         policyId: string;
@@ -138,8 +145,13 @@ function SlaPolicyCard({
   canManage,
   onEdit,
   onLifecycleAction,
+  onDelete,
   isLifecyclePending,
+  isDeletePending,
   lifecycleError,
+  deleteError,
+  deleteConfirmation,
+  onCancelDeleteConfirmation,
   confirmation,
   onCancelConfirmation,
 }: SlaPolicyCardProps) {
@@ -168,15 +180,43 @@ function SlaPolicyCard({
           </div>
 
           {canManage && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onEdit(policy)}
-              disabled={isLifecyclePending}
-            >
-              <Edit3 className="size-4" />
-              Edit
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onEdit(policy)}
+                disabled={isLifecyclePending || isDeletePending}
+              >
+                <Edit3 className="size-4" />
+                Edit
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onDelete(policy)}
+                disabled={
+                  policy.isActive || isLifecyclePending || isDeletePending
+                }
+                title={
+                  policy.isActive
+                    ? "Deactivate this policy before deleting it."
+                    : "Delete SLA policy"
+                }
+              >
+                {isDeletePending ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="size-4" />
+                    Delete
+                  </>
+                )}
+              </Button>
+            </div>
           )}
         </div>
       </CardHeader>
@@ -280,6 +320,55 @@ function SlaPolicyCard({
               {lifecycleError}
             </div>
           )}
+
+          {canManage && deleteConfirmation && (
+            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+              <p className="text-sm font-medium">Delete this SLA policy?</p>
+
+              <p className="mt-1 text-xs text-muted-foreground">
+                This action permanently removes the policy. It cannot be undone.
+              </p>
+
+              <div className="mt-3 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onCancelDeleteConfirmation}
+                  disabled={isDeletePending}
+                >
+                  Cancel
+                </Button>
+
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => onDelete(policy)}
+                  disabled={isDeletePending}
+                >
+                  {isDeletePending ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="size-4" />
+                      Delete Policy
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {canManage && deleteError && (
+            <div
+              role="alert"
+              className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+            >
+              {deleteError}
+            </div>
+          )}
         </div>
 
         <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
@@ -294,7 +383,9 @@ function SlaPolicyCard({
 
 export function SlaPolicyList() {
   const [isCreating, setIsCreating] = useState(false);
-
+  const [deleteConfirmation, setDeleteConfirmation] = useState<
+    string | undefined
+  >();
   const [editingPolicyId, setEditingPolicyId] = useState<string | null>(null);
 
   const [confirmation, setConfirmation] = useState<
@@ -318,6 +409,8 @@ export function SlaPolicyList() {
   const policiesQuery = useSlaPolicies(organizationId);
 
   const lifecycleMutation = useSlaPolicyLifecycle(organizationId);
+
+  const deleteMutation = useDeleteSlaPolicy(organizationId);
 
   if (organizationsQuery.isLoading) {
     return <LoadingState label="Loading workspace..." />;
@@ -421,6 +514,38 @@ export function SlaPolicyList() {
     }
   }
 
+  function requestDelete(policy: SlaPolicy) {
+    if (
+      !canManage ||
+      policy.isActive ||
+      lifecycleMutation.isPending ||
+      deleteMutation.isPending
+    ) {
+      return;
+    }
+
+    setDeleteConfirmation(policy.id);
+  }
+
+  async function executeDelete(policy: SlaPolicy) {
+    if (!canManage || policy.isActive || deleteMutation.isPending) {
+      return;
+    }
+
+    try {
+      await deleteMutation.mutateAsync(policy.id);
+
+      setDeleteConfirmation(undefined);
+    } catch {
+      /*
+       * Keep the confirmation and server error visible so the
+       * administrator can understand and retry the operation.
+       */
+    }
+  }
+  const deleteError =
+    deleteMutation.error instanceof Error ? deleteMutation.error.message : null;
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -446,8 +571,8 @@ export function SlaPolicyList() {
       {!canManage && (
         <div className="rounded-lg border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
           You have view-only access to SLA policies. Contact an organization
-          administrator or owner to create, edit, activate, or deactivate
-          policies.
+          administrator or owner to create, edit, activate, or deactivate, or
+          delete policies.
         </div>
       )}
 
@@ -483,17 +608,23 @@ export function SlaPolicyList() {
               policy={policy}
               canManage={canManage}
               onEdit={(selectedPolicy) => {
-                if (!canManage || lifecycleMutation.isPending) {
+                if (
+                  !canManage ||
+                  lifecycleMutation.isPending ||
+                  deleteMutation.isPending
+                ) {
                   return;
                 }
 
                 setIsCreating(false);
                 setEditingPolicyId(selectedPolicy.id);
                 setConfirmation(undefined);
+                setDeleteConfirmation(undefined);
                 lifecycleMutation.reset();
+                deleteMutation.reset();
               }}
               onLifecycleAction={(selectedPolicy, action) => {
-                if (!canManage) {
+                if (!canManage || deleteMutation.isPending) {
                   return;
                 }
 
@@ -502,22 +633,50 @@ export function SlaPolicyList() {
                   confirmation.action === action
                 ) {
                   void executeLifecycleAction(selectedPolicy, action);
-
                   return;
                 }
 
                 requestLifecycleAction(selectedPolicy, action);
+              }}
+              onDelete={(selectedPolicy) => {
+                if (!canManage || selectedPolicy.isActive) {
+                  return;
+                }
+
+                if (deleteConfirmation === selectedPolicy.id) {
+                  void executeDelete(selectedPolicy);
+                  return;
+                }
+
+                requestDelete(selectedPolicy);
               }}
               isLifecyclePending={
                 canManage &&
                 lifecycleMutation.isPending &&
                 lifecycleMutation.variables?.policyId === policy.id
               }
+              isDeletePending={
+                canManage &&
+                deleteMutation.isPending &&
+                deleteMutation.variables === policy.id
+              }
               lifecycleError={
                 canManage && lifecycleMutation.variables?.policyId === policy.id
                   ? lifecycleError
                   : null
               }
+              deleteError={
+                canManage && deleteConfirmation === policy.id
+                  ? deleteError
+                  : null
+              }
+              deleteConfirmation={canManage && deleteConfirmation === policy.id}
+              onCancelDeleteConfirmation={() => {
+                if (!deleteMutation.isPending) {
+                  setDeleteConfirmation(undefined);
+                  deleteMutation.reset();
+                }
+              }}
               confirmation={canManage ? confirmation : undefined}
               onCancelConfirmation={() => {
                 if (!lifecycleMutation.isPending) {

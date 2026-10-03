@@ -816,5 +816,37 @@ describe('SLA Policy API (e2e)', () => {
         .set('x-organization-id', fixture.organization.id)
         .expect(403);
     });
+
+    it('should allow ADMIN to delete an inactive SLA policy', async () => {
+      const created = await createPolicy('Admin Delete Policy');
+
+      expect(created.body.isActive).toBe(false);
+
+      await admin()
+        .delete(`/api/v1/sla-policies/${created.body.id}`)
+        .set('x-organization-id', fixture.organization.id)
+        .expect(200);
+
+      await owner()
+        .get(`/api/v1/sla-policies/${created.body.id}`)
+        .set('x-organization-id', fixture.organization.id)
+        .expect(404);
+    });
+
+    it('should allow OWNER to delete an inactive SLA policy', async () => {
+      const created = await createPolicy('Owner Delete Policy');
+
+      expect(created.body.isActive).toBe(false);
+
+      await owner()
+        .delete(`/api/v1/sla-policies/${created.body.id}`)
+        .set('x-organization-id', fixture.organization.id)
+        .expect(200);
+
+      await owner()
+        .get(`/api/v1/sla-policies/${created.body.id}`)
+        .set('x-organization-id', fixture.organization.id)
+        .expect(404);
+    });
   });
 });

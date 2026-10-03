@@ -6,6 +6,7 @@ import {
   activateSlaPolicy,
   createSlaPolicy,
   deactivateSlaPolicy,
+  deleteSlaPolicy,
   getSlaPolicies,
   getSlaPolicy,
   updateSlaPolicy,
@@ -217,6 +218,45 @@ export function useSlaPolicyLifecycle(organizationId: string | undefined) {
 
       queryClient.invalidateQueries({
         queryKey: slaPolicyQueryKeys.detail(organizationId, policy.id),
+      });
+    },
+  });
+}
+
+export function useDeleteSlaPolicy(organizationId: string | undefined) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (policyId: string) => {
+      if (!organizationId) {
+        throw new Error("Organization context is required");
+      }
+
+      return deleteSlaPolicy(organizationId, policyId);
+    },
+
+    onSuccess: ({ policyId }) => {
+      if (!organizationId) {
+        return;
+      }
+
+      queryClient.setQueryData<SlaPolicy[]>(
+        slaPolicyQueryKeys.list(organizationId),
+        (current) => {
+          if (!current) {
+            return current;
+          }
+
+          return current.filter((policy) => policy.id !== policyId);
+        },
+      );
+
+      queryClient.removeQueries({
+        queryKey: slaPolicyQueryKeys.detail(organizationId, policyId),
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: slaPolicyQueryKeys.list(organizationId),
       });
     },
   });
