@@ -54,6 +54,8 @@ const priorityConfig: Record<
   },
 };
 
+const MANAGE_SLA_ROLES = new Set(["OWNER", "ADMIN"]);
+
 function formatMinutes(minutes: number): string {
   if (minutes < 60) {
     return `${minutes} min`;
@@ -114,6 +116,7 @@ function PolicyTargetRow({ target }: { target: SlaPolicyTarget }) {
 
 interface SlaPolicyCardProps {
   policy: SlaPolicy;
+  canManage: boolean;
   onEdit: (policy: SlaPolicy) => void;
   onLifecycleAction: (
     policy: SlaPolicy,
@@ -132,6 +135,7 @@ interface SlaPolicyCardProps {
 
 function SlaPolicyCard({
   policy,
+  canManage,
   onEdit,
   onLifecycleAction,
   isLifecyclePending,
@@ -163,15 +167,17 @@ function SlaPolicyCard({
             </CardDescription>
           </div>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onEdit(policy)}
-            disabled={isLifecyclePending}
-          >
-            <Edit3 className="size-4" />
-            Edit
-          </Button>
+          {canManage && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onEdit(policy)}
+              disabled={isLifecyclePending}
+            >
+              <Edit3 className="size-4" />
+              Edit
+            </Button>
+          )}
         </div>
       </CardHeader>
 
@@ -198,27 +204,29 @@ function SlaPolicyCard({
               </span>
             </div>
 
-            <Button
-              variant={policy.isActive ? "outline" : "default"}
-              size="sm"
-              onClick={() => onLifecycleAction(policy, action)}
-              disabled={isLifecyclePending}
-            >
-              {isLifecyclePending ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  {policy.isActive ? "Deactivating..." : "Activating..."}
-                </>
-              ) : (
-                <>
-                  <Power className="size-4" />
-                  {policy.isActive ? "Deactivate" : "Activate"}
-                </>
-              )}
-            </Button>
+            {canManage && (
+              <Button
+                variant={policy.isActive ? "outline" : "default"}
+                size="sm"
+                onClick={() => onLifecycleAction(policy, action)}
+                disabled={isLifecyclePending}
+              >
+                {isLifecyclePending ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    {policy.isActive ? "Deactivating..." : "Activating..."}
+                  </>
+                ) : (
+                  <>
+                    <Power className="size-4" />
+                    {policy.isActive ? "Deactivate" : "Activate"}
+                  </>
+                )}
+              </Button>
+            )}
           </div>
 
-          {isConfirming && (
+          {canManage && isConfirming && (
             <div className="rounded-lg border bg-muted/30 p-4">
               <p className="text-sm font-medium">
                 {policy.isActive
@@ -264,7 +272,7 @@ function SlaPolicyCard({
             </div>
           )}
 
-          {lifecycleError && (
+          {canManage && lifecycleError && (
             <div
               role="alert"
               className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
@@ -299,7 +307,13 @@ export function SlaPolicyList() {
 
   const organizationsQuery = useOrganizations();
 
-  const organizationId = organizationsQuery.data?.[0]?.organizationId;
+  const membership = organizationsQuery.data?.[0];
+
+  const organizationId = membership?.organizationId;
+
+  const role = membership?.role;
+
+  const canManage = role ? MANAGE_SLA_ROLES.has(role) : false;
 
   const policiesQuery = useSlaPolicies(organizationId);
 
@@ -374,7 +388,7 @@ export function SlaPolicyList() {
     policy: SlaPolicy,
     action: "activate" | "deactivate",
   ) {
-    if (lifecycleMutation.isPending) {
+    if (!canManage || lifecycleMutation.isPending) {
       return;
     }
 
@@ -388,7 +402,7 @@ export function SlaPolicyList() {
     policy: SlaPolicy,
     action: "activate" | "deactivate",
   ) {
-    if (lifecycleMutation.isPending) {
+    if (!canManage || lifecycleMutation.isPending) {
       return;
     }
 
@@ -401,8 +415,8 @@ export function SlaPolicyList() {
       setConfirmation(undefined);
     } catch {
       /*
-       * Keep the confirmation/error visible so the user can
-       * understand and retry after a conflict or server error.
+       * Keep the confirmation and server error visible so the
+       * administrator can understand and retry the operation.
        */
     }
   }
@@ -418,7 +432,7 @@ export function SlaPolicyList() {
           </p>
         </div>
 
-        {!isCreating && !editingPolicyId && (
+        {canManage && !isCreating && !editingPolicyId && (
           <Button
             onClick={() => setIsCreating(true)}
             disabled={lifecycleMutation.isPending}
@@ -429,7 +443,15 @@ export function SlaPolicyList() {
         )}
       </div>
 
-      {isCreating && (
+      {!canManage && (
+        <div className="rounded-lg border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+          You have view-only access to SLA policies. Contact an organization
+          administrator or owner to create, edit, activate, or deactivate
+          policies.
+        </div>
+      )}
+
+      {isCreating && canManage && (
         <SlaPolicyForm
           organizationId={organizationId}
           onCancel={() => setIsCreating(false)}
@@ -437,7 +459,7 @@ export function SlaPolicyList() {
         />
       )}
 
-      {editingPolicy && (
+      {editingPolicy && canManage && (
         <SlaPolicyForm
           key={editingPolicy.id}
           organizationId={organizationId}
@@ -459,8 +481,9 @@ export function SlaPolicyList() {
             <SlaPolicyCard
               key={policy.id}
               policy={policy}
+              canManage={canManage}
               onEdit={(selectedPolicy) => {
-                if (lifecycleMutation.isPending) {
+                if (!canManage || lifecycleMutation.isPending) {
                   return;
                 }
 
@@ -470,6 +493,10 @@ export function SlaPolicyList() {
                 lifecycleMutation.reset();
               }}
               onLifecycleAction={(selectedPolicy, action) => {
+                if (!canManage) {
+                  return;
+                }
+
                 if (
                   confirmation?.policyId === selectedPolicy.id &&
                   confirmation.action === action
@@ -482,15 +509,16 @@ export function SlaPolicyList() {
                 requestLifecycleAction(selectedPolicy, action);
               }}
               isLifecyclePending={
+                canManage &&
                 lifecycleMutation.isPending &&
                 lifecycleMutation.variables?.policyId === policy.id
               }
               lifecycleError={
-                lifecycleMutation.variables?.policyId === policy.id
+                canManage && lifecycleMutation.variables?.policyId === policy.id
                   ? lifecycleError
                   : null
               }
-              confirmation={confirmation}
+              confirmation={canManage ? confirmation : undefined}
               onCancelConfirmation={() => {
                 if (!lifecycleMutation.isPending) {
                   setConfirmation(undefined);
