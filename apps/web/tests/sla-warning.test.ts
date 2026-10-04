@@ -231,3 +231,65 @@ describe("SlaIndicator warning presentation", () => {
     });
   });
 });
+
+describe("SLA warning realtime behavior", () => {
+  it("derives warning state from the current clock without a realtime event", () => {
+    const startedAt = "2026-10-04T10:00:00.000Z";
+    const dueAt = "2026-10-04T11:00:00.000Z";
+
+    const beforeWarning = getSlaTimer(
+      startedAt,
+      dueAt,
+      null,
+      null,
+      new Date("2026-10-04T10:47:00.000Z").getTime(),
+    );
+
+    expect(beforeWarning.state).toBe("RUNNING");
+    expect(beforeWarning.isWarning).toBe(false);
+
+    const insideWarningWindow = getSlaTimer(
+      startedAt,
+      dueAt,
+      null,
+      null,
+      new Date("2026-10-04T10:48:00.000Z").getTime(),
+    );
+
+    expect(insideWarningWindow.state).toBe("RUNNING");
+    expect(insideWarningWindow.isWarning).toBe(true);
+  });
+
+  it("does not require a breach event to enter the warning state", () => {
+    const startedAt = "2026-10-04T10:00:00.000Z";
+    const dueAt = "2026-10-04T11:00:00.000Z";
+
+    const result = getSlaTimer(
+      startedAt,
+      dueAt,
+      null,
+      null,
+      new Date("2026-10-04T10:50:00.000Z").getTime(),
+    );
+
+    expect(result.state).toBe("RUNNING");
+    expect(result.isWarning).toBe(true);
+    expect(result.breachedAt).toBeNull();
+  });
+
+  it("preserves breach semantics after the warning window", () => {
+    const startedAt = "2026-10-04T10:00:00.000Z";
+    const dueAt = "2026-10-04T11:00:00.000Z";
+
+    const result = getSlaTimer(
+      startedAt,
+      dueAt,
+      null,
+      "2026-10-04T11:01:00.000Z",
+      new Date("2026-10-04T11:02:00.000Z").getTime(),
+    );
+
+    expect(result.state).toBe("BREACHED");
+    expect(result.isWarning).toBe(false);
+  });
+});
