@@ -1,10 +1,7 @@
 import type { TicketSla } from "@/types/tickets";
+import { getSlaWarningThresholdMs, isSlaWarning } from "@/lib/sla-warning";
 
-export type SlaTimerState =
-  | "RUNNING"
-  | "COMPLETED"
-  | "OVERDUE"
-  | "BREACHED";
+export type SlaTimerState = "RUNNING" | "COMPLETED" | "OVERDUE" | "BREACHED";
 
 export interface SlaTimerResult {
   state: SlaTimerState;
@@ -13,6 +10,8 @@ export interface SlaTimerResult {
   dueAt: string;
   completedAt: string | null;
   breachedAt: string | null;
+  warningThresholdMs: number;
+  isWarning: boolean;
 }
 
 export function getSlaTimer(
@@ -24,21 +23,28 @@ export function getSlaTimer(
 ): SlaTimerResult {
   const startMs = new Date(startedAt).getTime();
   const dueMs = new Date(dueAt).getTime();
-  const completedMs = completedAt
-    ? new Date(completedAt).getTime()
-    : null;
+  const completedMs = completedAt ? new Date(completedAt).getTime() : null;
   const breachedTimestampMs = breachedAt
     ? new Date(breachedAt).getTime()
     : null;
 
+  const originalDurationMs = Math.max(0, dueMs - startMs);
+  const warningThresholdMs = getSlaWarningThresholdMs(originalDurationMs);
+
   if (completedMs !== null) {
+    const remainingMs = Math.max(0, dueMs - completedMs);
+
     return {
       state: breachedTimestampMs !== null ? "BREACHED" : "COMPLETED",
-      remainingMs: Math.max(0, dueMs - completedMs),
+      remainingMs,
       elapsedMs: Math.max(0, completedMs - startMs),
       dueAt,
       completedAt,
       breachedAt,
+      warningThresholdMs,
+      isWarning:
+        breachedTimestampMs === null &&
+        isSlaWarning(remainingMs, originalDurationMs),
     };
   }
 
@@ -50,6 +56,8 @@ export function getSlaTimer(
       dueAt,
       completedAt,
       breachedAt,
+      warningThresholdMs,
+      isWarning: false,
     };
   }
 
@@ -61,24 +69,27 @@ export function getSlaTimer(
       dueAt,
       completedAt,
       breachedAt,
+      warningThresholdMs,
+      isWarning: false,
     };
   }
 
+  const remainingMs = dueMs - now;
+
   return {
     state: "RUNNING",
-    remainingMs: dueMs - now,
+    remainingMs,
     elapsedMs: Math.max(0, now - startMs),
     dueAt,
     completedAt,
     breachedAt,
+    warningThresholdMs,
+    isWarning: isSlaWarning(remainingMs, originalDurationMs),
   };
 }
 
 export function formatDuration(milliseconds: number): string {
-  const totalSeconds = Math.max(
-    0,
-    Math.floor(milliseconds / 1000),
-  );
+  const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
 
   const days = Math.floor(totalSeconds / 86400);
   const hours = Math.floor((totalSeconds % 86400) / 3600);
