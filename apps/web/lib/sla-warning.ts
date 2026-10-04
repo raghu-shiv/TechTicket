@@ -1,0 +1,1 @@
+export const SLA_WARNING_THRESHOLD_RATIO = 0.2;

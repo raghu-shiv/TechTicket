@@ -689,10 +689,25 @@ The backend verification also exercised realtime ticket, approval, SLA, and noti
 
 ### 6-C — SLA Warnings
 
-**NEXT**
+**NEXT — WARNING RULE ESTABLISHED**
 
-Warning thresholds and warning-state behavior must be defined from the
-project requirements/SOP before implementation.
+TechTicket will use the following recommended product warning rule:
+
+> **An SLA enters WARNING when 20% or less of the original SLA window remains, while the SLA is still before its due time.**
+
+The threshold is proportional to the captured SLA duration rather than a fixed number of minutes. Examples: 15 minutes → final 3 minutes; 30 minutes → final 6 minutes; 1 hour → final 12 minutes; 4 hours → final 48 minutes; 24 hours → final 4 hours 48 minutes.
+
+This is a **TechTicket product-design inference** for a quick-support/helpdesk workflow, not an official numeric rule claimed from the referenced Quick Support product documentation. Public SLA/helpdesk products commonly use pre-breach warning states, while the exact threshold varies by product.
+
+Warning is a derived presentation state only and does not alter existing due-time calculation, overdue/breach semantics, breach persistence, escalation, audit, or realtime breach events. State precedence is: **BREACHED → COMPLETED → OVERDUE → WARNING → NORMAL/RUNNING**. Exactly 20% remaining is WARNING; greater than 20% is normal; less than 20% but above zero is WARNING.
+
+6-C implementation scope:
+
+- Encode the 20%-remaining threshold as a shared rule.
+- Add pure warning-state calculation without changing `getSlaTimer()` breach semantics.
+- Add first-response and resolution warning indicators.
+- Add realtime warning handling only if a concrete product requirement requires it.
+- Add boundary tests for exactly 20%, just above/below 20%, due, completed, and breached states.
 
 ### 6-D — SLA Breach Operations
 
