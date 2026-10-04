@@ -8,6 +8,8 @@ import {
 
 import { getSlaTimer } from "@/lib/sla";
 
+import { getSlaIndicatorPresentation } from "@/components/tickets/SlaIndicator";
+
 describe("SLA warning threshold", () => {
   it("uses 20% of the original SLA window", () => {
     expect(SLA_WARNING_THRESHOLD_RATIO).toBe(0.2);
@@ -98,5 +100,134 @@ describe("SLA warning threshold", () => {
 
     expect(result.state).toBe("BREACHED");
     expect(result.isWarning).toBe(false);
+  });
+});
+
+describe("SLA warning presentation", () => {
+  it("marks first response as warning when inside the threshold", () => {
+    const startedAt = "2026-10-04T10:00:00.000Z";
+    const dueAt = "2026-10-04T11:00:00.000Z";
+
+    const now = new Date("2026-10-04T10:50:00.000Z").getTime();
+
+    const result = getSlaTimer(startedAt, dueAt, null, null, now);
+
+    expect(result.state).toBe("RUNNING");
+    expect(result.isWarning).toBe(true);
+  });
+
+  it("does not mark first response as warning outside the threshold", () => {
+    const startedAt = "2026-10-04T10:00:00.000Z";
+    const dueAt = "2026-10-04T11:00:00.000Z";
+
+    const now = new Date("2026-10-04T10:40:00.000Z").getTime();
+
+    const result = getSlaTimer(startedAt, dueAt, null, null, now);
+
+    expect(result.state).toBe("RUNNING");
+    expect(result.isWarning).toBe(false);
+  });
+
+  it("preserves warning state independently for resolution", () => {
+    const startedAt = "2026-10-04T10:00:00.000Z";
+    const dueAt = "2026-10-04T11:00:00.000Z";
+
+    const now = new Date("2026-10-04T10:50:00.000Z").getTime();
+
+    const result = getSlaTimer(startedAt, dueAt, null, null, now);
+
+    expect(result.state).toBe("RUNNING");
+    expect(result.isWarning).toBe(true);
+  });
+});
+
+describe("SlaIndicator warning presentation", () => {
+  it("shows warning before normal running countdown", () => {
+    const firstResponse = {
+      state: "RUNNING" as const,
+      remainingMs: 12 * 60 * 1000,
+      elapsedMs: 48 * 60 * 1000,
+      dueAt: "2026-10-04T11:00:00.000Z",
+      completedAt: null,
+      breachedAt: null,
+      warningThresholdMs: 12 * 60 * 1000,
+      isWarning: true,
+    };
+
+    const resolution = {
+      ...firstResponse,
+      remainingMs: 60 * 60 * 1000,
+      warningThresholdMs: 12 * 60 * 1000,
+      isWarning: false,
+    };
+
+    const result = getSlaIndicatorPresentation(firstResponse, resolution);
+
+    expect(result).toEqual({
+      state: "WARNING",
+      remainingMs: 12 * 60 * 1000,
+    });
+  });
+
+  it("prioritizes breached over warning", () => {
+    const firstResponse = {
+      state: "BREACHED" as const,
+      remainingMs: 0,
+      elapsedMs: 61 * 60 * 1000,
+      dueAt: "2026-10-04T11:00:00.000Z",
+      completedAt: null,
+      breachedAt: "2026-10-04T11:01:00.000Z",
+      warningThresholdMs: 12 * 60 * 1000,
+      isWarning: false,
+    };
+
+    const resolution = {
+      state: "RUNNING" as const,
+      remainingMs: 10 * 60 * 1000,
+      elapsedMs: 50 * 60 * 1000,
+      dueAt: "2026-10-04T11:00:00.000Z",
+      completedAt: null,
+      breachedAt: null,
+      warningThresholdMs: 12 * 60 * 1000,
+      isWarning: true,
+    };
+
+    const result = getSlaIndicatorPresentation(firstResponse, resolution);
+
+    expect(result).toEqual({
+      state: "BREACHED",
+      label: "SLA breached",
+    });
+  });
+
+  it("prioritizes overdue over warning", () => {
+    const firstResponse = {
+      state: "OVERDUE" as const,
+      remainingMs: 0,
+      elapsedMs: 61 * 60 * 1000,
+      dueAt: "2026-10-04T11:00:00.000Z",
+      completedAt: null,
+      breachedAt: null,
+      warningThresholdMs: 12 * 60 * 1000,
+      isWarning: false,
+    };
+
+    const resolution = {
+      state: "RUNNING" as const,
+      remainingMs: 10 * 60 * 1000,
+      elapsedMs: 50 * 60 * 1000,
+      dueAt: "2026-10-04T11:00:00.000Z",
+      completedAt: null,
+      breachedAt: null,
+      warningThresholdMs: 12 * 60 * 1000,
+      isWarning: true,
+    };
+
+    const result = getSlaIndicatorPresentation(firstResponse, resolution);
+
+    expect(result).toEqual({
+      state: "OVERDUE",
+      label: "SLA overdue",
+    });
   });
 });

@@ -212,11 +212,7 @@ export default function TicketDetailPage({
         {/* ------------------------------------------------------------------ */}
 
         <div className="space-y-6">
-          <TicketSlaPanel
-            sla={ticket.sla}
-            createdAt={ticket.createdAt}
-            resolvedAt={ticket.resolvedAt}
-          />
+          <TicketSlaPanel ticket={ticket} />
 
           <Card>
             <CardContent className="space-y-5 p-6">

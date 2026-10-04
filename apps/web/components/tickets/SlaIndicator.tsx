@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Clock3, XCircle } from "lucide-react";
+import { CheckCircle2, Clock3, XCircle, AlertTriangle } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { useSlaClock } from "@/hooks/use-sla-clock";
@@ -12,30 +12,13 @@ import {
 import type { Ticket } from "@/types/tickets";
 
 type SlaIndicatorPresentation =
-  | {
-      state: "BREACHED";
-      label: "SLA breached";
-    }
-  | {
-      state: "OVERDUE";
-      label: "SLA overdue";
-    }
-  | {
-      state: "FIRST_RESPONSE";
-      remainingMs: number;
-    }
-  | {
-      state: "RESOLUTION";
-      remainingMs: number;
-    }
-  | {
-      state: "COMPLETED";
-      label: "SLA completed";
-    }
-  | {
-      state: "DEFAULT";
-      label: "SLA";
-    };
+  | { state: "BREACHED"; label: "SLA breached" }
+  | { state: "OVERDUE"; label: "SLA overdue" }
+  | { state: "WARNING"; remainingMs: number }
+  | { state: "FIRST_RESPONSE"; remainingMs: number }
+  | { state: "RESOLUTION"; remainingMs: number }
+  | { state: "COMPLETED"; label: "SLA completed" }
+  | { state: "DEFAULT"; label: "SLA" };
 
 export function SlaIndicator({ ticket }: { ticket: Ticket }) {
   const now = useSlaClock(30000);
@@ -73,6 +56,14 @@ export function SlaIndicator({ ticket }: { ticket: Ticket }) {
         <Badge variant="danger">
           <Clock3 className="size-3.5" />
           {presentation.label}
+        </Badge>
+      );
+
+    case "WARNING":
+      return (
+        <Badge variant="warning">
+          <AlertTriangle className="size-3.5" />
+          SLA warning {formatDuration(presentation.remainingMs)}
         </Badge>
       );
 
@@ -125,6 +116,20 @@ export function getSlaIndicatorPresentation(
     return {
       state: "OVERDUE",
       label: "SLA overdue",
+    };
+  }
+
+  if (firstResponse.isWarning) {
+    return {
+      state: "WARNING",
+      remainingMs: firstResponse.remainingMs,
+    };
+  }
+
+  if (resolution.isWarning) {
+    return {
+      state: "WARNING",
+      remainingMs: resolution.remainingMs,
     };
   }
 
