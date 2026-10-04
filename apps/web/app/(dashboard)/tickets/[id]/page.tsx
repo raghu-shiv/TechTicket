@@ -165,16 +165,17 @@ export default function TicketDetailPage({
       <PageHeader title={ticket.title} description={ticket.ticketNumber} />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <TicketSlaPanel
-          sla={ticket.sla}
-          createdAt={ticket.createdAt}
-          resolvedAt={ticket.resolvedAt}
-        />
+        {/* ------------------------------------------------------------------ */}
+        {/* MAIN TICKET CONTENT                                                */}
+        {/* ------------------------------------------------------------------ */}
+
         <Card>
           <CardContent className="space-y-6 p-6">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant={status.variant}>{status.label}</Badge>
+
               <Badge variant={priority.variant}>{priority.label}</Badge>
+
               <Badge variant="outline">{typeLabels[ticket.type]}</Badge>
             </div>
 
@@ -206,73 +207,89 @@ export default function TicketDetailPage({
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="space-y-5 p-6">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Requester
-              </p>
+        {/* ------------------------------------------------------------------ */}
+        {/* SLA + TICKET CONTEXT                                               */}
+        {/* ------------------------------------------------------------------ */}
 
-              <div className="mt-2 flex items-start gap-3">
-                <UserRound className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+        <div className="space-y-6">
+          <TicketSlaPanel
+            sla={ticket.sla}
+            createdAt={ticket.createdAt}
+            resolvedAt={ticket.resolvedAt}
+          />
 
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">
-                    {ticket.requester.name}
-                  </p>
+          <Card>
+            <CardContent className="space-y-5 p-6">
+              {/* Requester */}
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Requester
+                </p>
 
-                  <p className="truncate text-xs text-muted-foreground">
-                    {ticket.requester.email}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t pt-5">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Assignee
-              </p>
-
-              {ticket.assignee ? (
                 <div className="mt-2 flex items-start gap-3">
                   <UserRound className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
 
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">
-                      {ticket.assignee.name}
+                      {ticket.requester.name}
                     </p>
 
                     <p className="truncate text-xs text-muted-foreground">
-                      {ticket.assignee.email}
+                      {ticket.requester.email}
                     </p>
                   </div>
                 </div>
-              ) : (
-                <div className="mt-2 flex items-center gap-3 text-sm text-muted-foreground">
-                  <UserRound className="size-4" />
-                  <span>Unassigned</span>
-                </div>
-              )}
-            </div>
+              </div>
 
-            <div className="border-t pt-5">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Team
-              </p>
-
-              {ticket.team ? (
-                <div className="mt-2 flex items-center gap-3">
-                  <UsersRound className="size-4 shrink-0 text-muted-foreground" />
-                  <span className="text-sm">{ticket.team.name}</span>
-                </div>
-              ) : (
-                <p className="mt-2 text-sm text-muted-foreground">
-                  No team assigned
+              {/* Assignee */}
+              <div className="border-t pt-5">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Assignee
                 </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+
+                {ticket.assignee ? (
+                  <div className="mt-2 flex items-start gap-3">
+                    <UserRound className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">
+                        {ticket.assignee.name}
+                      </p>
+
+                      <p className="truncate text-xs text-muted-foreground">
+                        {ticket.assignee.email}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-2 flex items-center gap-3 text-sm text-muted-foreground">
+                    <UserRound className="size-4" />
+                    <span>Unassigned</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Team */}
+              <div className="border-t pt-5">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Team
+                </p>
+
+                {ticket.team ? (
+                  <div className="mt-2 flex items-center gap-3">
+                    <UsersRound className="size-4 shrink-0 text-muted-foreground" />
+
+                    <span className="text-sm">{ticket.team.name}</span>
+                  </div>
+                ) : (
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    No team assigned
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
