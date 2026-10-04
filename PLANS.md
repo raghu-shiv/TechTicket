@@ -10,7 +10,7 @@ feature.
 
 ## Phase 6 --- SLA
 
-### Status: IN PROGRESS — Phase 6-B COMPLETE AND VERIFIED
+### Status: IN PROGRESS — Phase 6-C COMPLETE AND VERIFIED
 
 Phase 4 is complete through Phase 4-J --- Ticket History Refinement.
 Phase 5-A --- Ticket Library is now complete and verified, including
@@ -27,7 +27,7 @@ Current roadmap:
 -   Phase 5-D --- Saved Filter API: **COMPLETE AND VERIFIED**
 -   Phase 5-E --- Saved Filter UX: **COMPLETE AND VERIFIED**
 -   Phase 5-F --- Full Phase 5 Verification: **COMPLETE AND VERIFIED**
--   Phase 6 --- SLA: **IN PROGRESS — 6-B COMPLETE AND VERIFIED**
+-   Phase 6 --- SLA: **IN PROGRESS — 6-C COMPLETE AND VERIFIED**
 -   Phase 7 --- Analytics: **PLANNED**
 -   Phase 8 --- Production Hardening: **PLANNED**
 
@@ -1163,83 +1163,103 @@ The backend verification also exercised realtime ticket, approval, SLA, and noti
 
 ## 6-C — SLA Warnings
 
-**Status: NEXT — WARNING RULE ESTABLISHED**
+**Status: COMPLETE AND VERIFIED**
 
-### Recommended TechTicket Warning Rule
+Implemented and verified:
 
-For TechTicket, an SLA enters the **WARNING** state when **20% or less of the original SLA window remains**, while the SLA is still before its due time. The warning threshold is proportional to the ticket's captured SLA duration rather than being a fixed number of minutes.
+- 6-C.1 — Define + encode warning threshold
+- 6-C.2 — Warning calculation
+- 6-C.3 — UI warning indicators
+- 6-C.4 — Realtime warning handling
+- 6-C.5 — Boundary tests
+- 6-C.6 — Full Phase 6-C verification
 
-Formula:
+Warning rule:
 
-```text
-warning when remaining time / original SLA duration <= 20%
-and remaining time > 0
-```
+> An SLA enters WARNING when 20% or less of the original SLA window
+> remains, while the SLA is still before its due time.
 
-Examples:
+The threshold is proportional to the captured SLA duration:
 
-```text
-15-minute SLA  → warning during final 3 minutes
-30-minute SLA  → warning during final 6 minutes
-1-hour SLA     → warning during final 12 minutes
-2-hour SLA     → warning during final 24 minutes
-4-hour SLA     → warning during final 48 minutes
-8-hour SLA     → warning during final 1h 36m
-24-hour SLA    → warning during final 4h 48m
-```
+- 15 minutes → final 3 minutes
+- 30 minutes → final 6 minutes
+- 1 hour → final 12 minutes
+- 4 hours → final 48 minutes
+- 24 hours → final 4 hours 48 minutes
 
-The rule is a **TechTicket product-design inference**, selected for a quick-support/helpdesk workflow where agents need actionable time to intervene before a breach. Public helpdesk/SLA products commonly expose a pre-breach warning state, but the exact 20% value is not claimed as an official requirement of the referenced Quick Support product.
+This is a TechTicket product-design inference for a quick-support/helpdesk
+workflow, not an official numeric rule claimed from the referenced Quick
+Support product documentation.
 
-### Warning State Semantics
-
-Warning is an additional presentation/derived state. It **does not change breach semantics**, due-time calculation, breach persistence, escalation, audit, or existing realtime breach events.
+Warning is a derived presentation state only. It does not change existing
+due-time calculation, overdue/breach semantics, breach persistence,
+escalation, audit, or realtime breach events.
 
 State precedence:
 
 ```text
-BREACHED
-    ↓
-COMPLETED
-    ↓
-OVERDUE
-    ↓
-WARNING
-    ↓
-NORMAL / RUNNING
+BREACHED → COMPLETED → OVERDUE → WARNING → NORMAL/RUNNING
 ```
 
 Boundary behavior:
 
-- More than 20% remaining → normal/running
-- Exactly 20% remaining → warning
-- Less than 20% remaining but greater than 0 → warning
-- Due time reached with no completion → existing overdue semantics
-- Server-recorded breach → existing breached semantics
-- Completed target → existing completed semantics
+- Greater than 20% remaining → NORMAL/RUNNING
+- Exactly 20% remaining → WARNING
+- Less than 20% but greater than zero → WARNING
+- Exactly due → OVERDUE
+- Existing `breachedAt` → BREACHED
+- Warning does not create a database state or Socket.IO warning event
 
-### 6-C Scope
+Verification:
 
-- Encode the 20%-remaining warning threshold as a single shared rule.
-- Add pure warning-state calculation without changing `getSlaTimer()` breach semantics.
-- Add first-response and resolution warning presentation.
-- Add ticket-level warning indicators where SLA timers are already shown.
-- Add realtime warning handling only if a concrete product requirement requires an event-driven update.
-- Add threshold-boundary tests, including exactly 20%, just above 20%, just below 20%, due-time, completed, and breached cases.
+```text
+Frontend test files  2/2 passed
+Frontend tests       43/43 passed
+Frontend lint        PASS
+Frontend TypeScript  PASS
+Frontend build       SUCCESS
+Failures             0
+```
 
-The existing Ticket SLA snapshot, due timestamps, breach fields, organization scoping, and authorization remain the source of truth. No duplicate SLA model is introduced.
+The warning calculation is derived locally from the existing SLA snapshot
+and clock. Existing backend breach detection and realtime breach events
+remain authoritative for actual SLA breaches.
 
 ## 6-D — SLA Breach Operations
 
-**Status: PLANNED**
+**Status: IN PROGRESS**
 
-Scope:
+Goal:
 
-- Breach-state operational UX
-- Existing breach/escalation integration
-- Realtime breach presentation
-- Operational follow-up workflows
+Turn the existing SLA breach engine into an operational ticket workflow
+without changing breach detection or idempotency.
 
-Reuse the existing SLA breach detection, escalation, audit, and realtime foundations.
+Implementation boundary:
+
+- Reuse existing `TicketSla` breach timestamps.
+- Reuse existing `SlaEscalation` records.
+- Reuse existing SLA breach audit activities.
+- Reuse existing SLA breach realtime events.
+- Preserve organization scoping and authorization.
+- Do not introduce a duplicate breach model.
+- Do not change existing breach detection semantics.
+- Preserve `SlaEscalation` idempotency through the existing
+  `@@unique([ticketSlaId, type])` constraint and `skipDuplicates` behavior.
+
+### 6-D Milestones
+
+- 6-D.1 — Breach operational data/API contract
+- 6-D.2 — Ticket breach indicators
+- 6-D.3 — Breach filtering
+- 6-D.4 — Breach history/activity presentation
+- 6-D.5 — Escalation record exposure where required
+- 6-D.6 — Realtime breach presentation
+- 6-D.7 — Breach authorization and organization isolation
+- 6-D.8 — Full 6-D verification
+
+The first implementation step is 6-D.1: inspect the existing breach,
+escalation, activity, and realtime contracts and expose only the data needed
+by the operational UI.
 
 ## 6-E — SLA Dashboard
 
@@ -1279,10 +1299,11 @@ Phase 4 is complete.
 Phase 5-A through Phase 5-F are **COMPLETE AND VERIFIED**.
 Phase 6-A — SLA Policy Management is **COMPLETE AND VERIFIED**.
 Phase 6-B — Ticket SLA Timer Experience is **COMPLETE AND VERIFIED**.
+Phase 6-C — SLA Warnings is **COMPLETE AND VERIFIED**.
 
-The next implementation milestone is:
+The current implementation milestone is:
 
-**6-C — SLA Warnings**
+**6-D — SLA Breach Operations**
 
 Continue from the verified repository state and avoid speculative
 architecture changes.
