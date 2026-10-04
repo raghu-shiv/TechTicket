@@ -27,6 +27,7 @@ import {
 } from "@/components/shared";
 import { Badge } from "@/components/ui/badge";
 import { SavedFiltersPanel } from "@/components/tickets/SavedFiltersPanel";
+import { SlaIndicator } from "@/components/tickets/SlaIndicator";
 import { savedFilterToSearchParams } from "@/lib/saved-filters";
 import { useOrganizations } from "@/hooks/use-organizations";
 import { useTickets } from "@/hooks/use-tickets";
@@ -194,8 +195,12 @@ function TicketRow({ ticket }: { ticket: Ticket }) {
           <Badge variant={status.variant}>{status.label}</Badge>
         </div>
 
-        <div>
+        <div className="space-y-1">
           <Badge variant={priority.variant}>{priority.label}</Badge>
+
+          <div>
+            <SlaIndicator ticket={ticket} />
+          </div>
         </div>
 
         <div className="min-w-0">

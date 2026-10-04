@@ -21,6 +21,7 @@ import { Card, CardContent } from "@/components/ui";
 import { useOrganizations } from "@/hooks/use-organizations";
 import { useTicket } from "@/hooks/use-ticket";
 import type { TicketPriority, TicketStatus, TicketType } from "@/types/tickets";
+import { TicketSlaPanel } from "@/components/tickets/TicketSlaPanel";
 
 const statusConfig: Record<
   TicketStatus,
@@ -164,6 +165,11 @@ export default function TicketDetailPage({
       <PageHeader title={ticket.title} description={ticket.ticketNumber} />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <TicketSlaPanel
+          sla={ticket.sla}
+          createdAt={ticket.createdAt}
+          resolvedAt={ticket.resolvedAt}
+        />
         <Card>
           <CardContent className="space-y-6 p-6">
             <div className="flex flex-wrap items-center gap-2">
