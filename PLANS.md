@@ -10,7 +10,7 @@ feature.
 
 ## Phase 6 --- SLA
 
-### Status: IN PROGRESS — Phase 6-A COMPLETE AND VERIFIED
+### Status: IN PROGRESS — Phase 6-B COMPLETE AND VERIFIED
 
 Phase 4 is complete through Phase 4-J --- Ticket History Refinement.
 Phase 5-A --- Ticket Library is now complete and verified, including
@@ -27,7 +27,7 @@ Current roadmap:
 -   Phase 5-D --- Saved Filter API: **COMPLETE AND VERIFIED**
 -   Phase 5-E --- Saved Filter UX: **COMPLETE AND VERIFIED**
 -   Phase 5-F --- Full Phase 5 Verification: **COMPLETE AND VERIFIED**
--   Phase 6 --- SLA: **IN PROGRESS — 6-A COMPLETE AND VERIFIED**
+-   Phase 6 --- SLA: **IN PROGRESS — 6-B COMPLETE AND VERIFIED**
 -   Phase 7 --- Analytics: **PLANNED**
 -   Phase 8 --- Production Hardening: **PLANNED**
 
@@ -954,7 +954,7 @@ Ticket attachments                COMPLETE
 Ticket relations                  COMPLETE
 Advanced ticket filtering         COMPLETE
 SLA policies                      COMPLETE
-SLA timers                        COMPLETE
+SLA timers                        COMPLETE AND VERIFIED
 SLA breach detection              COMPLETE
 SLA escalation                    COMPLETE
 Ticket activity / audit history   COMPLETE
@@ -1112,7 +1112,7 @@ Phase 6-A verification completed successfully across:
 
 ## 6-B — Ticket SLA Timer Experience
 
-**Status: NEXT**
+**Status: COMPLETE AND VERIFIED**
 
 Scope:
 
@@ -1135,9 +1135,35 @@ Implementation boundary:
 - Keep timer presentation deterministic and testable.
 - Verify API contract, frontend behavior, lint, TypeScript, build, and regression E2E before moving to 6-C.
 
+6-B.5 presentation test result:
+
+```text
+Test Files  1 passed (1)
+Tests       5 passed (5)
+Failures    0
+```
+
+6-B.6 full verification:
+
+```text
+Frontend:
+Vitest tests        PASS — 1/1 test file, 5/5 tests
+Frontend lint        PASS
+Frontend TypeScript  PASS
+Frontend build       SUCCESS
+
+Backend:
+E2E tests            PASS
+Unit tests           PASS
+Backend lint         PASS
+Backend build        SUCCESS
+```
+
+The backend verification also exercised realtime ticket, approval, SLA, and notification event coverage and organization-isolation scenarios. Resend HTTP 422 messages for `example.com` test recipients were provider test-environment restrictions and did not produce test failures.
+
 ## 6-C — SLA Warnings
 
-**Status: PLANNED**
+**Status: NEXT**
 
 Scope:
 
@@ -1198,10 +1224,11 @@ Final Phase 6 verification boundary:
 Phase 4 is complete.
 Phase 5-A through Phase 5-F are **COMPLETE AND VERIFIED**.
 Phase 6-A — SLA Policy Management is **COMPLETE AND VERIFIED**.
+Phase 6-B — Ticket SLA Timer Experience is **COMPLETE AND VERIFIED**.
 
 The next implementation milestone is:
 
-**6-B — Ticket SLA Timer Experience**
+**6-C — SLA Warnings**
 
 Continue from the verified repository state and avoid speculative
 architecture changes.
