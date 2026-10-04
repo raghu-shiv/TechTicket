@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock3, XCircle } from "lucide-react";
+import { CheckCircle2, Clock3, XCircle } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { useSlaClock } from "@/hooks/use-sla-clock";
@@ -31,10 +31,15 @@ export function SlaIndicator({ ticket }: { ticket: Ticket }) {
     now,
   );
 
-  const breached =
-    firstResponse.state === "BREACHED" || resolution.state === "BREACHED";
+  /*
+   * --------------------------------------------------------------------------
+   * BREACHED
+   * --------------------------------------------------------------------------
+   *
+   * A server-recorded breach takes precedence over every other state.
+   */
 
-  if (breached) {
+  if (firstResponse.state === "BREACHED" || resolution.state === "BREACHED") {
     return (
       <Badge variant="danger">
         <XCircle className="size-3.5" />
@@ -42,6 +47,15 @@ export function SlaIndicator({ ticket }: { ticket: Ticket }) {
       </Badge>
     );
   }
+
+  /*
+   * --------------------------------------------------------------------------
+   * OVERDUE
+   * --------------------------------------------------------------------------
+   *
+   * The client may detect that the due time has passed before the
+   * background SLA monitor has persisted the breach timestamp.
+   */
 
   if (firstResponse.state === "OVERDUE" || resolution.state === "OVERDUE") {
     return (
@@ -52,14 +66,59 @@ export function SlaIndicator({ ticket }: { ticket: Ticket }) {
     );
   }
 
+  /*
+   * --------------------------------------------------------------------------
+   * FIRST RESPONSE STILL RUNNING
+   * --------------------------------------------------------------------------
+   *
+   * This is important when resolution is already completed but the first
+   * response target is still active in the snapshot.
+   */
+
+  if (firstResponse.state === "RUNNING") {
+    return (
+      <Badge variant="warning">
+        <Clock3 className="size-3.5" />
+        Response {formatDuration(firstResponse.remainingMs)}
+      </Badge>
+    );
+  }
+
+  /*
+   * --------------------------------------------------------------------------
+   * RESOLUTION STILL RUNNING
+   * --------------------------------------------------------------------------
+   */
+
   if (resolution.state === "RUNNING") {
     return (
       <Badge variant="warning">
         <Clock3 className="size-3.5" />
-        {formatDuration(resolution.remainingMs)}
+        SLA {formatDuration(resolution.remainingMs)}
       </Badge>
     );
   }
+
+  /*
+   * --------------------------------------------------------------------------
+   * COMPLETED
+   * --------------------------------------------------------------------------
+   */
+
+  if (firstResponse.state === "COMPLETED" && resolution.state === "COMPLETED") {
+    return (
+      <Badge variant="success">
+        <CheckCircle2 className="size-3.5" />
+        SLA completed
+      </Badge>
+    );
+  }
+
+  /*
+   * --------------------------------------------------------------------------
+   * FALLBACK
+   * --------------------------------------------------------------------------
+   */
 
   return (
     <Badge variant="secondary">

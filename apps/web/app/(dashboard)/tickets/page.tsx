@@ -178,7 +178,7 @@ function TicketRow({ ticket }: { ticket: Ticket }) {
       href={`/tickets/${ticket.id}`}
       className="block border-b last:border-b-0 transition-colors hover:bg-muted/40"
     >
-      <div className="grid gap-4 px-5 py-4 lg:grid-cols-[minmax(220px,1.5fr)_140px_120px_180px_140px] lg:items-center">
+      <div className="grid gap-4 px-5 py-4 lg:grid-cols-[minmax(220px,1.5fr)_140px_150px_180px_140px] lg:items-center">
         <div className="min-w-0">
           <span className="text-xs font-medium text-muted-foreground">
             {ticket.ticketNumber}
@@ -235,7 +235,7 @@ function TicketRow({ ticket }: { ticket: Ticket }) {
 function TicketTable({ tickets }: { tickets: Ticket[] }) {
   return (
     <Card className="overflow-hidden">
-      <div className="hidden border-b bg-muted/30 px-5 py-3 lg:grid lg:grid-cols-[minmax(220px,1.5fr)_140px_120px_180px_140px] lg:items-center lg:gap-4">
+      <div className="hidden border-b bg-muted/30 px-5 py-3 lg:grid lg:grid-cols-[minmax(220px,1.5fr)_140px_150px_180px_140px] lg:items-center lg:gap-4">
         <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Ticket
         </span>
