@@ -31,6 +31,7 @@ import { SlaIndicator } from "@/components/tickets/SlaIndicator";
 import { savedFilterToSearchParams } from "@/lib/saved-filters";
 import { useOrganizations } from "@/hooks/use-organizations";
 import { useTickets } from "@/hooks/use-tickets";
+import { useSlaRealtime } from "@/hooks/use-sla-realtime";
 import type {
   Ticket,
   TicketPriority,
@@ -368,7 +369,9 @@ function TicketsContent() {
   const organizationsQuery = useOrganizations();
 
   const organizationId = organizationsQuery.data?.[0]?.organizationId;
-
+  useSlaRealtime({
+    organizationId,
+  });
   /*
    * --------------------------------------------------------------------------
    * URL STATE

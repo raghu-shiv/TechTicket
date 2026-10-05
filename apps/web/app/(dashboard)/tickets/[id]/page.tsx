@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui";
 import { useOrganizations } from "@/hooks/use-organizations";
 import { useTicket } from "@/hooks/use-ticket";
+import { useSlaRealtime } from "@/hooks/use-sla-realtime";
 import type { TicketPriority, TicketStatus, TicketType } from "@/types/tickets";
 import { TicketSlaPanel } from "@/components/tickets/TicketSlaPanel";
 import { SlaBreachHistory } from "@/components/tickets/SlaBreachHistory";
@@ -94,6 +95,10 @@ export default function TicketDetailPage({
   const organizationId = organizationsQuery.data?.[0]?.organizationId;
 
   const ticketQuery = useTicket(organizationId, id);
+  useSlaRealtime({
+    organizationId,
+    ticketId: id,
+  });
 
   if (organizationsQuery.isLoading) {
     return <LoadingState />;

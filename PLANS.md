@@ -1252,10 +1252,10 @@ Implementation boundary:
 - 6-D.2 — Ticket breach indicators — **COMPLETE AND VERIFIED**
 - 6-D.3 — Breach filtering — **COMPLETE & VERIFIED**
 - 6-D.4 — Breach history/activity presentation — **COMPLETE & VERIFIED**
-- 6-D.5 — Escalation record exposure where required — **IN PROGRESS**
-- 6-D.6 — Realtime breach presentation — **PLANNED**
-- 6-D.7 — Breach authorization and organization isolation — **PLANNED**
-- 6-D.8 — Full 6-D verification — **PLANNED**
+- 6-D.5 — Escalation record exposure where required — **COMPLETE & VERIFIED**
+- 6-D.6 — Realtime breach presentation — **COMPLETE**
+- 6-D.7 — Breach authorization and organization isolation — **IN PROGRESS**
+- 6-D.8 — Full 6-D verification — **IN PROGRESS**
 
 The first implementation step is 6-D.1: inspect the existing breach,
 escalation, activity, and realtime contracts and expose only the data needed

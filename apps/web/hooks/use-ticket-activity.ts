@@ -11,6 +11,14 @@ import type {
 export const ticketActivityQueryKeys = {
   all: ["ticket-activity"] as const,
 
+  ticket: (organizationId: string, ticketId: string) =>
+    [
+      ...ticketActivityQueryKeys.all,
+      "ticket",
+      organizationId,
+      ticketId,
+    ] as const,
+
   list: (
     organizationId: string,
     ticketId: string,
@@ -23,10 +31,8 @@ export const ticketActivityQueryKeys = {
     } = {},
   ) =>
     [
-      ...ticketActivityQueryKeys.all,
+      ...ticketActivityQueryKeys.ticket(organizationId, ticketId),
       "list",
-      organizationId,
-      ticketId,
       params,
     ] as const,
 };
