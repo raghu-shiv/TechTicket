@@ -12,6 +12,7 @@ import {
   getSlaBreachTypes,
 } from "@/lib/sla";
 import type { Ticket } from "@/types/tickets";
+import { SlaEscalationHistory } from "@/components/tickets/SlaEscalationHistory";
 
 interface TicketSlaPanelProps {
   ticket: Ticket;
@@ -67,6 +68,7 @@ export function TicketSlaPanel({ ticket }: TicketSlaPanelProps) {
         {getSlaBreachTypes(ticket.sla).length > 0 && (
           <SlaBreachSummary sla={ticket.sla} />
         )}
+        <SlaEscalationHistory escalations={ticket.sla?.slaEscalations ?? []} />
       </div>
     </section>
   );
