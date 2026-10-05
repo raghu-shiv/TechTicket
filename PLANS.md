@@ -10,7 +10,7 @@ feature.
 
 ## Phase 6 --- SLA
 
-### Status: IN PROGRESS — Phase 6-C COMPLETE AND VERIFIED
+### Status: IN PROGRESS — Phase 6-D COMPLETE AND VERIFIED
 
 Phase 4 is complete through Phase 4-J --- Ticket History Refinement.
 Phase 5-A --- Ticket Library is now complete and verified, including
@@ -27,7 +27,7 @@ Current roadmap:
 - Phase 5-D --- Saved Filter API: **COMPLETE AND VERIFIED**
 - Phase 5-E --- Saved Filter UX: **COMPLETE AND VERIFIED**
 - Phase 5-F --- Full Phase 5 Verification: **COMPLETE AND VERIFIED**
-- Phase 6 --- SLA: **IN PROGRESS — 6-C COMPLETE AND VERIFIED**
+- Phase 6 --- SLA: **IN PROGRESS — 6-D COMPLETE AND VERIFIED**
 - Phase 7 --- Analytics: **PLANNED**
 - Phase 8 --- Production Hardening: **PLANNED**
 
@@ -981,6 +981,8 @@ Phase 5-C Saved Filters Foundation COMPLETE AND VERIFIED
 Phase 5-D Saved Filter API         COMPLETE AND VERIFIED
 Phase 5-E Saved Filter UX          COMPLETE AND VERIFIED
 Phase 5-F Full Phase 5 Verification COMPLETE AND VERIFIED
+Phase 6-C SLA Warnings            COMPLETE AND VERIFIED
+Phase 6-D SLA Breach Operations   COMPLETE AND VERIFIED
 ```
 
 # Latest Verification Commands
@@ -989,7 +991,9 @@ Phase 5-F Full Phase 5 Verification COMPLETE AND VERIFIED
 docker compose exec api npm run test:e2e
 docker compose exec api npm run lint
 docker compose exec api npm run build
+docker compose exec web npx tsc --noEmit
 docker compose exec web npm run lint
+docker compose exec web npm run test
 docker compose exec web npm run build
 ```
 
@@ -1227,7 +1231,7 @@ remain authoritative for actual SLA breaches.
 
 ## 6-D — SLA Breach Operations
 
-**Status: IN PROGRESS**
+**Status: COMPLETE AND VERIFIED**
 
 Goal:
 
@@ -1253,17 +1257,55 @@ Implementation boundary:
 - 6-D.3 — Breach filtering — **COMPLETE & VERIFIED**
 - 6-D.4 — Breach history/activity presentation — **COMPLETE & VERIFIED**
 - 6-D.5 — Escalation record exposure where required — **COMPLETE & VERIFIED**
-- 6-D.6 — Realtime breach presentation — **COMPLETE**
-- 6-D.7 — Breach authorization and organization isolation — **IN PROGRESS**
-- 6-D.8 — Full 6-D verification — **IN PROGRESS**
+- 6-D.6 — Realtime breach presentation — **COMPLETE AND VERIFIED**
+- 6-D.7 — Breach authorization and organization isolation — **COMPLETE AND VERIFIED**
+- 6-D.8 — Full 6-D verification — **COMPLETE AND VERIFIED**
 
-The first implementation step is 6-D.1: inspect the existing breach,
-escalation, activity, and realtime contracts and expose only the data needed
-by the operational UI.
+### 6-D.7 / 6-D.8 Verification Checkpoint
+
+**COMPLETE AND VERIFIED — 2026-10-05**
+
+Authorization and organization isolation use the existing authenticated
+organization context and ticket access boundaries. No duplicate
+breach-specific permission model was introduced.
+
+Verified realtime security behavior includes:
+
+- Unauthenticated realtime connections rejected.
+- Invalid sessions rejected.
+- Non-member organization connections rejected.
+- Sockets joined only to their authenticated organization and own user
+  rooms.
+- Cross-organization ticket-room access rejected.
+- Ticket-level realtime access revalidated through the ticket service.
+- User-room access restricted to the authenticated user.
+- Realtime broadcast targets prevented from crossing organization
+  boundaries.
+- SLA breach events scoped to the originating organization and ticket
+  rooms.
+
+6-D.8 final verification boundary:
+
+- Frontend TypeScript: PASS
+- Frontend tests: PASS
+- Frontend lint: PASS
+- Frontend production build: PASS
+- Backend realtime/security unit and E2E coverage: PASS
+- SLA breach API/realtime coverage: PASS
+- Organization isolation coverage: PASS
+- Authorization coverage: PASS
+
+Manual browser SLA-breach generation remains deferred because the current
+UI does not yet expose a ticket-creation path. This does not block the
+automated 6-D authorization, isolation, API, and realtime verification
+boundary.
+
+The 6-D implementation and verification boundary is complete. The next
+implementation milestone is 6-E — SLA Dashboard.
 
 ## 6-E — SLA Dashboard
 
-**Status: PLANNED**
+**Status: NEXT**
 
 Scope:
 
@@ -1300,10 +1342,11 @@ Phase 5-A through Phase 5-F are **COMPLETE AND VERIFIED**.
 Phase 6-A — SLA Policy Management is **COMPLETE AND VERIFIED**.
 Phase 6-B — Ticket SLA Timer Experience is **COMPLETE AND VERIFIED**.
 Phase 6-C — SLA Warnings is **COMPLETE AND VERIFIED**.
+Phase 6-D — SLA Breach Operations is **COMPLETE AND VERIFIED**.
 
 The current implementation milestone is:
 
-**6-D — SLA Breach Operations**
+**6-E — SLA Dashboard**
 
 Continue from the verified repository state and avoid speculative
 architecture changes.
