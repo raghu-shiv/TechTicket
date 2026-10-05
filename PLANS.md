@@ -27,8 +27,8 @@ Current roadmap:
 - Phase 5-D --- Saved Filter API: **COMPLETE AND VERIFIED**
 - Phase 5-E --- Saved Filter UX: **COMPLETE AND VERIFIED**
 - Phase 5-F --- Full Phase 5 Verification: **COMPLETE AND VERIFIED**
-- Phase 6 --- SLA: **IN PROGRESS — 6-E COMPLETE AND VERIFIED; 6-F NEXT**
-- Phase 7 --- Analytics: **PLANNED**
+- Phase 6 --- SLA: **COMPLETE AND VERIFIED**
+- Phase 7 --- Analytics: **NEXT**
 - Phase 8 --- Production Hardening: **PLANNED**
 
 # Phase 3 --- Ticket Core
@@ -710,7 +710,236 @@ final documentation checkpoint.
 - Ticket library reports
 - Exports
 
-## Phase 8 --- Production Hardening
+## Phase 7 --- Analytics
+
+**Status: NEXT**
+
+Phase 7 turns the existing ticket, activity, SLA, assignment, organization,
+and ticket-library data into organization-scoped analytics and reporting.
+Analytics should reuse existing domain data and services rather than create
+duplicate operational models.
+
+## 7-A --- Analytics Foundation
+
+**PLANNED**
+
+- Define the analytics metric dictionary and KPI ownership
+- Establish organization-scoped reporting/query boundaries
+- Define date-range, timezone, team, assignee, priority, status, and ticket
+  filters where applicable
+- Define reusable server-side aggregation/query services
+- Define pagination/drill-down contracts
+- Define empty-state and no-data behavior
+- Define export contracts before implementing individual reports
+- Add focused unit/E2E coverage for organization isolation and metric
+  correctness
+
+## 7-B --- Analytics Dashboard
+
+**PLANNED**
+
+Executive/operations overview using existing ticket and SLA data.
+
+Planned KPIs:
+
+- Total tickets
+- Open/active tickets
+- Resolved/closed tickets
+- Unassigned tickets
+- SLA compliance
+- SLA breaches
+- First-response performance
+- Resolution/TAT performance
+- Ticket volume over time
+- Priority distribution
+- Team workload
+- Assignee workload
+
+KPI cards and charts should link to the relevant filtered operational views.
+
+## 7-C --- Product Dashboard
+
+**PLANNED**
+
+Product/service-level analytics focused on products or product categories.
+
+Planned reporting:
+
+- Ticket volume by product
+- Open vs resolved by product
+- Priority distribution by product
+- SLA compliance by product
+- Breach rate by product
+- Average/median TAT by product
+- Reopen rate by product
+- Trend analysis over time
+- Drill-down into the ticket library
+
+This milestone depends on the product/category fields actually available in
+the current ticket domain; no new product taxonomy should be invented
+without a defined requirement.
+
+## 7-D --- Employee Dashboard
+
+**PLANNED**
+
+Agent/employee performance and workload reporting.
+
+Planned reporting:
+
+- Assigned ticket volume
+- Open workload
+- Resolved volume
+- Unassigned-to-assigned workload flow
+- First-response performance
+- Resolution/TAT performance
+- SLA compliance
+- SLA breach count
+- Average and median resolution time
+- Reopen volume/rate
+- Workload distribution across employees
+- Team comparison where authorized
+
+Employee analytics must preserve organization and permission boundaries.
+
+## 7-E --- SLA Reports
+
+**PLANNED**
+
+Extend the existing SLA Dashboard into a broader reporting surface.
+
+Planned reports:
+
+- SLA compliance by period
+- First-response compliance
+- Resolution compliance
+- Breach volume and rate
+- Breaches by priority
+- Breaches by team
+- Breaches by assignee
+- At-risk volume
+- SLA trend over time
+- SLA performance drill-down
+- Policy/target performance where existing snapshot data supports it
+
+Reuse the existing `TicketSla` snapshot and SLA dashboard semantics.
+
+## 7-F --- TAT Reports
+
+**PLANNED**
+
+Time-to-action/performance reporting using timestamps already captured by
+the ticket domain.
+
+Planned metrics:
+
+- Time to first response
+- Time to resolution
+- Average TAT
+- Median TAT
+- Percentile TAT where useful
+- TAT by priority
+- TAT by team
+- TAT by assignee
+- TAT by product/category where supported
+- TAT trends over time
+- Resolved-ticket drill-down
+
+Metric definitions must explicitly distinguish actual elapsed TAT from SLA
+target duration.
+
+## 7-G --- Usage Reports
+
+**PLANNED**
+
+Organization usage analytics using existing persisted activity and ticket
+data.
+
+Potential reporting:
+
+- Ticket creation volume
+- Ticket activity volume
+- Comment volume
+- Attachment usage
+- Approval usage
+- Notification activity
+- Active-user/agent usage where existing data supports it
+- Usage trends over time
+
+Only metrics supported by persisted data should be exposed.
+
+## 7-H --- Ticket Library Reports
+
+**PLANNED**
+
+Analytics built around the existing Ticket Library query model.
+
+Planned reporting:
+
+- Ticket volume by status
+- Ticket volume by priority
+- Ticket volume by team
+- Ticket volume by assignee
+- Ticket volume by created date
+- Unassigned volume
+- Saved-filter/reporting integration where appropriate
+- Filtered result counts
+- Drill-down into `/tickets`
+
+The existing URL-backed Ticket Library query remains the operational source
+of truth for ticket filtering.
+
+## 7-I --- Exports
+
+**PLANNED**
+
+Provide controlled exports for analytics/reporting datasets.
+
+Planned formats:
+
+- CSV
+- XLSX where justified
+- JSON where useful for machine-readable reporting
+
+Export requirements:
+
+- Reuse the same organization-scoped query/metric definitions as on-screen
+  reports
+- Preserve active filters and date ranges
+- Enforce authorization server-side
+- Prevent cross-organization exports
+- Stream large exports where appropriate
+- Define stable column/field contracts
+- Add export authorization and data-integrity tests
+
+## 7-J --- Full Analytics Verification
+
+**PLANNED**
+
+Final Phase 7 verification boundary:
+
+- Analytics unit tests
+- Focused report E2E tests
+- Organization isolation
+- Permission coverage
+- Date/time boundary cases
+- Empty/no-data states
+- Aggregation correctness
+- Drill-down correctness
+- Export correctness
+- Backend lint
+- Backend production build
+- Frontend TypeScript
+- Frontend lint
+- Frontend tests
+- Frontend production build
+- Full regression
+- Final documentation checkpoint
+
+Phase 7 should not be marked complete until the complete verification
+boundary passes.
+
+# Phase 8 --- Production Hardening
 
 - Unit tests
 - Integration tests
@@ -1357,59 +1586,71 @@ unavailable rather than presenting fabricated metrics.
 
 ## 6-F — Full SLA Verification
 
-**NEXT**
+**COMPLETE AND VERIFIED — 2026-10-05**
 
-Final SLA verification will cover:
+Final SLA verification passed across backend, frontend, authorization,
+organization isolation, timer boundaries, warning/breach transitions,
+realtime behavior, regression, and production build gates.
 
-- Unit tests
-- Focused SLA E2E
+### Verification checkpoint
+
+```text
+Backend unit tests             3/3 files, 29/29 tests passed
+Focused SLA Dashboard E2E      25/25 tests passed
+SLA Breach Operations E2E      2/2 tests passed
+SLA Policy E2E                  43/43 tests passed
+Realtime SLA E2E                3/3 tests passed
+Realtime room routing E2E       6/6 tests passed
+Realtime broadcaster E2E       13/13 tests passed
+
+Full API E2E                    24/24 files, 319/319 tests passed
+API failures                    0
+API lint                        0 warnings / 0 errors
+API production build            SUCCESS
+
+Frontend TypeScript             PASS
+Frontend lint                   PASS
+Frontend tests                  7/7 files, 86/86 tests passed
+Frontend production build       SUCCESS
+```
+
+### Functional/security verification
+
+Verified:
+
 - Organization isolation
-- Permission coverage
-- Timer boundary cases
-- Warning/breach transitions
-- Realtime regression
-- Backend lint
-- Backend production build
-- Frontend TypeScript verification
-- Frontend lint
-- Frontend tests
-- Frontend production build
-- Final documentation verification
+- SLA authorization/permission coverage
+- SLA dashboard aggregation and drill-down
+- SLA breach operations
+- SLA policy lifecycle
+- Timer boundary conditions
+- 20% warning-threshold boundaries
+- Warning/overdue/breach state precedence
+- Realtime SLA breach events
+- Realtime organization/ticket/user room isolation
+- Full API regression
+- Frontend SLA regression
+- Backend lint and production build
+- Frontend TypeScript, lint, tests, and production build
 
-6-F is the final SLA completion boundary. Phase 6 must not be marked
-complete until this verification passes.
+The full E2E run emitted Resend HTTP 422 messages for `example.com`
+development/test recipients. These provider-environment messages did not
+produce failed test assertions; the complete suite still passed 319/319.
 
+Phase 6 — SLA is now **COMPLETE AND VERIFIED**.
 
-## 6-F — Full SLA Verification
-
-**Status: PLANNED**
-
-Final Phase 6 verification boundary:
-
-- Backend unit/integration tests
-- Focused SLA E2E
-- Full backend E2E
-- Frontend lint
-- Frontend TypeScript
-- Frontend production build
-- SLA workflow verification
-- Organization isolation
-- Authorization
-- Realtime SLA behavior
-- Final documentation checkpoint
+Phase 7 — Analytics is the next implementation phase.
 
 # Next Development Direction
 
 Phase 4 is complete.
 Phase 5-A through Phase 5-F are **COMPLETE AND VERIFIED**.
-Phase 6-A — SLA Policy Management is **COMPLETE AND VERIFIED**.
-Phase 6-B — Ticket SLA Timer Experience is **COMPLETE AND VERIFIED**.
-Phase 6-C — SLA Warnings is **COMPLETE AND VERIFIED**.
-Phase 6-D — SLA Breach Operations is **COMPLETE AND VERIFIED**.
+Phase 6-A through Phase 6-F are **COMPLETE AND VERIFIED**.
 
 The current implementation milestone is:
 
-**6-E — SLA Dashboard**
+**Phase 7 — Analytics**
 
 Continue from the verified repository state and avoid speculative
 architecture changes.
+
