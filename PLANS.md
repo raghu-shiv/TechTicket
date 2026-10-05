@@ -10,7 +10,7 @@ feature.
 
 ## Phase 6 --- SLA
 
-### Status: IN PROGRESS — Phase 6-D COMPLETE AND VERIFIED
+### Status: IN PROGRESS — Phase 6-E COMPLETE AND VERIFIED; 6-F NEXT
 
 Phase 4 is complete through Phase 4-J --- Ticket History Refinement.
 Phase 5-A --- Ticket Library is now complete and verified, including
@@ -27,7 +27,7 @@ Current roadmap:
 - Phase 5-D --- Saved Filter API: **COMPLETE AND VERIFIED**
 - Phase 5-E --- Saved Filter UX: **COMPLETE AND VERIFIED**
 - Phase 5-F --- Full Phase 5 Verification: **COMPLETE AND VERIFIED**
-- Phase 6 --- SLA: **IN PROGRESS — 6-D COMPLETE AND VERIFIED**
+- Phase 6 --- SLA: **IN PROGRESS — 6-E COMPLETE AND VERIFIED; 6-F NEXT**
 - Phase 7 --- Analytics: **PLANNED**
 - Phase 8 --- Production Hardening: **PLANNED**
 
@@ -1305,17 +1305,80 @@ implementation milestone is 6-E — SLA Dashboard.
 
 ## 6-E — SLA Dashboard
 
-**Status: NEXT**
+**COMPLETE AND VERIFIED — 2026-10-05**
 
-Scope:
+The SLA Dashboard is implemented as a read-only operational reporting
+surface using the existing `TicketSla` snapshot, ticket, team, assignee,
+breach, and resolution data.
 
-- SLA performance metrics
-- First-response compliance
-- Resolution compliance
-- Breach metrics
-- Policy-level operational reporting
+Implemented:
 
-Dashboard metrics and definitions must be established from the project requirements/SOP before implementation.
+- Server-side SLA dashboard aggregation
+- Paginated SLA ticket drill-down
+- Total, active, at-risk, breached, and resolved metrics
+- First-response completion/compliance/breach metrics
+- Resolution completion/compliance/breach metrics
+- ALL, ACTIVE, AT_RISK, BREACHED, RESOLVED,
+  FIRST_RESPONSE_BREACHED, and RESOLUTION_BREACHED views
+- Priority, team, and created-date filtering
+- Organization-scoped dashboard queries
+- Ticket detail links and pagination
+- `/reports` reporting landing page
+- `/reports/sla` SLA Dashboard route
+- Frontend API client and React Query integration
+- Dedicated frontend SLA dashboard tests
+
+Implementation boundary:
+
+- Reuse the existing `TicketSla` snapshot and ticket domain.
+- Do not introduce a duplicate SLA reporting or queue data model.
+- Preserve organization scoping and existing authorization boundaries.
+- Preserve existing SLA due-time, warning, breach, escalation, audit, and
+  realtime semantics.
+- Keep dashboard aggregation server-side.
+- Dashboard metric cards/views are intentionally overlapping operational
+  dimensions; they are not required to sum to the total.
+
+Verification checkpoint:
+
+```text
+Frontend TypeScript       PASS
+Frontend lint             PASS
+Frontend test files       7/7 passed
+Frontend tests            86/86 passed
+Frontend production build SUCCESS
+Failures                  0
+```
+
+The `/reports` landing page provides the reporting navigation boundary for
+the implemented SLA Dashboard. Future reports remain explicitly marked as
+unavailable rather than presenting fabricated metrics.
+
+
+## 6-F — Full SLA Verification
+
+**NEXT**
+
+Final SLA verification will cover:
+
+- Unit tests
+- Focused SLA E2E
+- Organization isolation
+- Permission coverage
+- Timer boundary cases
+- Warning/breach transitions
+- Realtime regression
+- Backend lint
+- Backend production build
+- Frontend TypeScript verification
+- Frontend lint
+- Frontend tests
+- Frontend production build
+- Final documentation verification
+
+6-F is the final SLA completion boundary. Phase 6 must not be marked
+complete until this verification passes.
+
 
 ## 6-F — Full SLA Verification
 

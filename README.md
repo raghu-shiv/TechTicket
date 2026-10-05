@@ -13,7 +13,7 @@ Ticket History Refinement. Phase 5-A through Phase 5-F are COMPLETE AND
 VERIFIED. Phase 6-A — SLA Policy Management, Phase 6-B — Ticket SLA Timer Experience,
 Phase 6-C — SLA Warnings, and Phase 6-D — SLA Breach Operations are COMPLETE AND VERIFIED.**
 
-The current implementation milestone is **6-E — SLA Dashboard**.
+The current implementation milestone is **6-F — Full SLA Verification**.
 
 Latest verified backend state:
 
@@ -465,6 +465,16 @@ Development web application:
 http://localhost:3000
 ```
 
+## Reporting
+
+The reporting surface currently includes:
+
+- `/reports` — Reports landing page
+- `/reports/sla` — SLA Dashboard
+
+The SLA Dashboard is backed by organization-scoped server-side aggregation
+and paginated ticket drill-down. Additional reports remain future scope.
+
 ## Repository Structure
 
 ``` text
@@ -826,12 +836,69 @@ boundary.
 
 ### 6-E — SLA Dashboard
 
-**NEXT**
+**COMPLETE AND VERIFIED — 2026-10-05**
 
-Dashboard metrics and definitions must be established from the project
-requirements/SOP before implementation.
+The SLA Dashboard is a read-only operational reporting surface built on
+the existing SLA snapshot and ticket domain.
+
+Implemented:
+
+- Server-side SLA metrics and aggregation
+- Paginated SLA ticket drill-down
+- Active, at-risk, breached, and resolved views
+- First-response and resolution compliance metrics
+- First-response and resolution breach views
+- Priority, team, and created-date filtering
+- Organization-scoped reporting
+- Ticket detail navigation
+- `/reports` reporting landing page
+- `/reports/sla` SLA Dashboard route
+- Frontend API client and React Query integration
+- Dedicated SLA dashboard frontend tests
+
+The dashboard deliberately reuses the existing `TicketSla` data and does
+not introduce a duplicate SLA reporting model. Existing SLA warning,
+breach, escalation, audit, and realtime semantics remain unchanged.
+
+Frontend verification:
+
+```text
+TypeScript           PASS
+Lint                 PASS
+Test Files           7/7 passed
+Tests                86/86 passed
+Production build     SUCCESS
+Failures             0
+```
+
+The `/reports` page is the reporting entry point. The SLA Dashboard is the
+first implemented report; future reports are explicitly presented as
+coming soon rather than using fabricated metrics.
 
 ### 6-F — Full SLA Verification
+
+**NEXT**
+
+The final SLA verification boundary covers:
+
+- Unit tests
+- Focused SLA E2E
+- Organization isolation
+- Permission coverage
+- Timer boundary cases
+- Warning/breach transitions
+- Realtime regression
+- Backend lint/build
+- Frontend TypeScript
+- Frontend lint
+- Frontend tests
+- Frontend production build
+- Final documentation verification
+
+Phase 6 remains in progress until 6-F passes.
+
+
+## 6-F — Full SLA Verification
 
 **PLANNED**
 
@@ -998,7 +1065,7 @@ Phase 6-D SLA Breach Operations   COMPLETE AND VERIFIED
 
 Phase 3-H established the underlying SLA automation foundation. Phase 6
 focuses on the product-level SLA experience and operational workflow.
-Phase 6-D is now complete and verified; the next milestone is 6-E — SLA
+Phase 6-E is now complete and verified; the next milestone is 6-F — Full SLA
 Dashboard.
 
 - SLA policies
