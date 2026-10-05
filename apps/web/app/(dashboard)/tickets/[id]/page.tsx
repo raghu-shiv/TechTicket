@@ -7,6 +7,7 @@ import {
   Ticket as TicketIcon,
   UserRound,
   UsersRound,
+  XCircle,
 } from "lucide-react";
 import { use } from "react";
 
@@ -177,6 +178,15 @@ export default function TicketDetailPage({
               <Badge variant={priority.variant}>{priority.label}</Badge>
 
               <Badge variant="outline">{typeLabels[ticket.type]}</Badge>
+
+              {ticket.sla &&
+                (ticket.sla.firstResponseBreachedAt !== null ||
+                  ticket.sla.resolutionBreachedAt !== null) && (
+                  <Badge variant="danger">
+                    <XCircle className="size-3.5" />
+                    SLA breached
+                  </Badge>
+                )}
             </div>
 
             <div>

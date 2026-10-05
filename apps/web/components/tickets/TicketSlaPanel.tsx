@@ -8,6 +8,8 @@ import {
   formatDuration,
   getFirstResponseTimer,
   getResolutionTimer,
+  getSlaBreachLabel,
+  getSlaBreachTypes,
 } from "@/lib/sla";
 import type { Ticket } from "@/types/tickets";
 
@@ -62,19 +64,8 @@ export function TicketSlaPanel({ ticket }: TicketSlaPanelProps) {
 
         <SlaTimerCard title="Resolution" timer={resolution} />
 
-        {(firstResponse.state === "BREACHED" ||
-          resolution.state === "BREACHED") && (
-          <div className="flex items-start gap-3 rounded-md border border-destructive/30 bg-destructive/5 p-3">
-            <XCircle className="mt-0.5 size-4 shrink-0 text-destructive" />
-
-            <div className="space-y-1">
-              <p className="text-sm font-medium">SLA breached</p>
-
-              <p className="text-xs text-muted-foreground">
-                One or more SLA targets have been breached.
-              </p>
-            </div>
-          </div>
+        {getSlaBreachTypes(ticket.sla).length > 0 && (
+          <SlaBreachSummary sla={ticket.sla} />
         )}
       </div>
     </section>
@@ -244,4 +235,65 @@ function formatSlaDate(value: string): string {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
+}
+
+interface SlaBreachSummaryProps {
+  sla: NonNullable<Ticket["sla"]>;
+}
+
+function SlaBreachSummary({ sla }: SlaBreachSummaryProps) {
+  const breachTypes = getSlaBreachTypes(sla);
+
+  if (breachTypes.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="rounded-md border border-destructive/30 bg-destructive/5 p-4">
+      <div className="flex items-start gap-3">
+        <XCircle className="mt-0.5 size-4 shrink-0 text-destructive" />
+
+        <div className="min-w-0 flex-1 space-y-3">
+          <div>
+            <p className="text-sm font-medium text-destructive">
+              SLA breach detected
+            </p>
+
+            <p className="mt-1 text-xs text-muted-foreground">
+              One or more SLA targets were breached for this ticket.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {breachTypes.map((type) => {
+              const breachedAt =
+                type === "FIRST_RESPONSE"
+                  ? sla.firstResponseBreachedAt
+                  : sla.resolutionBreachedAt;
+
+              return (
+                <div
+                  key={type}
+                  className="rounded-md border border-destructive/20 bg-background px-3 py-2"
+                >
+                  <div className="flex items-center gap-2">
+                    <Badge variant="danger">
+                      <XCircle className="size-3.5" />
+                      {getSlaBreachLabel(type)}
+                    </Badge>
+                  </div>
+
+                  {breachedAt && (
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Breached {formatSlaDate(breachedAt)}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }

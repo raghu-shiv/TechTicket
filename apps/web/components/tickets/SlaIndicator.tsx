@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Clock3, XCircle, AlertTriangle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock3, XCircle } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { useSlaClock } from "@/hooks/use-sla-clock";
@@ -8,6 +8,8 @@ import {
   formatDuration,
   getFirstResponseTimer,
   getResolutionTimer,
+  getSlaBreachLabel,
+  getSlaBreachTypes,
 } from "@/lib/sla";
 import type { Ticket } from "@/types/tickets";
 
@@ -42,15 +44,22 @@ export function SlaIndicator({ ticket }: { ticket: Ticket }) {
 
   const presentation = getSlaIndicatorPresentation(firstResponse, resolution);
 
-  switch (presentation.state) {
-    case "BREACHED":
-      return (
-        <Badge variant="danger">
-          <XCircle className="size-3.5" />
-          {presentation.label}
-        </Badge>
-      );
+  if (presentation.state === "BREACHED") {
+    const breachTypes = getSlaBreachTypes(ticket.sla);
 
+    return (
+      <div className="flex flex-wrap items-center gap-1.5">
+        {breachTypes.map((type) => (
+          <Badge key={type} variant="danger">
+            <XCircle className="size-3.5" />
+            {getSlaBreachLabel(type)}
+          </Badge>
+        ))}
+      </div>
+    );
+  }
+
+  switch (presentation.state) {
     case "OVERDUE":
       return (
         <Badge variant="danger">

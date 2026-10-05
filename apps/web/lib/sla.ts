@@ -14,6 +14,32 @@ export interface SlaTimerResult {
   isWarning: boolean;
 }
 
+export type SlaBreachType = "FIRST_RESPONSE" | "RESOLUTION";
+
+export function getSlaBreachTypes(sla: TicketSla): SlaBreachType[] {
+  const breaches: SlaBreachType[] = [];
+
+  if (sla.firstResponseBreachedAt !== null) {
+    breaches.push("FIRST_RESPONSE");
+  }
+
+  if (sla.resolutionBreachedAt !== null) {
+    breaches.push("RESOLUTION");
+  }
+
+  return breaches;
+}
+
+export function getSlaBreachLabel(type: SlaBreachType): string {
+  switch (type) {
+    case "FIRST_RESPONSE":
+      return "Response breach";
+
+    case "RESOLUTION":
+      return "Resolution breach";
+  }
+}
+
 export function getSlaTimer(
   startedAt: string,
   dueAt: string,

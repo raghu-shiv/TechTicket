@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { getFirstResponseTimer, getResolutionTimer } from "@/lib/sla";
+import {
+  getFirstResponseTimer,
+  getResolutionTimer,
+  getSlaBreachLabel,
+  getSlaBreachTypes,
+} from "@/lib/sla";
 import { getSlaIndicatorPresentation } from "@/components/tickets/SlaIndicator";
 import type { TicketSla } from "@/types/tickets";
 
@@ -95,5 +100,43 @@ describe("getSlaIndicatorPresentation", () => {
       state: "COMPLETED",
       label: "SLA completed",
     });
+  });
+});
+
+describe("SLA breach indicators", () => {
+  it("identifies a first-response breach", () => {
+    const sla = createSla({
+      firstResponseBreachedAt: iso(31 * 60 * 1000),
+    });
+
+    expect(getSlaBreachTypes(sla)).toEqual(["FIRST_RESPONSE"]);
+  });
+
+  it("identifies a resolution breach", () => {
+    const sla = createSla({
+      resolutionBreachedAt: iso(121 * 60 * 1000),
+    });
+
+    expect(getSlaBreachTypes(sla)).toEqual(["RESOLUTION"]);
+  });
+
+  it("identifies both breach types", () => {
+    const sla = createSla({
+      firstResponseBreachedAt: iso(31 * 60 * 1000),
+      resolutionBreachedAt: iso(121 * 60 * 1000),
+    });
+
+    expect(getSlaBreachTypes(sla)).toEqual(["FIRST_RESPONSE", "RESOLUTION"]);
+  });
+
+  it("returns no breach types for an SLA without breaches", () => {
+    const sla = createSla();
+
+    expect(getSlaBreachTypes(sla)).toEqual([]);
+  });
+
+  it("uses the correct operational breach labels", () => {
+    expect(getSlaBreachLabel("FIRST_RESPONSE")).toBe("Response breach");
+    expect(getSlaBreachLabel("RESOLUTION")).toBe("Resolution breach");
   });
 });
