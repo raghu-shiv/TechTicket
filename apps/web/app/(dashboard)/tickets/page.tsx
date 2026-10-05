@@ -382,6 +382,7 @@ function TicketsContent() {
    * /tickets?status=OPEN
    * /tickets?priority=URGENT
    * /tickets?unassigned=true
+   * /tickets?slaBreached=true
    * /tickets?search=database
    * /tickets?status=OPEN&priority=HIGH&page=2
    *
@@ -397,6 +398,7 @@ function TicketsContent() {
   const priorityParam = searchParams.get("priority");
   const typeParam = searchParams.get("type");
   const unassignedParam = searchParams.get("unassigned");
+  const slaBreachedParam = searchParams.get("slaBreached");
   const sortByParam = searchParams.get("sortBy");
   const sortOrderParam = searchParams.get("sortOrder");
 
@@ -437,6 +439,7 @@ function TicketsContent() {
   );
 
   const unassigned = unassignedParam === "true";
+  const slaBreached = slaBreachedParam === "true";
 
   /*
    * --------------------------------------------------------------------------
@@ -518,6 +521,14 @@ function TicketsContent() {
   ) => {
     updateUrl({
       unassigned: event.target.checked,
+    });
+  };
+
+  const handleSlaBreachedChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    updateUrl({
+      slaBreached: event.target.checked,
     });
   };
 
@@ -641,8 +652,15 @@ function TicketsContent() {
       });
     }
 
+    if (slaBreached) {
+      filters.push({
+        key: "slaBreached",
+        label: "SLA breached only",
+      });
+    }
+
     return filters;
-  }, [searchParam, status, priority, type, unassigned]);
+  }, [searchParam, status, priority, type, unassigned, slaBreached]);
 
   const hasFilters = activeFilters.length > 0;
 
@@ -661,10 +679,21 @@ function TicketsContent() {
       priority: priority || undefined,
       type: type || undefined,
       unassigned: unassigned || undefined,
+      slaBreached: slaBreached || undefined,
       sortBy,
       sortOrder,
     }),
-    [page, searchParam, status, priority, type, unassigned, sortBy, sortOrder],
+    [
+      page,
+      searchParam,
+      status,
+      priority,
+      type,
+      unassigned,
+      slaBreached,
+      sortBy,
+      sortOrder,
+    ],
   );
 
   const ticketsQuery = useTickets(organizationId, ticketParams);
@@ -862,16 +891,29 @@ function TicketsContent() {
 
               {/* Secondary actions */}
               <div className="flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
-                <label className="flex cursor-pointer items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={unassigned}
-                    onChange={handleUnassignedChange}
-                    className="size-4 rounded border-input"
-                  />
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
+                  <label className="flex cursor-pointer items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={unassigned}
+                      onChange={handleUnassignedChange}
+                      className="size-4 rounded border-input"
+                    />
 
-                  <span>Unassigned tickets only</span>
-                </label>
+                    <span>Unassigned tickets only</span>
+                  </label>
+
+                  <label className="flex cursor-pointer items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={slaBreached}
+                      onChange={handleSlaBreachedChange}
+                      className="size-4 rounded border-input"
+                    />
+
+                    <span>SLA breached only</span>
+                  </label>
+                </div>
 
                 {hasFilters && (
                   <button
@@ -884,7 +926,6 @@ function TicketsContent() {
                   </button>
                 )}
               </div>
-
               {/* Active filters */}
               {hasFilters && (
                 <div

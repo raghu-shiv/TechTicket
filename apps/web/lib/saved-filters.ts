@@ -133,6 +133,12 @@ export function searchParamsToSavedFilter(
     definition.unassignedTeam = true;
   }
 
+  const slaBreached = searchParams.get("slaBreached");
+
+  if (slaBreached === "true") {
+    definition.slaBreached = true;
+  }
+
   const createdFrom = searchParams.get("createdFrom")?.trim();
 
   if (createdFrom) {
@@ -198,6 +204,7 @@ export function savedFilterToTicketParams(
 
     unassigned: filters.unassigned,
     unassignedTeam: filters.unassignedTeam,
+    slaBreached: filters.slaBreached,
 
     createdFrom: filters.createdFrom,
     createdTo: filters.createdTo,
@@ -259,6 +266,7 @@ export function hasSavedFilterCriteria(
     filters.requesterId ||
     filters.unassigned ||
     filters.unassignedTeam ||
+    filters.slaBreached ||
     filters.createdFrom ||
     filters.createdTo ||
     filters.updatedFrom ||

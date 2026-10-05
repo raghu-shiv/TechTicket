@@ -23,6 +23,7 @@ export interface SavedFilterDefinition {
 
   unassigned?: boolean;
   unassignedTeam?: boolean;
+  slaBreached?: boolean;
 
   createdFrom?: string;
   createdTo?: string;

@@ -20,16 +20,16 @@ build.
 
 Current roadmap:
 
--   Phase 5-A --- Ticket Library: **COMPLETE AND VERIFIED**
--   Phase 5-B --- Ticket Library UX Refinement: **COMPLETE AND
-    VERIFIED**
--   Phase 5-C --- Saved Filters Foundation: **COMPLETE AND VERIFIED**
--   Phase 5-D --- Saved Filter API: **COMPLETE AND VERIFIED**
--   Phase 5-E --- Saved Filter UX: **COMPLETE AND VERIFIED**
--   Phase 5-F --- Full Phase 5 Verification: **COMPLETE AND VERIFIED**
--   Phase 6 --- SLA: **IN PROGRESS — 6-C COMPLETE AND VERIFIED**
--   Phase 7 --- Analytics: **PLANNED**
--   Phase 8 --- Production Hardening: **PLANNED**
+- Phase 5-A --- Ticket Library: **COMPLETE AND VERIFIED**
+- Phase 5-B --- Ticket Library UX Refinement: **COMPLETE AND
+  VERIFIED**
+- Phase 5-C --- Saved Filters Foundation: **COMPLETE AND VERIFIED**
+- Phase 5-D --- Saved Filter API: **COMPLETE AND VERIFIED**
+- Phase 5-E --- Saved Filter UX: **COMPLETE AND VERIFIED**
+- Phase 5-F --- Full Phase 5 Verification: **COMPLETE AND VERIFIED**
+- Phase 6 --- SLA: **IN PROGRESS — 6-C COMPLETE AND VERIFIED**
+- Phase 7 --- Analytics: **PLANNED**
+- Phase 8 --- Production Hardening: **PLANNED**
 
 # Phase 3 --- Ticket Core
 
@@ -39,23 +39,23 @@ Current roadmap:
 
 Implemented and verified:
 
--   Ticket database model and PostgreSQL persistence
--   Ticket CRUD
--   Ticket assignment and team assignment
--   Ticket status workflow
--   Ticket filtering and pagination
--   Public/internal comments
--   Ticket attachments
--   MinIO-backed object storage
--   Ticket activity/audit history
--   Ticket relations
--   Advanced search/filtering
--   SLA automation
+- Ticket database model and PostgreSQL persistence
+- Ticket CRUD
+- Ticket assignment and team assignment
+- Ticket status workflow
+- Ticket filtering and pagination
+- Public/internal comments
+- Ticket attachments
+- MinIO-backed object storage
+- Ticket activity/audit history
+- Ticket relations
+- Advanced search/filtering
+- SLA automation
 
 Known limitation:
 
--   Current ticket-number generation is not fully atomic under high
-    concurrency. This remains a future production-hardening item.
+- Current ticket-number generation is not fully atomic under high
+  concurrency. This remains a future production-hardening item.
 
 ## 3-G --- Search / Filtering / Pagination Expansion
 
@@ -63,18 +63,18 @@ Known limitation:
 
 Implemented:
 
--   Ticket keyword search
--   Created-date filtering
--   Controlled sorting
--   PostgreSQL full-text search
--   Ticket-number partial matching
--   Relationship filtering
--   Unassigned and updated-date filtering
--   Organization-scoped pagination/filtering
+- Ticket keyword search
+- Created-date filtering
+- Controlled sorting
+- PostgreSQL full-text search
+- Ticket-number partial matching
+- Relationship filtering
+- Unassigned and updated-date filtering
+- Organization-scoped pagination/filtering
 
 Known limitation:
 
--   No dedicated PostgreSQL `tsvector`/GIN index has been added yet.
+- No dedicated PostgreSQL `tsvector`/GIN index has been added yet.
 
 ## 3-H --- SLA & Automation
 
@@ -82,17 +82,17 @@ Known limitation:
 
 Implemented:
 
--   SLA policies
--   Priority-based SLA
--   Organization-specific policies
--   Ticket SLA snapshots
--   First-response and resolution SLA tracking
--   SLA due-time calculation
--   Breach detection
--   Reopen behavior
--   Breach escalation persistence
--   Breach event emission
--   Breach audit activities
+- SLA policies
+- Priority-based SLA
+- Organization-specific policies
+- Ticket SLA snapshots
+- First-response and resolution SLA tracking
+- SLA due-time calculation
+- Breach detection
+- Reopen behavior
+- Breach escalation persistence
+- Breach event emission
+- Breach audit activities
 
 ## 3-I --- Ticket Activity, Audit History & Notifications
 
@@ -100,26 +100,26 @@ Implemented:
 
 Implemented:
 
--   Ticket activity/audit history
--   Organization-scoped activity retrieval
--   Ticket lifecycle activities
--   Comment activities
--   SLA breach activities
--   Assignment/status/comment notifications
--   Resend email infrastructure
--   Redis/BullMQ queue and worker
--   Recipient de-duplication and actor exclusion
--   Approval notification integration
--   Notification processor organization isolation
--   Notification E2E coverage
+- Ticket activity/audit history
+- Organization-scoped activity retrieval
+- Ticket lifecycle activities
+- Comment activities
+- SLA breach activities
+- Assignment/status/comment notifications
+- Resend email infrastructure
+- Redis/BullMQ queue and worker
+- Recipient de-duplication and actor exclusion
+- Approval notification integration
+- Notification processor organization isolation
+- Notification E2E coverage
 
 Known testing note:
 
--   Resend's development/testing environment rejects arbitrary
-    `example.com` recipients. `delivered@resend.dev` was used for live
-    provider verification.
--   Some older notification presentation wording remains a future polish
-    item.
+- Resend's development/testing environment rejects arbitrary
+  `example.com` recipients. `delivered@resend.dev` was used for live
+  provider verification.
+- Some older notification presentation wording remains a future polish
+  item.
 
 # Phase 4 --- Workflow
 
@@ -158,7 +158,7 @@ infrastructure.
 
 Activity types:
 
-``` text
+```text
 APPROVAL_REQUESTED
 APPROVAL_APPROVED
 APPROVAL_REJECTED
@@ -167,12 +167,12 @@ APPROVAL_CANCELLED
 
 Verified:
 
--   Approval request creation and pending retrieval
--   Authorization boundaries
--   Agent approval, rejection, and cancellation
--   Complete approval activity history
--   Approval metadata including approval ID, ticket number, approver,
-    status, comment, actor, and timestamp
+- Approval request creation and pending retrieval
+- Authorization boundaries
+- Agent approval, rejection, and cancellation
+- Complete approval activity history
+- Approval metadata including approval ID, ticket number, approver,
+  status, comment, actor, and timestamp
 
 Automatic ticket-status transitions from approval outcomes remain
 deferred/configurable because those business rules are not defined by
@@ -187,7 +187,7 @@ infrastructure.
 
 Recipient routing:
 
-``` text
+```text
 REQUESTED  -> approver
 APPROVED   -> requester
 REJECTED   -> requester
@@ -196,12 +196,12 @@ CANCELLED  -> approver
 
 Implemented:
 
--   Approval notification event contract
--   Four approval lifecycle notification events
--   Organization-scoped notification jobs
--   Organization membership validation in the worker
--   Human-readable ticket numbers in notification content
--   Compatibility with existing ticket notification producers
+- Approval notification event contract
+- Four approval lifecycle notification events
+- Organization-scoped notification jobs
+- Organization membership validation in the worker
+- Human-readable ticket numbers in notification content
+- Compatibility with existing ticket notification producers
 
 Live Resend delivery was verified with `delivered@resend.dev`.
 
@@ -247,15 +247,15 @@ cancellation, invalid states, and organization boundaries.
 
 Verified:
 
--   Notification queue/job foundation
--   Approval notification integration
--   Notification payloads and recipients
--   All supported approval notification events
--   Cancellation notification
--   Queue processor behavior
--   Organization isolation
--   Deterministic test cleanup
--   Full E2E regression
+- Notification queue/job foundation
+- Approval notification integration
+- Notification payloads and recipients
+- All supported approval notification events
+- Cancellation notification
+- Queue processor behavior
+- Organization isolation
+- Deterministic test cleanup
+- Full E2E regression
 
 Processor tests cover valid recipients, cross-organization recipients,
 invalid recipients, and unsupported notification jobs.
@@ -269,20 +269,20 @@ interfere with active workers or locked jobs.
 
 Dedicated `test/ticket.e2e-spec.ts` coverage protects:
 
--   Ticket creation
--   Retrieval/details
--   List/search/filtering/pagination
--   Authorization and organization isolation
--   Assignment/team assignment
--   Status workflow
--   Comments/history
--   Attachments
--   Approval/ticket interaction
--   Validation and error paths
+- Ticket creation
+- Retrieval/details
+- List/search/filtering/pagination
+- Authorization and organization isolation
+- Assignment/team assignment
+- Status workflow
+- Comments/history
+- Attachments
+- Approval/ticket interaction
+- Validation and error paths
 
 Verified dedicated ticket result:
 
-``` text
+```text
 test/ticket.e2e-spec.ts
 56/56 tests passed
 ```
@@ -293,13 +293,13 @@ test/ticket.e2e-spec.ts
 
 Command:
 
-``` text
+```text
 docker compose exec api npm run test:e2e
 ```
 
 Result:
 
-``` text
+```text
 Test Files  8 passed (8)
 Tests       108 passed (108)
 Failures    0
@@ -312,13 +312,13 @@ Duration    35.70s
 
 Command:
 
-``` text
+```text
 docker compose exec api npm run lint
 ```
 
 Result:
 
-``` text
+```text
 Found 0 warnings and 0 errors.
 Finished in 380ms on 101 files with 96 rules using 16 threads.
 ```
@@ -326,9 +326,9 @@ Finished in 380ms on 101 files with 96 rules using 16 threads.
 The seven previous warnings were removed with minimal
 behavior-preserving cleanup:
 
--   Four unused catch parameters in `storage.service.ts`
--   Two unused catch parameters in `ticket-attachments.service.ts`
--   One empty `auth.middleware.ts` file
+- Four unused catch parameters in `storage.service.ts`
+- Two unused catch parameters in `ticket-attachments.service.ts`
+- One empty `auth.middleware.ts` file
 
 ## 4-G.9 --- Production Build
 
@@ -336,13 +336,13 @@ behavior-preserving cleanup:
 
 Command:
 
-``` text
+```text
 docker compose exec api npm run build
 ```
 
 Result:
 
-``` text
+```text
 Found 0 errors.
 ```
 
@@ -352,7 +352,7 @@ Found 0 errors.
 
 Final checkpoint:
 
-``` text
+```text
 E2E test files       8/8 passed
 E2E tests            108/108 passed
 Lint                 0 warnings / 0 errors
@@ -366,26 +366,26 @@ checkpoint.
 
 Completed implemented/verified scope:
 
--   Approval data model
--   Approval service/API
--   Approval permissions
--   Approval workflow integration
--   Approval audit/activity integration
--   Approval lifecycle notifications
--   Notification processor tests
--   Notification organization isolation
--   Notification test cleanup
--   Notification E2E regression
--   Ticket regression testing
--   Full API E2E verification
--   Lint verification
--   Production build verification
+- Approval data model
+- Approval service/API
+- Approval permissions
+- Approval workflow integration
+- Approval audit/activity integration
+- Approval lifecycle notifications
+- Notification processor tests
+- Notification organization isolation
+- Notification test cleanup
+- Notification E2E regression
+- Ticket regression testing
+- Full API E2E verification
+- Lint verification
+- Production build verification
 
 Still planned:
 
--   Realtime / WebSockets
--   Unassigned queue
--   Ticket history refinement
+- Realtime / WebSockets
+- Unassigned queue
+- Ticket history refinement
 
 # Phase 4-H --- Realtime / WebSockets
 
@@ -447,7 +447,7 @@ verified.
 
 Latest full API E2E checkpoint:
 
-``` text
+```text
 Test Files  9 passed (9)
 Tests       115 passed (115)
 ```
@@ -516,7 +516,7 @@ realtime lifecycle verification.
 
 Latest full API E2E checkpoint:
 
-``` text
+```text
 Test Files  9 passed (9)
 Tests       120 passed (120)
 ```
@@ -604,7 +604,7 @@ joins.
 
 Latest full API E2E checkpoint:
 
-``` text
+```text
 Test Files  16 passed (16)
 Tests       151 passed (151)
 Failures    0
@@ -642,87 +642,87 @@ final documentation checkpoint.
 
 ## Phase 1 --- Foundation
 
--   Monorepo
--   Docker
--   Next.js
--   NestJS
--   PostgreSQL
--   Redis
--   Prisma
--   CI
--   ESLint
--   Prettier
--   Environment management
--   UI foundation
+- Monorepo
+- Docker
+- Next.js
+- NestJS
+- PostgreSQL
+- Redis
+- Prisma
+- CI
+- ESLint
+- Prettier
+- Environment management
+- UI foundation
 
 ## Phase 2 --- Identity
 
--   Login
--   Logout
--   Refresh tokens
--   Users
--   Roles
--   Permissions
--   Profile
+- Login
+- Logout
+- Refresh tokens
+- Users
+- Roles
+- Permissions
+- Profile
 
 ## Phase 3 --- Ticket Core
 
--   Create ticket
--   Ticket list
--   Ticket details
--   Assignment
--   Status
--   Priority
--   Comments
--   Attachments
--   History
+- Create ticket
+- Ticket list
+- Ticket details
+- Assignment
+- Status
+- Priority
+- Comments
+- Attachments
+- History
 
 ## Phase 4 --- Workflow
 
--   Approvals
--   Approval notifications
--   Unassigned queue
--   Ticket history
--   Notifications
--   Realtime updates
+- Approvals
+- Approval notifications
+- Unassigned queue
+- Ticket history
+- Notifications
+- Realtime updates
 
 ## Phase 5 --- Productivity
 
--   Ticket library
--   Saved filters
+- Ticket library
+- Saved filters
 
 ## Phase 6 --- SLA
 
--   SLA policies
--   SLA timers
--   SLA warnings
--   SLA breaches
--   SLA dashboard
+- SLA policies
+- SLA timers
+- SLA warnings
+- SLA breaches
+- SLA dashboard
 
 ## Phase 7 --- Analytics
 
--   Dashboard
--   Product dashboard
--   Employee dashboard
--   SLA reports
--   TAT reports
--   Usage reports
--   Ticket library reports
--   Exports
+- Dashboard
+- Product dashboard
+- Employee dashboard
+- SLA reports
+- TAT reports
+- Usage reports
+- Ticket library reports
+- Exports
 
 ## Phase 8 --- Production Hardening
 
--   Unit tests
--   Integration tests
--   E2E tests
--   Security audit
--   Performance testing
--   Database optimization
--   Logging
--   Monitoring
--   Backups
--   CI/CD
--   Production Docker
+- Unit tests
+- Integration tests
+- E2E tests
+- Security audit
+- Performance testing
+- Database optimization
+- Logging
+- Monitoring
+- Backups
+- CI/CD
+- Production Docker
 
 # Phase 5 --- Productivity
 
@@ -732,16 +732,16 @@ final documentation checkpoint.
 
 Completed:
 
--   5-A.1 --- Ticket Library API/client contract
--   5-A.2 --- `/tickets` page
--   5-A.3 --- Filtering + sorting
--   5-A.4 --- Pagination
--   5-A.5 --- Ticket-row navigation
--   5-A.6 --- E2E/API/frontend verification
+- 5-A.1 --- Ticket Library API/client contract
+- 5-A.2 --- `/tickets` page
+- 5-A.3 --- Filtering + sorting
+- 5-A.4 --- Pagination
+- 5-A.5 --- Ticket-row navigation
+- 5-A.6 --- E2E/API/frontend verification
 
 Verification:
 
-``` text
+```text
 API E2E              17/17 files passed
 API E2E tests        211/211 passed
 Web lint             PASS
@@ -758,13 +758,13 @@ loading, and controlled invalid-ticket handling.
 
 Completed:
 
--   Refined ticket-list information hierarchy
--   Search/filter presentation
--   Active-filter controls
--   Responsive behavior
--   Useful defaults
--   URL-backed filtering, sorting, and pagination
--   Existing UI primitive reuse
+- Refined ticket-list information hierarchy
+- Search/filter presentation
+- Active-filter controls
+- Responsive behavior
+- Useful defaults
+- URL-backed filtering, sorting, and pagination
+- Existing UI primitive reuse
 
 ## 5-C --- Saved Filters Foundation
 
@@ -772,17 +772,17 @@ Completed:
 
 Implemented and verified:
 
--   `SavedFilter` Prisma model
--   Organization/user ownership relationships
--   `20261002185115_add_saved_filters` migration
--   Prisma client generation
--   Schema validation
--   API build/lint
--   Foundation E2E coverage
+- `SavedFilter` Prisma model
+- Organization/user ownership relationships
+- `20261002185115_add_saved_filters` migration
+- Prisma client generation
+- Schema validation
+- API build/lint
+- Foundation E2E coverage
 
 Conceptual model:
 
-``` text
+```text
 id
 organizationId
 userId
@@ -797,7 +797,7 @@ updatedAt
 
 **Status: COMPLETE AND VERIFIED**
 
-``` text
+```text
 POST  /api/v1/saved-filters
 GET   /api/v1/saved-filters
 GET   /api/v1/saved-filters/:id
@@ -807,12 +807,12 @@ DELETE /api/v1/saved-filters/:id
 
 Completed:
 
--   5-D.1 --- API contract and DTO validation
--   5-D.2 --- Saved Filter service
--   5-D.3 --- Saved Filter controller
--   5-D.4 --- Authentication and organization context
--   5-D.5 --- E2E isolation/CRUD
--   5-D.6 --- Full verification
+- 5-D.1 --- API contract and DTO validation
+- 5-D.2 --- Saved Filter service
+- 5-D.3 --- Saved Filter controller
+- 5-D.4 --- Authentication and organization context
+- 5-D.5 --- E2E isolation/CRUD
+- 5-D.6 --- Full verification
 
 ### 5-D.5 --- E2E isolation/CRUD
 
@@ -828,7 +828,7 @@ isolation, and server-derived ownership.
 
 Latest checkpoint:
 
-``` text
+```text
 API E2E test files   21/21 passed
 API E2E tests        249/249 passed
 Failures             0
@@ -842,19 +842,19 @@ API production build SUCCESS
 
 Planned scope:
 
--   Save current ticket-library filters
--   Saved-filter list
--   Apply a saved filter to the current ticket library
--   Rename/edit saved filters
--   Delete saved filters
--   Reset back to the normal ticket library
--   Clear visual distinction between the current query and saved query
--   Preserve URL-backed filtering, sorting, and pagination
--   Reuse the existing Saved Filter API and UI primitives
+- Save current ticket-library filters
+- Saved-filter list
+- Apply a saved filter to the current ticket library
+- Rename/edit saved filters
+- Delete saved filters
+- Reset back to the normal ticket library
+- Clear visual distinction between the current query and saved query
+- Preserve URL-backed filtering, sorting, and pagination
+- Reuse the existing Saved Filter API and UI primitives
 
 Design boundary:
 
-``` text
+```text
 Current URL query
       |
       v
@@ -884,27 +884,27 @@ Verification boundary:
 
 ### Backend
 
--   Unit tests
--   Full E2E tests
--   Lint
--   Production build
+- Unit tests
+- Full E2E tests
+- Lint
+- Production build
 
 ### Frontend
 
--   Lint
--   Production build
+- Lint
+- Production build
 
 ### Functional/security verification
 
--   Organization isolation
--   Saved-filter ownership
--   Invalid saved-filter payloads
--   Pagination/filter interaction
--   Applying a saved filter reproduces the intended ticket query
--   Edit permissions
--   Delete permissions
--   Save/apply/reset/edit/delete workflow regression
--   Current-query vs saved-query behavior
+- Organization isolation
+- Saved-filter ownership
+- Invalid saved-filter payloads
+- Pagination/filter interaction
+- Applying a saved filter reproduces the intended ticket query
+- Edit permissions
+- Delete permissions
+- Save/apply/reset/edit/delete workflow regression
+- Current-query vs saved-query behavior
 
 Final verification checkpoint:
 
@@ -946,7 +946,7 @@ For each remaining feature:
 
 # Current Project Checkpoint
 
-``` text
+```text
 Authentication                    COMPLETE
 Organization context              COMPLETE
 Ticket CRUD                       COMPLETE
@@ -985,7 +985,7 @@ Phase 5-F Full Phase 5 Verification COMPLETE AND VERIFIED
 
 # Latest Verification Commands
 
-``` powershell
+```powershell
 docker compose exec api npm run test:e2e
 docker compose exec api npm run lint
 docker compose exec api npm run build
@@ -995,7 +995,7 @@ docker compose exec web npm run build
 
 Latest API E2E verification:
 
-``` text
+```text
 E2E test files       21/21 passed
 E2E tests            249/249 passed
 Failures             0
@@ -1003,14 +1003,14 @@ Failures             0
 
 Latest frontend verification:
 
-``` text
+```text
 Lint                 PASS
 Production build     SUCCESS
 ```
 
 ## Phase 5-F Verification Checklist
 
-``` text
+```text
 Backend unit tests              PASS
 Backend E2E tests               PASS
 Backend lint                    PASS
@@ -1248,14 +1248,14 @@ Implementation boundary:
 
 ### 6-D Milestones
 
-- 6-D.1 — Breach operational data/API contract
-- 6-D.2 — Ticket breach indicators
-- 6-D.3 — Breach filtering
-- 6-D.4 — Breach history/activity presentation
-- 6-D.5 — Escalation record exposure where required
-- 6-D.6 — Realtime breach presentation
-- 6-D.7 — Breach authorization and organization isolation
-- 6-D.8 — Full 6-D verification
+- 6-D.1 — Breach operational data/API contract — **COMPLETE AND VERIFIED**
+- 6-D.2 — Ticket breach indicators — **COMPLETE AND VERIFIED**
+- 6-D.3 — Breach filtering — **COMPLETE & VERIFIED**
+- 6-D.4 — Breach history/activity presentation — **IN PROGRESS**
+- 6-D.5 — Escalation record exposure where required — **PLANNED**
+- 6-D.6 — Realtime breach presentation — **PLANNED**
+- 6-D.7 — Breach authorization and organization isolation — **PLANNED**
+- 6-D.8 — Full 6-D verification — **PLANNED**
 
 The first implementation step is 6-D.1: inspect the existing breach,
 escalation, activity, and realtime contracts and expose only the data needed

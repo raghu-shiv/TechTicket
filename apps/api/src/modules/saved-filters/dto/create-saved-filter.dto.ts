@@ -91,6 +91,10 @@ export class SavedFilterDefinitionDto implements SavedFilterDefinition {
   unassignedTeam?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  slaBreached?: boolean;
+
+  @IsOptional()
   @IsDateString()
   createdFrom?: string;
 

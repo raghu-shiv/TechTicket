@@ -18,6 +18,7 @@ export function normalizeSavedFilter(
 
     unassigned: filters.unassigned,
     unassignedTeam: filters.unassignedTeam,
+    slaBreached: filters.slaBreached,
 
     createdFrom: filters.createdFrom,
     createdTo: filters.createdTo,
