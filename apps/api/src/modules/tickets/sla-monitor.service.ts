@@ -18,6 +18,10 @@ export class SlaMonitorService {
     waitForCompletion: true,
   })
   async detectBreaches(): Promise<void> {
+    if (process.env.TECHTICKET_E2E === 'true') {
+      return;
+    }
+
     const now = new Date();
 
     const firstResponseBreaches = await this.database.ticketSla.updateMany({

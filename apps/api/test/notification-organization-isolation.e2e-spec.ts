@@ -16,7 +16,7 @@ import { createOrganizationTestFixture } from './helpers/organization.helper.js'
 
 import { DatabaseService } from '../src/database/database.service.js';
 import { EmailService } from '../src/modules/notifications/email/email.service.js';
-import { NotificationQueueProcessor } from '../src/modules/notifications/queues/notification-queue.processor.js';
+import { NotificationProcessorService } from '../src/modules/notifications/queues/notification-processor.service.js';
 import { NOTIFICATION_JOBS } from '../src/modules/notifications/queues/notification-queue.constants.js';
 import type { SendEmailNotificationJob } from '../src/modules/notifications/queues/notification-job.types.js';
 
@@ -24,7 +24,7 @@ describe('Notification Organization Isolation (e2e)', () => {
   let app: INestApplication;
   let database: DatabaseService;
   let emailService: EmailService;
-  let processor: NotificationQueueProcessor;
+  let processor: NotificationProcessorService;
 
   let organizationA: Awaited<ReturnType<typeof createOrganizationTestFixture>>;
 
@@ -35,7 +35,7 @@ describe('Notification Organization Isolation (e2e)', () => {
 
     database = app.get(DatabaseService);
     emailService = app.get(EmailService);
-    processor = app.get(NotificationQueueProcessor);
+    processor = app.get(NotificationProcessorService);
 
     organizationA = await createOrganizationTestFixture(app);
     organizationB = await createOrganizationTestFixture(app);

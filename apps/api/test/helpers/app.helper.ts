@@ -6,6 +6,9 @@ import { AppModule } from '../../src/app.module.js';
 import { auth } from '../../src/auth/auth.js';
 
 export async function createTestApp(): Promise<INestApplication> {
+  process.env.NODE_ENV = 'test';
+  process.env.TECHTICKET_E2E = 'true';
+
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [AppModule],
   }).compile();
