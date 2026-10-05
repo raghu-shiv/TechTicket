@@ -20,6 +20,7 @@ function createSla(overrides: Partial<TicketSla> = {}): TicketSla {
     firstRespondedAt: null,
     firstResponseBreachedAt: null,
     resolutionBreachedAt: null,
+    slaEscalations: [],
     ...overrides,
   };
 }

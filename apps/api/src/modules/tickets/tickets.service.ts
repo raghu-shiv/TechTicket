@@ -64,6 +64,7 @@ export class TicketsService {
       requesterId?: string;
       unassigned?: boolean;
       unassignedTeam?: boolean;
+      slaBreached?: boolean;
     } = {},
   ) {
     const page = filters.page ?? 1;
@@ -231,6 +232,22 @@ export class TicketsService {
       ...(filters.unassignedTeam !== undefined && {
         teamId: filters.unassignedTeam ? null : { not: null },
       }),
+      ...(filters.slaBreached === true && {
+        sla: {
+          OR: [
+            {
+              firstResponseBreachedAt: {
+                not: null,
+              },
+            },
+            {
+              resolutionBreachedAt: {
+                not: null,
+              },
+            },
+          ],
+        },
+      }),
     };
 
     const [tickets, total] = await Promise.all([
@@ -266,6 +283,17 @@ export class TicketsService {
               firstRespondedAt: true,
               firstResponseBreachedAt: true,
               resolutionBreachedAt: true,
+
+              slaEscalations: {
+                orderBy: {
+                  createdAt: 'desc',
+                },
+                select: {
+                  id: true,
+                  type: true,
+                  createdAt: true,
+                },
+              },
             },
           },
 
@@ -344,6 +372,17 @@ export class TicketsService {
             resolutionBreachedAt: true,
             createdAt: true,
             updatedAt: true,
+
+            slaEscalations: {
+              orderBy: {
+                createdAt: 'desc',
+              },
+              select: {
+                id: true,
+                type: true,
+                createdAt: true,
+              },
+            },
           },
         },
         requester: {

@@ -94,4 +94,13 @@ export class ListTicketsDto {
   })
   @IsIn([true, false])
   unassignedTeam?: boolean;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value;
+  })
+  @IsIn([true, false])
+  slaBreached?: boolean;
 }

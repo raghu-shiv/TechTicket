@@ -33,15 +33,29 @@ export interface TicketTeam {
   name: string;
 }
 
+export type SlaEscalationType = "FIRST_RESPONSE_BREACH" | "RESOLUTION_BREACH";
+
+export interface TicketSlaEscalation {
+  id: string;
+  type: SlaEscalationType;
+  createdAt: string;
+}
+
 export interface TicketSla {
   id: string;
+
   firstResponseMinutes: number;
   resolutionMinutes: number;
+
   firstResponseDueAt: string;
   resolutionDueAt: string;
+
   firstRespondedAt: string | null;
+
   firstResponseBreachedAt: string | null;
   resolutionBreachedAt: string | null;
+
+  slaEscalations: TicketSlaEscalation[];
 }
 
 export interface Ticket {
@@ -97,6 +111,8 @@ export interface TicketListParams {
 
   unassigned?: boolean;
   unassignedTeam?: boolean;
+
+  slaBreached?: boolean;
 }
 
 export interface TicketListMeta {

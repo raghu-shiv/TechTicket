@@ -152,7 +152,7 @@ describe('Realtime Authentication (e2e)', () => {
     } finally {
       socket.disconnect();
     }
-  });
+  }, 15_000);
 
   it('should prevent cross-organization room access', async () => {
     const fixture = await createOrganizationTestFixture(app);

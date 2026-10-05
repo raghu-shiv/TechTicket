@@ -70,6 +70,7 @@ export class TicketsController {
       requesterId: query.requesterId,
       unassigned: query.unassigned,
       unassignedTeam: query.unassignedTeam,
+      slaBreached: query.slaBreached,
     });
   }
 
