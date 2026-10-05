@@ -23,6 +23,7 @@ import { useOrganizations } from "@/hooks/use-organizations";
 import { useTicket } from "@/hooks/use-ticket";
 import type { TicketPriority, TicketStatus, TicketType } from "@/types/tickets";
 import { TicketSlaPanel } from "@/components/tickets/TicketSlaPanel";
+import { SlaBreachHistory } from "@/components/tickets/SlaBreachHistory";
 
 const statusConfig: Record<
   TicketStatus,
@@ -297,6 +298,8 @@ export default function TicketDetailPage({
           </Card>
         </div>
       </div>
+
+      <SlaBreachHistory organizationId={organizationId} ticketId={ticket.id} />
     </div>
   );
 }
