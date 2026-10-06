@@ -17,6 +17,17 @@ import { AnalyticsService } from './analytics.service';
 export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
 
+  @Get('dashboard')
+  getDashboard(
+    @OrganizationContextParam()
+    context: OrganizationContext,
+
+    @Query()
+    query: AnalyticsQueryDto,
+  ) {
+    return this.analyticsService.getDashboard(context, query);
+  }
+
   @Get('foundation')
   getFoundation(
     @OrganizationContextParam()
