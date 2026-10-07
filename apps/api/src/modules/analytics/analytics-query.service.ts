@@ -36,6 +36,7 @@ export class AnalyticsQueryService {
       teamId: this.normalizeOptionalString(input.teamId),
       assigneeId: this.normalizeOptionalString(input.assigneeId),
       requesterId: this.normalizeOptionalString(input.requesterId),
+      productId: this.normalizeOptionalString(input.productId),
 
       unassigned: input.unassigned,
       unassignedTeam: input.unassignedTeam,
@@ -143,6 +144,14 @@ export class AnalyticsQueryService {
         Prisma.sql`
           "Ticket"."teamId" = ${dimensions.teamId}
         `,
+      );
+    }
+
+    if (dimensions.productId !== undefined) {
+      conditions.push(
+        Prisma.sql`
+      "Ticket"."productId" = ${dimensions.productId}
+    `,
       );
     }
 

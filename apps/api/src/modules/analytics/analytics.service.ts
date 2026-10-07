@@ -14,6 +14,12 @@ import type {
   AnalyticsDashboardWorkloadPoint,
 } from './analytics-dashboard.types';
 
+import type {
+  ProductAnalyticsProduct,
+  ProductAnalyticsResponse,
+  ProductAnalyticsTrendPoint,
+} from './product-analytics.types';
+
 export interface AnalyticsFoundationMetadata {
   dataSource: 'tickets';
 
@@ -547,6 +553,382 @@ export class AnalyticsService {
           dateField: query.dateField,
           dateFrom: query.dateRange.from?.toISOString() ?? null,
           dateTo: query.dateRange.to?.toISOString() ?? null,
+          organizationScoped: true,
+          queryVersion: 1,
+        },
+      },
+    };
+  }
+
+  async getProductAnalytics(
+    context: OrganizationContext,
+    input: AnalyticsQueryInput = {},
+  ): Promise<ProductAnalyticsResponse> {
+    const query = this.queryService.normalize(context, input);
+
+    const baseWhere = this.queryService.buildTicketWhere(query);
+
+    const dateColumn =
+      query.dateField === 'updatedAt'
+        ? Prisma.sql`"Ticket"."updatedAt"`
+        : Prisma.sql`"Ticket"."createdAt"`;
+
+    const productWhere = Prisma.sql`
+  "Product"."organizationId" = ${query.organizationId}
+`;
+
+    const [summaryResult, productRows, priorityRows, trendRows] =
+      await Promise.all([
+        this.database.$queryRaw<
+          Array<{
+            totalTickets: number;
+            activeTickets: number;
+            resolvedClosedTickets: number;
+            productsWithTickets: number;
+            slaTracked: number;
+            slaBreached: number;
+            averageResolutionMinutes: number | null;
+            medianResolutionMinutes: number | null;
+          }>
+        >`
+        SELECT
+          COUNT("Ticket"."id")::int AS "totalTickets",
+
+          COUNT(*) FILTER (
+            WHERE "Ticket"."status" IN (
+              'OPEN'::"TicketStatus",
+              'IN_PROGRESS'::"TicketStatus",
+              'PENDING'::"TicketStatus"
+            )
+          )::int AS "activeTickets",
+
+          COUNT(*) FILTER (
+            WHERE "Ticket"."status" IN (
+              'RESOLVED'::"TicketStatus",
+              'CLOSED'::"TicketStatus"
+            )
+          )::int AS "resolvedClosedTickets",
+
+          COUNT(DISTINCT "Ticket"."productId")
+            FILTER (
+              WHERE "Ticket"."productId" IS NOT NULL
+            )::int AS "productsWithTickets",
+
+          COUNT("TicketSla"."id")::int AS "slaTracked",
+
+          COUNT("TicketSla"."id") FILTER (
+            WHERE
+              "TicketSla"."firstResponseBreachedAt" IS NOT NULL
+              OR
+              "TicketSla"."resolutionBreachedAt" IS NOT NULL
+          )::int AS "slaBreached",
+
+          AVG(
+            EXTRACT(
+              EPOCH FROM (
+                "Ticket"."resolvedAt" - "Ticket"."createdAt"
+              )
+            ) / 60.0
+          ) FILTER (
+            WHERE "Ticket"."resolvedAt" IS NOT NULL
+          ) AS "averageResolutionMinutes",
+
+          percentile_cont(0.5) WITHIN GROUP (
+            ORDER BY
+              EXTRACT(
+                EPOCH FROM (
+                  "Ticket"."resolvedAt" - "Ticket"."createdAt"
+                )
+              ) / 60.0
+          ) FILTER (
+            WHERE "Ticket"."resolvedAt" IS NOT NULL
+          ) AS "medianResolutionMinutes"
+
+        FROM "Ticket"
+
+        LEFT JOIN "TicketSla"
+          ON "TicketSla"."ticketId" = "Ticket"."id"
+
+        WHERE ${baseWhere}
+      `,
+
+        this.database.$queryRaw<
+          Array<{
+            id: string;
+            name: string;
+            isActive: boolean;
+
+            ticketVolume: number;
+            activeTickets: number;
+            resolvedClosedTickets: number;
+
+            slaTracked: number;
+            slaBreached: number;
+
+            averageResolutionMinutes: number | null;
+            medianResolutionMinutes: number | null;
+          }>
+        >`
+        SELECT
+          "Product"."id",
+          "Product"."name",
+          "Product"."isActive",
+
+          COUNT("Ticket"."id")::int AS "ticketVolume",
+
+          COUNT("Ticket"."id") FILTER (
+            WHERE "Ticket"."status" IN (
+              'OPEN'::"TicketStatus",
+              'IN_PROGRESS'::"TicketStatus",
+              'PENDING'::"TicketStatus"
+            )
+          )::int AS "activeTickets",
+
+          COUNT("Ticket"."id") FILTER (
+            WHERE "Ticket"."status" IN (
+              'RESOLVED'::"TicketStatus",
+              'CLOSED'::"TicketStatus"
+            )
+          )::int AS "resolvedClosedTickets",
+
+          COUNT("TicketSla"."id")::int AS "slaTracked",
+
+          COUNT("TicketSla"."id") FILTER (
+            WHERE
+              "TicketSla"."firstResponseBreachedAt" IS NOT NULL
+              OR
+              "TicketSla"."resolutionBreachedAt" IS NOT NULL
+          )::int AS "slaBreached",
+
+          AVG(
+            EXTRACT(
+              EPOCH FROM (
+                "Ticket"."resolvedAt" - "Ticket"."createdAt"
+              )
+            ) / 60.0
+          ) FILTER (
+            WHERE "Ticket"."resolvedAt" IS NOT NULL
+          ) AS "averageResolutionMinutes",
+
+          percentile_cont(0.5) WITHIN GROUP (
+            ORDER BY
+              EXTRACT(
+                EPOCH FROM (
+                  "Ticket"."resolvedAt" - "Ticket"."createdAt"
+                )
+              ) / 60.0
+          ) FILTER (
+            WHERE "Ticket"."resolvedAt" IS NOT NULL
+          ) AS "medianResolutionMinutes"
+
+        FROM "Product"
+
+        LEFT JOIN "Ticket"
+          ON "Ticket"."productId" = "Product"."id"
+          AND ${baseWhere}
+
+        LEFT JOIN "TicketSla"
+          ON "TicketSla"."ticketId" = "Ticket"."id"
+
+        WHERE ${productWhere}
+
+        GROUP BY
+          "Product"."id",
+          "Product"."name",
+          "Product"."isActive"
+
+        ORDER BY
+          "ticketVolume" DESC,
+          "Product"."name" ASC
+      `,
+
+        this.database.$queryRaw<
+          Array<{
+            productId: string;
+            priority: string;
+            count: number;
+          }>
+        >`
+        SELECT
+          "Ticket"."productId",
+          "Ticket"."priority"::text AS "priority",
+          COUNT(*)::int AS "count"
+        FROM "Ticket"
+        WHERE
+          ${baseWhere}
+          AND "Ticket"."productId" IS NOT NULL
+        GROUP BY
+          "Ticket"."productId",
+          "Ticket"."priority"
+      `,
+
+        this.database.$queryRaw<
+          Array<{
+            productId: string;
+            date: Date;
+            count: number;
+          }>
+        >`
+        SELECT
+          "Ticket"."productId",
+          date_trunc('day', ${dateColumn}) AS "date",
+          COUNT(*)::int AS "count"
+        FROM "Ticket"
+        WHERE
+          ${baseWhere}
+          AND "Ticket"."productId" IS NOT NULL
+        GROUP BY
+          "Ticket"."productId",
+          date_trunc('day', ${dateColumn})
+        ORDER BY
+          "date" ASC
+      `,
+      ]);
+
+    const summary = summaryResult[0];
+
+    const priorityByProduct = new Map<
+      string,
+      Array<{
+        key: string;
+        count: number;
+      }>
+    >();
+
+    for (const row of priorityRows) {
+      const existing = priorityByProduct.get(row.productId) ?? [];
+
+      existing.push({
+        key: row.priority,
+        count: Number(row.count),
+      });
+
+      priorityByProduct.set(row.productId, existing);
+    }
+
+    const trendByProduct = new Map<string, ProductAnalyticsTrendPoint[]>();
+
+    for (const row of trendRows) {
+      const existing = trendByProduct.get(row.productId) ?? [];
+
+      existing.push({
+        date: row.date.toISOString(),
+        count: Number(row.count),
+      });
+
+      trendByProduct.set(row.productId, existing);
+    }
+
+    const products: ProductAnalyticsProduct[] = productRows.map((row) => {
+      const priorities = priorityByProduct.get(row.id) ?? [];
+
+      const priorityTotal = priorities.reduce(
+        (sum, item) => sum + item.count,
+        0,
+      );
+
+      return {
+        id: row.id,
+        name: row.name,
+        isActive: row.isActive,
+
+        ticketVolume: Number(row.ticketVolume),
+        activeTickets: Number(row.activeTickets),
+        resolvedClosedTickets: Number(row.resolvedClosedTickets),
+
+        priorityDistribution: priorities.map((item) => ({
+          key: item.key,
+          label: item.key.replaceAll('_', ' '),
+          count: item.count,
+          percentage:
+            priorityTotal === 0
+              ? 0
+              : Number(((item.count / priorityTotal) * 100).toFixed(1)),
+        })),
+
+        sla: {
+          tracked: Number(row.slaTracked),
+          breached: Number(row.slaBreached),
+          compliant: Math.max(
+            Number(row.slaTracked) - Number(row.slaBreached),
+            0,
+          ),
+          complianceRate:
+            Number(row.slaTracked) === 0
+              ? null
+              : Number(
+                  (
+                    (Math.max(
+                      Number(row.slaTracked) - Number(row.slaBreached),
+                      0,
+                    ) /
+                      Number(row.slaTracked)) *
+                    100
+                  ).toFixed(1),
+                ),
+        },
+
+        tat: {
+          resolved: Number(row.resolvedClosedTickets),
+          averageResolutionMinutes:
+            row.averageResolutionMinutes === null
+              ? null
+              : Number(row.averageResolutionMinutes),
+          medianResolutionMinutes:
+            row.medianResolutionMinutes === null
+              ? null
+              : Number(row.medianResolutionMinutes),
+        },
+
+        trend: trendByProduct.get(row.id) ?? [],
+      };
+    });
+
+    const slaTracked = Number(summary?.slaTracked ?? 0);
+    const slaBreached = Number(summary?.slaBreached ?? 0);
+
+    return {
+      data: {
+        summary: {
+          totalTickets: Number(summary?.totalTickets ?? 0),
+          activeTickets: Number(summary?.activeTickets ?? 0),
+          resolvedClosedTickets: Number(summary?.resolvedClosedTickets ?? 0),
+          productsWithTickets: Number(summary?.productsWithTickets ?? 0),
+
+          slaTracked,
+          slaBreached,
+          slaComplianceRate:
+            slaTracked === 0
+              ? null
+              : Number(
+                  (
+                    (Math.max(slaTracked - slaBreached, 0) / slaTracked) *
+                    100
+                  ).toFixed(1),
+                ),
+
+          averageResolutionMinutes:
+            summary?.averageResolutionMinutes === null ||
+            summary?.averageResolutionMinutes === undefined
+              ? null
+              : Number(summary.averageResolutionMinutes),
+
+          medianResolutionMinutes:
+            summary?.medianResolutionMinutes === null ||
+            summary?.medianResolutionMinutes === undefined
+              ? null
+              : Number(summary.medianResolutionMinutes),
+        },
+
+        products,
+      },
+
+      meta: {
+        query: {
+          dateField: query.dateField,
+          dateFrom: query.dateRange.from?.toISOString() ?? null,
+          dateTo: query.dateRange.to?.toISOString() ?? null,
+          productId: query.dimensions.productId ?? null,
           organizationScoped: true,
           queryVersion: 1,
         },

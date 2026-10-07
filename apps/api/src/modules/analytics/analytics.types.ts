@@ -53,3 +53,17 @@ export interface NormalizedAnalyticsQuery {
   page: number;
   limit: number;
 }
+
+export interface AnalyticsDimensions {
+  status?: TicketStatus;
+  priority?: TicketPriority;
+  type?: TicketType;
+
+  teamId?: string;
+  assigneeId?: string;
+  requesterId?: string;
+  productId?: string;
+
+  unassigned?: boolean;
+  unassignedTeam?: boolean;
+}

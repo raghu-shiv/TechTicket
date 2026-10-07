@@ -49,6 +49,10 @@ export class AnalyticsQueryDto {
 
   @IsOptional()
   @IsString()
+  productId?: string;
+
+  @IsOptional()
+  @IsString()
   assigneeId?: string;
 
   @IsOptional()

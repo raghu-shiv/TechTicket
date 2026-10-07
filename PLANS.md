@@ -130,24 +130,44 @@ Vitest/Jest test files.
 
 ### 7-C.1 --- Product Dashboard API
 
-**NEXT**
+**COMPLETED & VERIFIED**
 
-Planned reporting:
+Implemented and verified the organization-scoped Product Dashboard reporting API.
+
+Completed reporting:
 
 - Ticket volume by product
-- Open vs resolved by product
+- Open vs resolved/closed by product
 - Priority distribution by product
 - SLA compliance by product
-- Breach rate by product
+- SLA breach rate by product
 - Average/median TAT by product
-- Reopen rate where supported by existing activity/domain data
+- Reopen rate deferred because the current activity/domain model does not provide a dedicated, reliable reopen metric
 - Trend analysis over time
 - Organization-scoped filtering and aggregation
-- Drill-down into the Ticket Library
+- Product filtering
+- Historical reporting for inactive products
+- Exclusion of unclassified tickets from product-level metrics
+- Organization isolation / cross-tenant protection
+- Authentication protection
+- Date-range filtering
+- Product-level server-side aggregation
+- Product Dashboard API response contract
+- Regression compatibility with Analytics Dashboard and Analytics Foundation APIs
+
+**Verification:**
+
+- Prisma Client generation: PASS
+- TypeScript compilation: PASS
+- API lint: PASS — 0 warnings, 0 errors
+- API build: PASS
+- Product Dashboard E2E: **12/12 tests passed**
+- Analytics Dashboard + Foundation E2E regression: **48/48 tests passed**
+- API unit tests: **29/29 tests passed**
 
 ### 7-C.2 --- Product Dashboard UI
 
-**PLANNED**
+**NEXT**
 
 Build the product analytics dashboard using the verified Product Dashboard
 API and existing analytics UI patterns.
@@ -1042,8 +1062,7 @@ Phase 6-A through Phase 6-F are **COMPLETE AND VERIFIED**.
 
 The current implementation milestone is:
 
-**7-C.1 — Product Dashboard API**
+**7-C.2 --- Product Dashboard UI**
 
-Continue from the verified Product Taxonomy Foundation and avoid speculative
-architecture changes. Reuse the existing organization-scoped analytics and
-ticket query infrastructure already established in Phase 7-A and 7-B.
+Build the product analytics dashboard using the verified Product Dashboard
+API and existing analytics UI patterns.

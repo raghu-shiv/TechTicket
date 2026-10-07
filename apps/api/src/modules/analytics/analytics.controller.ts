@@ -38,4 +38,15 @@ export class AnalyticsController {
   ) {
     return this.analyticsService.getFoundation(context, query);
   }
+
+  @Get('products')
+  getProductAnalytics(
+    @OrganizationContextParam()
+    context: OrganizationContext,
+
+    @Query()
+    query: AnalyticsQueryDto,
+  ) {
+    return this.analyticsService.getProductAnalytics(context, query);
+  }
 }
