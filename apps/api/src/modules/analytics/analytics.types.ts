@@ -21,6 +21,7 @@ export interface AnalyticsDimensions {
   teamId?: string;
   assigneeId?: string;
   requesterId?: string;
+  productId?: string;
 
   unassigned?: boolean;
   unassignedTeam?: boolean;
@@ -28,6 +29,7 @@ export interface AnalyticsDimensions {
 
 export interface AnalyticsQueryInput extends AnalyticsDimensions {
   dateField?: AnalyticsDateField;
+
   from?: string | Date;
   to?: string | Date;
 
@@ -52,18 +54,4 @@ export interface NormalizedAnalyticsQuery {
 
   page: number;
   limit: number;
-}
-
-export interface AnalyticsDimensions {
-  status?: TicketStatus;
-  priority?: TicketPriority;
-  type?: TicketType;
-
-  teamId?: string;
-  assigneeId?: string;
-  requesterId?: string;
-  productId?: string;
-
-  unassigned?: boolean;
-  unassignedTeam?: boolean;
 }

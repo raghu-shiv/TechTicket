@@ -7,6 +7,8 @@ import type { OrganizationContext } from '../../common/organization/organization
 import { AnalyticsQueryService } from './analytics-query.service';
 import type { AnalyticsQueryInput } from './analytics.types';
 
+import type { SlaReportResponse, SlaReportSummary } from './sla-report.types';
+
 import type {
   AnalyticsDashboardDistributionPoint,
   AnalyticsDashboardResponse,
@@ -930,6 +932,278 @@ export class AnalyticsService {
           dateTo: query.dateRange.to?.toISOString() ?? null,
           productId: query.dimensions.productId ?? null,
           organizationScoped: true,
+          queryVersion: 1,
+        },
+      },
+    };
+  }
+
+  async getSlaReport(
+    context: OrganizationContext,
+    input: AnalyticsQueryInput = {},
+  ): Promise<SlaReportResponse> {
+    const query = this.queryService.normalize(context, input);
+
+    const where = this.queryService.buildTicketWhere(query);
+
+    const now = new Date();
+
+    const rows = await this.database.$queryRaw<
+      Array<{
+        totalTracked: number;
+
+        breached: number;
+
+        active: number;
+
+        atRisk: number;
+
+        resolved: number;
+
+        firstResponseCompleted: number;
+
+        firstResponseCompliant: number;
+
+        firstResponseBreached: number;
+
+        resolutionCompleted: number;
+
+        resolutionCompliant: number;
+
+        resolutionBreached: number;
+      }>
+    >`
+    WITH sla AS (
+      SELECT
+        "Ticket"."id",
+        "Ticket"."resolvedAt",
+
+        "TicketSla"."firstResponseMinutes",
+        "TicketSla"."resolutionMinutes",
+
+        "TicketSla"."firstResponseDueAt",
+        "TicketSla"."firstRespondedAt",
+        "TicketSla"."firstResponseBreachedAt",
+
+        "TicketSla"."resolutionDueAt",
+        "TicketSla"."resolutionBreachedAt",
+
+        CASE
+          WHEN
+            "TicketSla"."firstResponseBreachedAt" IS NOT NULL
+            OR
+            "TicketSla"."resolutionBreachedAt" IS NOT NULL
+          THEN true
+          ELSE false
+        END AS "isBreached",
+
+        CASE
+          WHEN "Ticket"."resolvedAt" IS NOT NULL
+          THEN true
+          ELSE false
+        END AS "isResolved",
+
+        CASE
+          WHEN
+            "Ticket"."resolvedAt" IS NULL
+
+            AND "TicketSla"."firstResponseBreachedAt" IS NULL
+            AND "TicketSla"."resolutionBreachedAt" IS NULL
+
+            AND (
+              (
+                "TicketSla"."firstRespondedAt" IS NULL
+                AND "TicketSla"."firstResponseDueAt" > ${now}
+
+                AND (
+                  EXTRACT(
+                    EPOCH FROM (
+                      "TicketSla"."firstResponseDueAt" - ${now}
+                    )
+                  ) * 1000
+                  <=
+                  "TicketSla"."firstResponseMinutes"
+                  * 60
+                  * 1000
+                  * 0.20
+                )
+              )
+
+              OR
+
+              (
+                "TicketSla"."resolutionDueAt" > ${now}
+
+                AND (
+                  EXTRACT(
+                    EPOCH FROM (
+                      "TicketSla"."resolutionDueAt" - ${now}
+                    )
+                  ) * 1000
+                  <=
+                  "TicketSla"."resolutionMinutes"
+                  * 60
+                  * 1000
+                  * 0.20
+                )
+              )
+            )
+
+          THEN true
+          ELSE false
+        END AS "isAtRisk"
+
+      FROM "TicketSla"
+
+      INNER JOIN "Ticket"
+        ON "Ticket"."id" = "TicketSla"."ticketId"
+
+      WHERE ${where}
+    )
+
+    SELECT
+      COUNT(*)::int AS "totalTracked",
+
+      COUNT(*) FILTER (
+        WHERE "isBreached" = true
+      )::int AS "breached",
+
+      COUNT(*) FILTER (
+        WHERE "isAtRisk" = true
+      )::int AS "atRisk",
+
+      COUNT(*) FILTER (
+        WHERE
+          "isResolved" = false
+          AND "isBreached" = false
+          AND "isAtRisk" = false
+      )::int AS "active",
+
+      COUNT(*) FILTER (
+        WHERE "isResolved" = true
+      )::int AS "resolved",
+
+      COUNT(*) FILTER (
+        WHERE "firstRespondedAt" IS NOT NULL
+      )::int AS "firstResponseCompleted",
+
+      COUNT(*) FILTER (
+        WHERE
+          "firstRespondedAt" IS NOT NULL
+          AND "firstRespondedAt" <= "firstResponseDueAt"
+      )::int AS "firstResponseCompliant",
+
+      COUNT(*) FILTER (
+        WHERE "firstResponseBreachedAt" IS NOT NULL
+      )::int AS "firstResponseBreached",
+
+      COUNT(*) FILTER (
+        WHERE "resolvedAt" IS NOT NULL
+      )::int AS "resolutionCompleted",
+
+      COUNT(*) FILTER (
+        WHERE
+          "resolvedAt" IS NOT NULL
+          AND "resolvedAt" <= "resolutionDueAt"
+      )::int AS "resolutionCompliant",
+
+      COUNT(*) FILTER (
+        WHERE "resolutionBreachedAt" IS NOT NULL
+      )::int AS "resolutionBreached"
+
+    FROM sla
+  `;
+
+    const aggregate = rows[0];
+
+    const totalTracked = Number(aggregate?.totalTracked ?? 0);
+    const breached = Number(aggregate?.breached ?? 0);
+
+    const compliant = Math.max(totalTracked - breached, 0);
+
+    const firstResponseCompleted = Number(
+      aggregate?.firstResponseCompleted ?? 0,
+    );
+
+    const firstResponseCompliant = Number(
+      aggregate?.firstResponseCompliant ?? 0,
+    );
+
+    const firstResponseBreached = Number(aggregate?.firstResponseBreached ?? 0);
+
+    const resolutionCompleted = Number(aggregate?.resolutionCompleted ?? 0);
+
+    const resolutionCompliant = Number(aggregate?.resolutionCompliant ?? 0);
+
+    const resolutionBreached = Number(aggregate?.resolutionBreached ?? 0);
+
+    const summary: SlaReportSummary = {
+      totalTracked,
+
+      breached,
+
+      compliant,
+
+      complianceRate:
+        totalTracked === 0
+          ? null
+          : Number(((compliant / totalTracked) * 100).toFixed(1)),
+
+      atRisk: Number(aggregate?.atRisk ?? 0),
+
+      active: Number(aggregate?.active ?? 0),
+
+      resolved: Number(aggregate?.resolved ?? 0),
+
+      firstResponse: {
+        completed: firstResponseCompleted,
+
+        compliant: firstResponseCompliant,
+
+        breached: firstResponseBreached,
+
+        complianceRate:
+          firstResponseCompleted === 0
+            ? null
+            : Number(
+                (
+                  (firstResponseCompliant / firstResponseCompleted) *
+                  100
+                ).toFixed(1),
+              ),
+      },
+
+      resolution: {
+        completed: resolutionCompleted,
+
+        compliant: resolutionCompliant,
+
+        breached: resolutionBreached,
+
+        complianceRate:
+          resolutionCompleted === 0
+            ? null
+            : Number(
+                ((resolutionCompliant / resolutionCompleted) * 100).toFixed(1),
+              ),
+      },
+    };
+
+    return {
+      data: {
+        summary,
+      },
+
+      meta: {
+        query: {
+          dateField: query.dateField,
+
+          dateFrom: query.dateRange.from?.toISOString() ?? null,
+
+          dateTo: query.dateRange.to?.toISOString() ?? null,
+
+          organizationScoped: true,
+
           queryVersion: 1,
         },
       },

@@ -49,4 +49,15 @@ export class AnalyticsController {
   ) {
     return this.analyticsService.getProductAnalytics(context, query);
   }
+
+  @Get('sla')
+  getSlaReport(
+    @OrganizationContextParam()
+    context: OrganizationContext,
+
+    @Query()
+    query: AnalyticsQueryDto,
+  ) {
+    return this.analyticsService.getSlaReport(context, query);
+  }
 }
