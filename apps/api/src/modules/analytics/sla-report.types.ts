@@ -19,6 +19,28 @@ export interface SlaReportTrendPoint {
   resolution: SlaReportMetric;
 }
 
+export interface SlaReportPriorityPoint {
+  key: string;
+
+  label: string;
+
+  tracked: number;
+
+  breached: number;
+
+  breachRate: number;
+
+  atRisk: number;
+
+  active: number;
+
+  resolved: number;
+
+  firstResponse: SlaReportMetric;
+
+  resolution: SlaReportMetric;
+}
+
 export interface SlaReportSummary {
   totalTracked: number;
 
@@ -40,6 +62,8 @@ export interface SlaReportResponse {
     summary: SlaReportSummary;
 
     trend: SlaReportTrendPoint[];
+
+    byPriority: SlaReportPriorityPoint[];
   };
 
   meta: {

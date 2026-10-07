@@ -8,6 +8,7 @@ import { AnalyticsQueryService } from './analytics-query.service';
 import type { AnalyticsQueryInput } from './analytics.types';
 
 import type {
+  SlaReportPriorityPoint,
   SlaReportResponse,
   SlaReportTrendPoint,
 } from './sla-report.types';
@@ -956,7 +957,7 @@ export class AnalyticsService {
         ? Prisma.sql`"Ticket"."updatedAt"`
         : Prisma.sql`"Ticket"."createdAt"`;
 
-    const [summaryRows, trendRows] = await Promise.all([
+    const [summaryRows, trendRows, priorityRows] = await Promise.all([
       this.database.$queryRaw<
         Array<{
           totalTracked: number;
@@ -1202,6 +1203,194 @@ export class AnalyticsService {
 
       LIMIT 366
     `,
+
+      this.database.$queryRaw<
+        Array<{
+          priority: string;
+
+          tracked: number;
+
+          breached: number;
+
+          atRisk: number;
+
+          active: number;
+
+          resolved: number;
+
+          firstResponseCompleted: number;
+
+          firstResponseCompliant: number;
+
+          firstResponseBreached: number;
+
+          resolutionCompleted: number;
+
+          resolutionCompliant: number;
+
+          resolutionBreached: number;
+        }>
+      >`
+SELECT
+  "Ticket"."priority"::text AS "priority",
+
+  COUNT("TicketSla"."id")::int AS "tracked",
+
+  COUNT("TicketSla"."id") FILTER (
+    WHERE
+      "TicketSla"."firstResponseBreachedAt" IS NOT NULL
+      OR
+      "TicketSla"."resolutionBreachedAt" IS NOT NULL
+  )::int AS "breached",
+
+  COUNT("TicketSla"."id") FILTER (
+    WHERE
+      "Ticket"."resolvedAt" IS NULL
+
+      AND "TicketSla"."firstResponseBreachedAt" IS NULL
+      AND "TicketSla"."resolutionBreachedAt" IS NULL
+
+      AND (
+        (
+          "TicketSla"."firstRespondedAt" IS NULL
+          AND "TicketSla"."firstResponseDueAt" > ${now}
+
+          AND (
+            EXTRACT(
+              EPOCH FROM (
+                "TicketSla"."firstResponseDueAt" - ${now}
+              )
+            ) * 1000
+            <=
+            "TicketSla"."firstResponseMinutes"
+            * 60
+            * 1000
+            * 0.20
+          )
+        )
+
+        OR
+
+        (
+          "TicketSla"."resolutionDueAt" > ${now}
+
+          AND (
+            EXTRACT(
+              EPOCH FROM (
+                "TicketSla"."resolutionDueAt" - ${now}
+              )
+            ) * 1000
+            <=
+            "TicketSla"."resolutionMinutes"
+            * 60
+            * 1000
+            * 0.20
+          )
+        )
+      )
+  )::int AS "atRisk",
+
+  COUNT("TicketSla"."id") FILTER (
+    WHERE
+      "Ticket"."resolvedAt" IS NULL
+
+      AND "TicketSla"."firstResponseBreachedAt" IS NULL
+      AND "TicketSla"."resolutionBreachedAt" IS NULL
+
+      AND NOT (
+        (
+          "TicketSla"."firstRespondedAt" IS NULL
+          AND "TicketSla"."firstResponseDueAt" > ${now}
+
+          AND (
+            EXTRACT(
+              EPOCH FROM (
+                "TicketSla"."firstResponseDueAt" - ${now}
+              )
+            ) * 1000
+            <=
+            "TicketSla"."firstResponseMinutes"
+            * 60
+            * 1000
+            * 0.20
+          )
+        )
+
+        OR
+
+        (
+          "TicketSla"."resolutionDueAt" > ${now}
+
+          AND (
+            EXTRACT(
+              EPOCH FROM (
+                "TicketSla"."resolutionDueAt" - ${now}
+              )
+            ) * 1000
+            <=
+            "TicketSla"."resolutionMinutes"
+            * 60
+            * 1000
+            * 0.20
+          )
+        )
+      )
+  )::int AS "active",
+
+  COUNT("TicketSla"."id") FILTER (
+    WHERE "Ticket"."resolvedAt" IS NOT NULL
+  )::int AS "resolved",
+
+  COUNT("TicketSla"."id") FILTER (
+    WHERE "TicketSla"."firstRespondedAt" IS NOT NULL
+  )::int AS "firstResponseCompleted",
+
+  COUNT("TicketSla"."id") FILTER (
+    WHERE
+      "TicketSla"."firstRespondedAt" IS NOT NULL
+      AND "TicketSla"."firstRespondedAt"
+        <= "TicketSla"."firstResponseDueAt"
+      AND "TicketSla"."firstResponseBreachedAt" IS NULL
+  )::int AS "firstResponseCompliant",
+
+  COUNT("TicketSla"."id") FILTER (
+    WHERE "TicketSla"."firstResponseBreachedAt" IS NOT NULL
+  )::int AS "firstResponseBreached",
+
+  COUNT("TicketSla"."id") FILTER (
+    WHERE "Ticket"."resolvedAt" IS NOT NULL
+  )::int AS "resolutionCompleted",
+
+  COUNT("TicketSla"."id") FILTER (
+    WHERE
+      "Ticket"."resolvedAt" IS NOT NULL
+      AND "Ticket"."resolvedAt"
+        <= "TicketSla"."resolutionDueAt"
+      AND "TicketSla"."resolutionBreachedAt" IS NULL
+  )::int AS "resolutionCompliant",
+
+  COUNT("TicketSla"."id") FILTER (
+    WHERE "TicketSla"."resolutionBreachedAt" IS NOT NULL
+  )::int AS "resolutionBreached"
+
+FROM "TicketSla"
+
+INNER JOIN "Ticket"
+  ON "Ticket"."id" = "TicketSla"."ticketId"
+
+WHERE ${where}
+
+GROUP BY "Ticket"."priority"
+
+ORDER BY
+  CASE "Ticket"."priority"::text
+    WHEN 'URGENT' THEN 1
+    WHEN 'HIGH' THEN 2
+    WHEN 'MEDIUM' THEN 3
+    WHEN 'LOW' THEN 4
+    ELSE 5
+  END
+`,
     ]);
 
     const aggregate = summaryRows[0];
@@ -1315,6 +1504,78 @@ export class AnalyticsService {
       };
     });
 
+    const byPriority: SlaReportPriorityPoint[] = priorityRows.map((row) => {
+      const tracked = Number(row.tracked);
+
+      const breached = Number(row.breached);
+
+      const firstResponseCompleted = Number(row.firstResponseCompleted);
+
+      const firstResponseCompliant = Number(row.firstResponseCompliant);
+
+      const firstResponseBreached = Number(row.firstResponseBreached);
+
+      const resolutionCompleted = Number(row.resolutionCompleted);
+
+      const resolutionCompliant = Number(row.resolutionCompliant);
+
+      const resolutionBreached = Number(row.resolutionBreached);
+
+      return {
+        key: row.priority,
+
+        label: row.priority.replaceAll('_', ' '),
+
+        tracked,
+
+        breached,
+
+        breachRate:
+          tracked === 0 ? 0 : Number(((breached / tracked) * 100).toFixed(2)),
+
+        atRisk: Number(row.atRisk),
+
+        active: Number(row.active),
+
+        resolved: Number(row.resolved),
+
+        firstResponse: {
+          completed: firstResponseCompleted,
+
+          compliant: firstResponseCompliant,
+
+          breached: firstResponseBreached,
+
+          complianceRate:
+            firstResponseCompleted === 0
+              ? null
+              : Number(
+                  (
+                    (firstResponseCompliant / firstResponseCompleted) *
+                    100
+                  ).toFixed(2),
+                ),
+        },
+
+        resolution: {
+          completed: resolutionCompleted,
+
+          compliant: resolutionCompliant,
+
+          breached: resolutionBreached,
+
+          complianceRate:
+            resolutionCompleted === 0
+              ? null
+              : Number(
+                  ((resolutionCompliant / resolutionCompleted) * 100).toFixed(
+                    2,
+                  ),
+                ),
+        },
+      };
+    });
+
     return {
       data: {
         summary: {
@@ -1350,6 +1611,8 @@ export class AnalyticsService {
         },
 
         trend,
+
+        byPriority,
       },
 
       meta: {

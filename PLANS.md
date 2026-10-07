@@ -425,15 +425,25 @@ Verification:
 
 ### 7-E.4 --- SLA by Priority
 
-**NEXT**
+**COMPLETE AND VERIFIED**
 
 - SLA compliance by priority
 - Breach volume/rate by priority
 - First-response and resolution performance by priority
+- Deterministic priority ordering: URGENT → HIGH → MEDIUM → LOW
+- Organization-scoped priority aggregation
+- Shared analytics priority filtering
+
+Verification:
+
+- SLA Reports E2E: 26/26 passed
+- API lint: 0 warnings, 0 errors
+- API build: passed
+- Combined analytics/SLA regression: 116/116 passed across 5 test files
 
 ### 7-E.5 --- SLA by Team
 
-**PLANNED**
+**NEXT**
 
 - SLA compliance by team
 - Breach volume/rate by team
@@ -1321,10 +1331,8 @@ Phase 6-A through Phase 6-F are **COMPLETE AND VERIFIED**.
 
 The current implementation milestone is:
 
-**7-E.4 --- SLA by Priority**
+**7-E.5 --- SLA by Team**
 
-**NEXT**
-
-- SLA compliance by priority
-- Breach volume/rate by priority
-- First-response and resolution performance by priority
+- SLA compliance by team
+- Breach volume/rate by team
+- First-response and resolution performance by team

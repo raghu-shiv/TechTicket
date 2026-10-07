@@ -224,6 +224,7 @@ describe('SLA Reports API (e2e)', () => {
     });
 
     expect(body.data.trend).toEqual([]);
+    expect(body.data.byPriority).toEqual([]);
   });
 
   it('should count SLA-tracked tickets only', async () => {
@@ -1004,5 +1005,322 @@ describe('SLA Reports API (e2e)', () => {
         },
       });
     }
+  });
+
+  it('should return SLA performance grouped by priority', async () => {
+    const now = new Date('2026-10-05T12:00:00.000Z');
+
+    await createSlaTicket({
+      title: 'Urgent ticket',
+      priority: 'URGENT',
+
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+    });
+
+    await createSlaTicket({
+      title: 'High ticket',
+      priority: 'HIGH',
+
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+    });
+
+    const response = await reportRequest().expect(200);
+
+    const body = response.body as SlaReportResponse;
+
+    expect(body.data.byPriority).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'URGENT',
+          label: 'URGENT',
+          tracked: 1,
+          breached: 0,
+          breachRate: 0,
+          atRisk: 0,
+          active: 1,
+          resolved: 0,
+        }),
+
+        expect.objectContaining({
+          key: 'HIGH',
+          label: 'HIGH',
+          tracked: 1,
+          breached: 0,
+          breachRate: 0,
+          atRisk: 0,
+          active: 1,
+          resolved: 0,
+        }),
+      ]),
+    );
+  });
+
+  it('should calculate breach volume and rate independently by priority', async () => {
+    const now = new Date();
+
+    await createSlaTicket({
+      title: 'Urgent breached',
+      priority: 'URGENT',
+
+      firstResponseDueAt: new Date(now.getTime() - 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+
+      firstResponseBreachedAt: new Date(now.getTime() - 30 * 60 * 1000),
+    });
+
+    await createSlaTicket({
+      title: 'Urgent compliant',
+      priority: 'URGENT',
+
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+
+      firstRespondedAt: new Date(now.getTime() - 5 * 60 * 1000),
+    });
+
+    await createSlaTicket({
+      title: 'Low ticket',
+      priority: 'LOW',
+
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+    });
+
+    const response = await reportRequest().expect(200);
+
+    const body = response.body as SlaReportResponse;
+
+    const urgent = body.data.byPriority.find((item) => item.key === 'URGENT');
+
+    expect(urgent).toEqual(
+      expect.objectContaining({
+        tracked: 2,
+        breached: 1,
+        breachRate: 50,
+      }),
+    );
+
+    const low = body.data.byPriority.find((item) => item.key === 'LOW');
+
+    expect(low).toEqual(
+      expect.objectContaining({
+        tracked: 1,
+        breached: 0,
+        breachRate: 0,
+      }),
+    );
+  });
+
+  it('should calculate first-response and resolution performance independently by priority', async () => {
+    const now = new Date();
+
+    await createSlaTicket({
+      title: 'High priority ticket',
+      priority: 'HIGH',
+
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+
+      firstRespondedAt: new Date(now.getTime() - 5 * 60 * 1000),
+
+      status: 'RESOLVED',
+
+      resolvedAt: new Date(now.getTime() - 2 * 60 * 1000),
+    });
+
+    await createSlaTicket({
+      title: 'High priority breached response',
+      priority: 'HIGH',
+
+      firstResponseDueAt: new Date(now.getTime() - 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+
+      firstResponseBreachedAt: new Date(now.getTime() - 30 * 60 * 1000),
+    });
+
+    const response = await reportRequest().expect(200);
+
+    const body = response.body as SlaReportResponse;
+
+    const high = body.data.byPriority.find((item) => item.key === 'HIGH');
+
+    expect(high).toBeDefined();
+
+    expect(high?.firstResponse).toEqual({
+      completed: 1,
+      compliant: 1,
+      breached: 1,
+      complianceRate: 100,
+    });
+
+    expect(high?.resolution).toEqual({
+      completed: 1,
+      compliant: 1,
+      breached: 0,
+      complianceRate: 100,
+    });
+  });
+
+  it('should return priority groups in deterministic priority order', async () => {
+    const now = new Date();
+
+    for (const [index, priority] of [
+      'LOW',
+      'MEDIUM',
+      'HIGH',
+      'URGENT',
+    ].entries()) {
+      await createSlaTicket({
+        title: `${priority} ticket`,
+        priority,
+
+        createdAt: new Date(now.getTime() + index * 1000),
+
+        firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+        resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+      });
+    }
+
+    const response = await reportRequest().expect(200);
+
+    const body = response.body as SlaReportResponse;
+
+    expect(body.data.byPriority.map((item) => item.key)).toEqual([
+      'URGENT',
+      'HIGH',
+      'MEDIUM',
+      'LOW',
+    ]);
+  });
+
+  it('should keep SLA priority aggregation organization-scoped', async () => {
+    const now = new Date('2026-10-05T12:00:00.000Z');
+
+    await createSlaTicket({
+      title: 'Own urgent ticket',
+      priority: 'URGENT',
+
+      createdAt: now,
+
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+    });
+
+    const foreign = await createOrganizationTestFixture(app);
+
+    try {
+      await database.ticket.create({
+        data: {
+          organizationId: foreign.organization.id,
+
+          requesterId: foreign.requester.userId,
+
+          ticketNumber: `FOREIGN-PRIORITY-${randomUUID()
+            .slice(0, 8)
+            .toUpperCase()}`,
+
+          title: 'Foreign urgent ticket',
+
+          description: 'Foreign urgent ticket',
+
+          priority: 'URGENT',
+
+          status: 'OPEN',
+
+          type: 'INCIDENT',
+
+          createdAt: now,
+
+          sla: {
+            create: {
+              firstResponseMinutes: 60,
+
+              resolutionMinutes: 240,
+
+              firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+              resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+            },
+          },
+        },
+      });
+
+      const response = await reportRequest().expect(200);
+
+      const body = response.body as SlaReportResponse;
+
+      const urgent = body.data.byPriority.find((item) => item.key === 'URGENT');
+
+      expect(urgent?.tracked).toBe(1);
+    } finally {
+      await database.organization.delete({
+        where: {
+          id: foreign.organization.id,
+        },
+      });
+
+      await database.user.deleteMany({
+        where: {
+          id: {
+            in: [
+              foreign.owner.userId,
+              foreign.admin.userId,
+              foreign.agent.userId,
+              foreign.requester.userId,
+            ],
+          },
+        },
+      });
+    }
+  });
+
+  it('should apply the shared priority filter to SLA priority analytics', async () => {
+    const now = new Date();
+
+    await createSlaTicket({
+      title: 'Urgent ticket',
+      priority: 'URGENT',
+
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+    });
+
+    await createSlaTicket({
+      title: 'Low ticket',
+      priority: 'LOW',
+
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+    });
+
+    const response = await reportRequest()
+      .query({
+        priority: 'URGENT',
+      })
+      .expect(200);
+
+    const body = response.body as SlaReportResponse;
+
+    expect(body.data.summary.totalTracked).toBe(1);
+
+    expect(body.data.byPriority).toEqual([
+      expect.objectContaining({
+        key: 'URGENT',
+        tracked: 1,
+      }),
+    ]);
   });
 });
