@@ -436,6 +436,27 @@ describe('Product Dashboard API (e2e)', () => {
 
     expect(a?.ticketVolume).toBe(1);
     expect(b?.ticketVolume).toBe(0);
+
+    expect(b).toEqual(
+      expect.objectContaining({
+        ticketVolume: 0,
+        activeTickets: 0,
+        resolvedClosedTickets: 0,
+        sla: expect.objectContaining({
+          tracked: 0,
+          breached: 0,
+          compliant: 0,
+          complianceRate: null,
+        }),
+        tat: expect.objectContaining({
+          resolved: 0,
+          averageResolutionMinutes: null,
+          medianResolutionMinutes: null,
+        }),
+        priorityDistribution: [],
+        trend: [],
+      }),
+    );
   });
 
   it('should honor date filtering', async () => {
@@ -556,5 +577,228 @@ describe('Product Dashboard API (e2e)', () => {
     );
 
     expect(response.status).toBe(401);
+  });
+
+  it('should return a valid empty analytics response when no tickets exist', async () => {
+    const response = await dashboardRequest().expect(200);
+
+    const body = response.body as ProductAnalyticsResponse;
+
+    expect(body.data.summary).toEqual(
+      expect.objectContaining({
+        totalTickets: 0,
+        activeTickets: 0,
+        resolvedClosedTickets: 0,
+        productsWithTickets: 0,
+        slaTracked: 0,
+        slaBreached: 0,
+        slaComplianceRate: null,
+        averageResolutionMinutes: null,
+        medianResolutionMinutes: null,
+      }),
+    );
+
+    expect(body.data.products).toEqual([]);
+    expect(body.meta.query.organizationScoped).toBe(true);
+  });
+
+  it('should include products with zero matching tickets', async () => {
+    const product = await createProduct('Zero Ticket Product');
+
+    const response = await dashboardRequest().expect(200);
+
+    const body = response.body as ProductAnalyticsResponse;
+
+    const item = body.data.products.find((row) => row.id === product.id);
+
+    expect(item).toEqual(
+      expect.objectContaining({
+        id: product.id,
+        name: product.name,
+        ticketVolume: 0,
+        activeTickets: 0,
+        resolvedClosedTickets: 0,
+        sla: {
+          tracked: 0,
+          breached: 0,
+          compliant: 0,
+          complianceRate: null,
+        },
+        tat: {
+          resolved: 0,
+          averageResolutionMinutes: null,
+          medianResolutionMinutes: null,
+        },
+        trend: [],
+      }),
+    );
+  });
+
+  it('should calculate SLA compliance correctly per product', async () => {
+    const product = await createProduct('SLA Product');
+
+    const now = new Date();
+
+    await database.ticket.create({
+      data: {
+        organizationId: fixture.organization.id,
+        requesterId: fixture.requester.userId,
+        ticketNumber: `PD-SLA-${randomUUID().slice(0, 8).toUpperCase()}`,
+        title: 'Compliant SLA ticket',
+        description: 'Compliant SLA ticket',
+        productId: product.id,
+        status: 'RESOLVED',
+        priority: 'HIGH',
+        type: 'INCIDENT',
+        resolvedAt: now,
+        sla: {
+          create: {
+            firstResponseMinutes: 60,
+            resolutionMinutes: 240,
+            firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+            resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+            firstRespondedAt: new Date(now.getTime() - 30 * 60 * 1000),
+            firstResponseBreachedAt: null,
+            resolutionBreachedAt: null,
+          },
+        },
+      },
+    });
+
+    await database.ticket.create({
+      data: {
+        organizationId: fixture.organization.id,
+        requesterId: fixture.requester.userId,
+        ticketNumber: `PD-SLA-${randomUUID().slice(0, 8).toUpperCase()}`,
+        title: 'Breached SLA ticket',
+        description: 'Breached SLA ticket',
+        productId: product.id,
+        status: 'RESOLVED',
+        priority: 'URGENT',
+        type: 'INCIDENT',
+        resolvedAt: now,
+        sla: {
+          create: {
+            firstResponseMinutes: 60,
+            resolutionMinutes: 240,
+            firstResponseDueAt: new Date(now.getTime() - 30 * 60 * 1000),
+            resolutionDueAt: new Date(now.getTime() - 30 * 60 * 1000),
+            firstRespondedAt: new Date(now.getTime() + 90 * 60 * 1000),
+            firstResponseBreachedAt: new Date(now.getTime() - 15 * 60 * 1000),
+            resolutionBreachedAt: new Date(now.getTime() - 15 * 60 * 1000),
+          },
+        },
+      },
+    });
+
+    const response = await dashboardRequest().expect(200);
+
+    const body = response.body as ProductAnalyticsResponse;
+
+    const item = body.data.products.find((row) => row.id === product.id);
+
+    expect(item?.sla).toEqual(
+      expect.objectContaining({
+        tracked: 2,
+        breached: 1,
+        compliant: 1,
+        complianceRate: 50,
+      }),
+    );
+  });
+
+  it('should combine product and date filters correctly', async () => {
+    const productA = await createProduct('Combined Filter A');
+    const productB = await createProduct('Combined Filter B');
+
+    await createTicket({
+      title: 'A inside',
+      productId: productA.id,
+      createdAt: new Date('2026-10-05T12:00:00.000Z'),
+    });
+
+    await createTicket({
+      title: 'A outside',
+      productId: productA.id,
+      createdAt: new Date('2026-09-01T12:00:00.000Z'),
+    });
+
+    await createTicket({
+      title: 'B inside',
+      productId: productB.id,
+      createdAt: new Date('2026-10-05T12:00:00.000Z'),
+    });
+
+    const response = await dashboardRequest()
+      .query({
+        productId: productA.id,
+        from: '2026-10-01T00:00:00.000Z',
+        to: '2026-10-06T23:59:59.999Z',
+      })
+      .expect(200);
+
+    const body = response.body as ProductAnalyticsResponse;
+
+    expect(body.meta.query.productId).toBe(productA.id);
+    expect(body.data.summary.totalTickets).toBe(1);
+
+    const productAResult = body.data.products.find(
+      (row) => row.id === productA.id,
+    );
+
+    const productBResult = body.data.products.find(
+      (row) => row.id === productB.id,
+    );
+
+    expect(productAResult?.ticketVolume).toBe(1);
+    expect(productBResult?.ticketVolume).toBe(0);
+  });
+
+  it('should return product ticket trend points in ascending date order', async () => {
+    const product = await createProduct('Trend Product');
+
+    await createTicket({
+      title: 'Day 1',
+      productId: product.id,
+      createdAt: new Date('2026-10-01T10:00:00.000Z'),
+    });
+
+    await createTicket({
+      title: 'Day 1 second',
+      productId: product.id,
+      createdAt: new Date('2026-10-01T15:00:00.000Z'),
+    });
+
+    await createTicket({
+      title: 'Day 2',
+      productId: product.id,
+      createdAt: new Date('2026-10-02T10:00:00.000Z'),
+    });
+
+    const response = await dashboardRequest().expect(200);
+
+    const body = response.body as ProductAnalyticsResponse;
+
+    const item = body.data.products.find((row) => row.id === product.id);
+
+    expect(item?.trend).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          date: expect.stringContaining('2026-10-01'),
+          count: 2,
+        }),
+        expect.objectContaining({
+          date: expect.stringContaining('2026-10-02'),
+          count: 1,
+        }),
+      ]),
+    );
+
+    expect(
+      item?.trend.every(
+        (point, index, array) =>
+          index === 0 || point.date >= array[index - 1].date,
+      ),
+    ).toBe(true);
   });
 });
