@@ -222,6 +222,8 @@ describe('SLA Reports API (e2e)', () => {
         complianceRate: null,
       },
     });
+
+    expect(body.data.trend).toEqual([]);
   });
 
   it('should count SLA-tracked tickets only', async () => {
@@ -709,5 +711,298 @@ describe('SLA Reports API (e2e)', () => {
     const body = response.body as SlaReportResponse;
 
     expect(body.data.summary.totalTracked).toBe(1);
+  });
+
+  it('should return the SLA trend contract', async () => {
+    const now = new Date('2026-10-05T12:00:00.000Z');
+
+    await createSlaTicket({
+      title: 'Trend ticket',
+
+      createdAt: now,
+
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+    });
+
+    const response = await reportRequest().expect(200);
+
+    const body = response.body as SlaReportResponse;
+
+    expect(body.data.trend).toEqual([
+      {
+        date: '2026-10-05T00:00:00.000Z',
+
+        tracked: 1,
+
+        breached: 0,
+
+        breachRate: 0,
+
+        firstResponse: {
+          completed: 0,
+          compliant: 0,
+          breached: 0,
+          complianceRate: null,
+        },
+
+        resolution: {
+          completed: 0,
+          compliant: 0,
+          breached: 0,
+          complianceRate: null,
+        },
+      },
+    ]);
+  });
+
+  it('should aggregate SLA metrics by day', async () => {
+    const dayOne = new Date('2026-10-01T10:00:00.000Z');
+
+    const dayTwo = new Date('2026-10-02T10:00:00.000Z');
+
+    await createSlaTicket({
+      title: 'Day one compliant',
+
+      createdAt: dayOne,
+
+      firstResponseDueAt: new Date(dayOne.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(dayOne.getTime() + 4 * 60 * 60 * 1000),
+
+      firstRespondedAt: new Date(dayOne.getTime() + 30 * 60 * 1000),
+    });
+
+    await createSlaTicket({
+      title: 'Day one breached',
+
+      createdAt: new Date('2026-10-01T15:00:00.000Z'),
+
+      firstResponseDueAt: new Date(dayOne.getTime() - 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(dayOne.getTime() + 4 * 60 * 60 * 1000),
+
+      firstResponseBreachedAt: new Date(dayOne.getTime() + 30 * 60 * 1000),
+    });
+
+    await createSlaTicket({
+      title: 'Day two ticket',
+
+      createdAt: dayTwo,
+
+      firstResponseDueAt: new Date(dayTwo.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(dayTwo.getTime() + 4 * 60 * 60 * 1000),
+    });
+
+    const response = await reportRequest().expect(200);
+
+    const body = response.body as SlaReportResponse;
+
+    expect(body.data.trend).toHaveLength(2);
+
+    expect(body.data.trend.map((point) => point.date)).toEqual([
+      '2026-10-01T00:00:00.000Z',
+      '2026-10-02T00:00:00.000Z',
+    ]);
+
+    expect(body.data.trend[0]).toMatchObject({
+      tracked: 2,
+      breached: 1,
+      breachRate: 50,
+
+      firstResponse: {
+        completed: 1,
+        compliant: 1,
+        breached: 1,
+        complianceRate: 100,
+      },
+    });
+
+    expect(body.data.trend[1]).toMatchObject({
+      tracked: 1,
+      breached: 0,
+
+      firstResponse: {
+        completed: 0,
+        compliant: 0,
+        breached: 0,
+        complianceRate: null,
+      },
+
+      resolution: {
+        completed: 0,
+        compliant: 0,
+        breached: 0,
+        complianceRate: null,
+      },
+    });
+  });
+
+  it('should calculate resolution compliance independently in the trend', async () => {
+    const day = new Date('2026-10-03T10:00:00.000Z');
+
+    await createSlaTicket({
+      title: 'Resolution compliant',
+
+      createdAt: day,
+
+      status: 'RESOLVED',
+
+      resolvedAt: new Date(day.getTime() + 60 * 60 * 1000),
+
+      firstResponseDueAt: new Date(day.getTime() + 30 * 60 * 1000),
+
+      resolutionDueAt: new Date(day.getTime() + 4 * 60 * 60 * 1000),
+    });
+
+    await createSlaTicket({
+      title: 'Resolution breached',
+
+      createdAt: new Date(day.getTime() + 2 * 60 * 60 * 1000),
+
+      status: 'RESOLVED',
+
+      resolvedAt: new Date(day.getTime() + 3 * 60 * 60 * 1000),
+
+      firstResponseDueAt: new Date(day.getTime() + 30 * 60 * 1000),
+
+      resolutionDueAt: new Date(day.getTime() + 60 * 60 * 1000),
+
+      resolutionBreachedAt: new Date(day.getTime() + 2 * 60 * 60 * 1000),
+    });
+
+    const response = await reportRequest().expect(200);
+
+    const body = response.body as SlaReportResponse;
+
+    expect(body.data.trend).toHaveLength(1);
+
+    expect(body.data.trend[0].resolution).toEqual({
+      completed: 2,
+      compliant: 1,
+      breached: 1,
+      complianceRate: 50,
+    });
+  });
+
+  it('should group the SLA trend using updatedAt when requested', async () => {
+    const createdAt = new Date('2026-09-01T10:00:00.000Z');
+
+    const updatedAt = new Date('2026-10-05T10:00:00.000Z');
+
+    const ticket = await createSlaTicket({
+      title: 'Updated date trend',
+
+      createdAt,
+
+      firstResponseDueAt: new Date(updatedAt.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(updatedAt.getTime() + 4 * 60 * 60 * 1000),
+    });
+
+    await database.ticket.update({
+      where: {
+        id: ticket.id,
+      },
+
+      data: {
+        updatedAt,
+      },
+    });
+
+    const response = await reportRequest()
+      .query({
+        dateField: 'updatedAt',
+      })
+      .expect(200);
+
+    const body = response.body as SlaReportResponse;
+
+    expect(body.data.trend).toHaveLength(1);
+
+    expect(body.data.trend[0].date).toBe('2026-10-05T00:00:00.000Z');
+  });
+
+  it('should keep SLA trend organization-scoped', async () => {
+    const now = new Date('2026-10-05T12:00:00.000Z');
+
+    await createSlaTicket({
+      title: 'Own organization trend ticket',
+
+      createdAt: now,
+
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+    });
+
+    const foreign = await createOrganizationTestFixture(app);
+
+    try {
+      await database.ticket.create({
+        data: {
+          organizationId: foreign.organization.id,
+
+          requesterId: foreign.requester.userId,
+
+          ticketNumber: `FOREIGN-TREND-${randomUUID()
+            .slice(0, 8)
+            .toUpperCase()}`,
+
+          title: 'Foreign trend ticket',
+
+          description: 'Foreign trend ticket',
+
+          priority: 'HIGH',
+
+          status: 'OPEN',
+
+          type: 'INCIDENT',
+
+          createdAt: now,
+
+          sla: {
+            create: {
+              firstResponseMinutes: 60,
+
+              resolutionMinutes: 240,
+
+              firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+              resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+            },
+          },
+        },
+      });
+
+      const response = await reportRequest().expect(200);
+
+      const body = response.body as SlaReportResponse;
+
+      expect(body.data.trend).toHaveLength(1);
+
+      expect(body.data.trend[0].tracked).toBe(1);
+    } finally {
+      await database.organization.delete({
+        where: {
+          id: foreign.organization.id,
+        },
+      });
+
+      await database.user.deleteMany({
+        where: {
+          id: {
+            in: [
+              foreign.owner.userId,
+              foreign.admin.userId,
+              foreign.agent.userId,
+              foreign.requester.userId,
+            ],
+          },
+        },
+      });
+    }
   });
 });
