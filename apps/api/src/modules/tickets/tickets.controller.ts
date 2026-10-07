@@ -67,6 +67,7 @@ export class TicketsController {
       type: query.type,
       assigneeId: query.assigneeId,
       teamId: query.teamId,
+      productId: query.productId,
       requesterId: query.requesterId,
       unassigned: query.unassigned,
       unassignedTeam: query.unassignedTeam,
@@ -183,6 +184,7 @@ export class TicketsController {
       description: dto.description,
       priority: dto.priority,
       type: dto.type,
+      productId: dto.productId,
     });
   }
 
@@ -349,6 +351,7 @@ export class TicketsController {
       description: dto.description,
       priority: dto.priority,
       type: dto.type,
+      productId: dto.productId,
     });
   }
 

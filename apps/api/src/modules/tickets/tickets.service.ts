@@ -27,6 +27,7 @@ interface CreateTicketInput {
   description: string;
   priority?: TicketPriority;
   type?: TicketType;
+  productId?: string;
 }
 
 interface UpdateTicketInput {
@@ -34,6 +35,7 @@ interface UpdateTicketInput {
   description?: string;
   priority?: TicketPriority;
   type?: TicketType;
+  productId?: string | null;
 }
 
 @Injectable()
@@ -61,6 +63,7 @@ export class TicketsService {
       type?: TicketType;
       assigneeId?: string;
       teamId?: string;
+      productId?: string;
       requesterId?: string;
       unassigned?: boolean;
       unassignedTeam?: boolean;
@@ -134,6 +137,10 @@ export class TicketsService {
 
     const where = {
       organizationId: context.organizationId,
+
+      ...(filters.productId !== undefined && {
+        productId: filters.productId,
+      }),
 
       ...(search && {
         OR: [
@@ -263,6 +270,7 @@ export class TicketsService {
           requesterId: true,
           assigneeId: true,
           teamId: true,
+          productId: true,
           title: true,
           description: true,
           status: true,
@@ -319,6 +327,14 @@ export class TicketsService {
               name: true,
             },
           },
+
+          product: {
+            select: {
+              id: true,
+              name: true,
+              isActive: true,
+            },
+          },
         },
       }),
 
@@ -351,6 +367,7 @@ export class TicketsService {
         requesterId: true,
         assigneeId: true,
         teamId: true,
+        productId: true,
         title: true,
         description: true,
         status: true,
@@ -405,6 +422,14 @@ export class TicketsService {
           select: {
             id: true,
             name: true,
+          },
+        },
+
+        product: {
+          select: {
+            id: true,
+            name: true,
+            isActive: true,
           },
         },
       },
@@ -497,11 +522,14 @@ export class TicketsService {
 
     const slaTarget = activePolicy?.targets[0];
 
+    await this.validateProduct(context.organizationId, input.productId);
+
     const ticket = await this.database.ticket.create({
       data: {
         ticketNumber,
         organizationId: context.organizationId,
         requesterId: context.userId,
+        productId: input.productId ?? null,
         title,
         description,
         priority,
@@ -535,6 +563,7 @@ export class TicketsService {
         requesterId: true,
         assigneeId: true,
         teamId: true,
+        productId: true,
         title: true,
         description: true,
         status: true,
@@ -554,6 +583,13 @@ export class TicketsService {
             firstRespondedAt: true,
             firstResponseBreachedAt: true,
             resolutionBreachedAt: true,
+          },
+        },
+        product: {
+          select: {
+            id: true,
+            name: true,
+            isActive: true,
           },
         },
       },
@@ -596,6 +632,7 @@ export class TicketsService {
         description: true,
         priority: true,
         type: true,
+        productId: true,
       },
     });
 
@@ -633,6 +670,11 @@ export class TicketsService {
       data.type = input.type;
     }
 
+    if (input.productId !== undefined) {
+      await this.validateProduct(context.organizationId, input.productId);
+      data.productId = input.productId;
+    }
+
     if (Object.keys(data).length === 0) {
       throw new BadRequestException('No fields provided for update');
     }
@@ -664,6 +706,13 @@ export class TicketsService {
       changedFields.type = { from: ticket.type, to: data.type };
     }
 
+    if (data.productId !== undefined && data.productId !== ticket.productId) {
+      changedFields.productId = {
+        from: ticket.productId ?? null,
+        to: data.productId ?? null,
+      } as Prisma.InputJsonValue;
+    }
+
     const updatedTicket = await this.database.ticket.update({
       where: { id: ticket.id },
       data,
@@ -674,6 +723,7 @@ export class TicketsService {
         requesterId: true,
         assigneeId: true,
         teamId: true,
+        productId: true,
         title: true,
         description: true,
         status: true,
@@ -683,6 +733,14 @@ export class TicketsService {
         updatedAt: true,
         resolvedAt: true,
         closedAt: true,
+
+        product: {
+          select: {
+            id: true,
+            name: true,
+            isActive: true,
+          },
+        },
       },
     });
 
@@ -881,6 +939,7 @@ export class TicketsService {
         requesterId: true,
         assigneeId: true,
         teamId: true,
+        productId: true,
         title: true,
         description: true,
         status: true,
@@ -908,6 +967,14 @@ export class TicketsService {
           select: {
             id: true,
             name: true,
+          },
+        },
+
+        product: {
+          select: {
+            id: true,
+            name: true,
+            isActive: true,
           },
         },
       },
@@ -999,6 +1066,7 @@ export class TicketsService {
         requesterId: true,
         assigneeId: true,
         teamId: true,
+        productId: true,
         title: true,
         description: true,
         status: true,
@@ -1100,6 +1168,7 @@ export class TicketsService {
         requesterId: true,
         assigneeId: true,
         teamId: true,
+        productId: true,
         title: true,
         description: true,
         status: true,
@@ -1127,6 +1196,14 @@ export class TicketsService {
           select: {
             id: true,
             name: true,
+          },
+        },
+
+        product: {
+          select: {
+            id: true,
+            name: true,
+            isActive: true,
           },
         },
       },
@@ -1625,5 +1702,37 @@ export class TicketsService {
     }
 
     return ticketNumber;
+  }
+
+  private async validateProduct(
+    organizationId: string,
+    productId: string | null | undefined,
+  ) {
+    // undefined = product was not supplied, so leave the existing value unchanged.
+    // null = explicitly clear the product, so no product validation is required.
+    if (productId === undefined || productId === null) {
+      return;
+    }
+
+    const product = await this.database.product.findFirst({
+      where: {
+        id: productId,
+        organizationId,
+      },
+      select: {
+        id: true,
+        isActive: true,
+      },
+    });
+
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+
+    if (!product.isActive) {
+      throw new BadRequestException(
+        'Inactive products cannot be assigned to tickets',
+      );
+    }
   }
 }

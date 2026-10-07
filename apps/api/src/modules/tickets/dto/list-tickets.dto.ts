@@ -75,6 +75,10 @@ export class ListTicketsDto {
 
   @IsOptional()
   @IsString()
+  productId?: string;
+
+  @IsOptional()
+  @IsString()
   requesterId?: string;
 
   @IsOptional()

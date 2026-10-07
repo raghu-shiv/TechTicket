@@ -27,4 +27,8 @@ export class UpdateTicketDto {
   @IsOptional()
   @IsEnum(TicketType)
   type?: TicketType;
+
+  @IsOptional()
+  @IsString()
+  productId?: string;
 }

@@ -25,4 +25,8 @@ export class CreateTicketDto {
   @IsOptional()
   @IsEnum(TicketType)
   type?: TicketType;
+
+  @IsOptional()
+  @IsString()
+  productId?: string;
 }

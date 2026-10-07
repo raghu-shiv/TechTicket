@@ -28,6 +28,12 @@ export interface TicketUser {
   email: string;
 }
 
+export interface TicketProduct {
+  id: string;
+  name: string;
+  isActive: boolean;
+}
+
 export interface TicketTeam {
   id: string;
   name: string;
@@ -130,6 +136,7 @@ export interface Ticket {
   requesterId: string;
   assigneeId: string | null;
   teamId: string | null;
+  productId: string | null;
 
   title: string;
   description: string;
@@ -148,6 +155,7 @@ export interface Ticket {
   requester: TicketUser;
   assignee: TicketUser | null;
   team: TicketTeam | null;
+  product: TicketProduct | null;
 }
 
 export interface TicketListParams {
@@ -168,6 +176,8 @@ export interface TicketListParams {
   status?: TicketStatus;
   priority?: TicketPriority;
   type?: TicketType;
+
+  productId?: string;
 
   assigneeId?: string;
   teamId?: string;
