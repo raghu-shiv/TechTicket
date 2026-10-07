@@ -30,6 +30,7 @@ import { Badge } from "@/components/ui/badge";
 import { SavedFiltersPanel } from "@/components/tickets/SavedFiltersPanel";
 import { SlaIndicator } from "@/components/tickets/SlaIndicator";
 import { savedFilterToSearchParams } from "@/lib/saved-filters";
+import { getProductIdFromTicketLibrarySearchParams } from "@/lib/product-drilldown";
 import { getProducts } from "@/lib/api/products";
 import { useOrganizations } from "@/hooks/use-organizations";
 import { useTickets } from "@/hooks/use-tickets";
@@ -417,7 +418,8 @@ function TicketsContent() {
   const statusParam = searchParams.get("status");
   const priorityParam = searchParams.get("priority");
   const typeParam = searchParams.get("type");
-  const productIdParam = searchParams.get("productId");
+  const productIdParam =
+    getProductIdFromTicketLibrarySearchParams(searchParams);
   const unassignedParam = searchParams.get("unassigned");
   const slaBreachedParam = searchParams.get("slaBreached");
   const sortByParam = searchParams.get("sortBy");
@@ -448,6 +450,13 @@ function TicketsContent() {
   );
 
   const productId = productIdParam ?? "";
+
+  const selectedProduct = useMemo(
+    () =>
+      (productsQuery.data ?? []).find((product) => product.id === productId) ??
+      null,
+    [productsQuery.data, productId],
+  );
 
   const sortBy = getInitialValue(
     sortByParam,
@@ -669,13 +678,9 @@ function TicketsContent() {
     }
 
     if (productId) {
-      const productName =
-        productsQuery.data?.find((product) => product.id === productId)?.name ??
-        productId;
-
       filters.push({
         key: "productId",
-        label: `Product: ${productName}`,
+        label: `Product: ${selectedProduct?.name ?? productId}`,
       });
     }
 
@@ -702,7 +707,7 @@ function TicketsContent() {
     productId,
     unassigned,
     slaBreached,
-    productsQuery.data,
+    selectedProduct,
   ]);
 
   const hasFilters = activeFilters.length > 0;
@@ -773,8 +778,12 @@ function TicketsContent() {
     return (
       <div>
         <PageHeader
-          title="My Tickets"
-          description="View and manage tickets in your workspace."
+          title={productId ? "Product Tickets" : "My Tickets"}
+          description={
+            productId
+              ? `Tickets associated with ${selectedProduct?.name ?? "the selected product"}.`
+              : "View and manage tickets in your workspace."
+          }
         />
 
         <EmptyState

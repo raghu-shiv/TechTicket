@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { buildProductTicketLibraryUrl } from "@/lib/product-drilldown";
 import {
   AlertTriangle,
   BarChart3,
@@ -448,9 +449,7 @@ export function ProductDashboard() {
 
                       <td className="px-5 py-4 text-right">
                         <Link
-                          href={`/tickets?productId=${encodeURIComponent(
-                            product.id,
-                          )}`}
+                          href={buildProductTicketLibraryUrl(product.id)}
                           className="font-medium text-primary hover:underline"
                         >
                           View tickets
@@ -516,7 +515,7 @@ function SelectedProduct({ product }: { product: ProductAnalyticsProduct }) {
             </div>
 
             <Link
-              href={`/tickets?productId=${encodeURIComponent(product.id)}`}
+              href={buildProductTicketLibraryUrl(product.id)}
               className="text-sm font-medium text-primary hover:underline"
             >
               Open Ticket Library

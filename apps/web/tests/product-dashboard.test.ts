@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { buildProductTicketLibraryUrl } from "@/lib/product-drilldown";
+
 import type {
   ProductAnalyticsResponse,
   ProductAnalyticsProduct,
@@ -243,5 +245,24 @@ describe("Product Dashboard response", () => {
     };
 
     expect(filteredResponse.meta.query.productId).toBe("product-1");
+  });
+});
+
+describe("product ticket drill-down", () => {
+  it("opens the organization ticket library using the selected product", () => {
+    expect(buildProductTicketLibraryUrl("product-123")).toBe(
+      "/tickets?productId=product-123",
+    );
+  });
+
+  it("uses the same drill-down URL for a product analytics entry point", () => {
+    const product = {
+      id: "product-456",
+      name: "Payments",
+    };
+
+    expect(buildProductTicketLibraryUrl(product.id)).toBe(
+      "/tickets?productId=product-456",
+    );
   });
 });
