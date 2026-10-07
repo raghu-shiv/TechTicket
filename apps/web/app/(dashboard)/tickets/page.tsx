@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowDown,
   ArrowLeft,
@@ -29,6 +30,7 @@ import { Badge } from "@/components/ui/badge";
 import { SavedFiltersPanel } from "@/components/tickets/SavedFiltersPanel";
 import { SlaIndicator } from "@/components/tickets/SlaIndicator";
 import { savedFilterToSearchParams } from "@/lib/saved-filters";
+import { getProducts } from "@/lib/api/products";
 import { useOrganizations } from "@/hooks/use-organizations";
 import { useTickets } from "@/hooks/use-tickets";
 import { useSlaRealtime } from "@/hooks/use-sla-realtime";
@@ -369,6 +371,21 @@ function TicketsContent() {
   const organizationsQuery = useOrganizations();
 
   const organizationId = organizationsQuery.data?.[0]?.organizationId;
+
+  const productsQuery = useQuery({
+    queryKey: ["products", organizationId],
+
+    queryFn: () => {
+      if (!organizationId) {
+        throw new Error("Organization context is required");
+      }
+
+      return getProducts(organizationId);
+    },
+
+    enabled: Boolean(organizationId),
+  });
+
   useSlaRealtime({
     organizationId,
   });
@@ -400,6 +417,7 @@ function TicketsContent() {
   const statusParam = searchParams.get("status");
   const priorityParam = searchParams.get("priority");
   const typeParam = searchParams.get("type");
+  const productIdParam = searchParams.get("productId");
   const unassignedParam = searchParams.get("unassigned");
   const slaBreachedParam = searchParams.get("slaBreached");
   const sortByParam = searchParams.get("sortBy");
@@ -428,6 +446,8 @@ function TicketsContent() {
     typeOptions.map((option) => option.value),
     "",
   );
+
+  const productId = productIdParam ?? "";
 
   const sortBy = getInitialValue(
     sortByParam,
@@ -648,6 +668,17 @@ function TicketsContent() {
       });
     }
 
+    if (productId) {
+      const productName =
+        productsQuery.data?.find((product) => product.id === productId)?.name ??
+        productId;
+
+      filters.push({
+        key: "productId",
+        label: `Product: ${productName}`,
+      });
+    }
+
     if (unassigned) {
       filters.push({
         key: "unassigned",
@@ -663,7 +694,16 @@ function TicketsContent() {
     }
 
     return filters;
-  }, [searchParam, status, priority, type, unassigned, slaBreached]);
+  }, [
+    searchParam,
+    status,
+    priority,
+    type,
+    productId,
+    unassigned,
+    slaBreached,
+    productsQuery.data,
+  ]);
 
   const hasFilters = activeFilters.length > 0;
 
@@ -681,6 +721,7 @@ function TicketsContent() {
       status: status || undefined,
       priority: priority || undefined,
       type: type || undefined,
+      productId: productId || undefined,
       unassigned: unassigned || undefined,
       slaBreached: slaBreached || undefined,
       sortBy,
@@ -692,6 +733,7 @@ function TicketsContent() {
       status,
       priority,
       type,
+      productId,
       unassigned,
       slaBreached,
       sortBy,
@@ -810,7 +852,7 @@ function TicketsContent() {
               </div>
 
               {/* Select filters */}
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
                 <FilterSelect
                   label="Status"
                   value={status}
@@ -849,6 +891,25 @@ function TicketsContent() {
                   {typeOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
+                    </option>
+                  ))}
+                </FilterSelect>
+
+                <FilterSelect
+                  label="Product"
+                  value={productId}
+                  onChange={(value) => {
+                    updateUrl({
+                      productId: value || null,
+                    });
+                  }}
+                >
+                  <option value="">All products</option>
+
+                  {(productsQuery.data ?? []).map((product) => (
+                    <option key={product.id} value={product.id}>
+                      {product.name}
+                      {!product.isActive ? " (Inactive)" : ""}
                     </option>
                   ))}
                 </FilterSelect>

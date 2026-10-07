@@ -2,8 +2,8 @@ import { BarChart3, ChevronRight, Clock3, TicketCheck } from "lucide-react";
 import Link from "next/link";
 
 import { AnalyticsDashboard } from "@/components/reports/AnalyticsDashboard";
+import { ProductDashboard } from "@/components/reports/ProductDashboard";
 import { Card, CardContent } from "@/components/ui";
-import { PageHeader } from "@/components/shared";
 
 const reports = [
   {
@@ -34,13 +34,34 @@ const reports = [
 
 export default function ReportsPage() {
   return (
-    <div className="space-y-10">
-      <PageHeader
-        title="Reports"
-        description="Analyze your support operations and service performance."
-      />
+    <div className="space-y-12">
+      <section aria-labelledby="overall-analytics">
+        <div className="mb-6">
+          <h2 id="overall-analytics" className="text-xl font-semibold">
+            Overall Analytics
+          </h2>
 
-      <AnalyticsDashboard />
+          <p className="mt-1 text-sm text-muted-foreground">
+            Organization-wide ticket and service performance.
+          </p>
+        </div>
+
+        <AnalyticsDashboard />
+      </section>
+
+      <section aria-labelledby="product-analytics">
+        <div className="mb-6">
+          <h2 id="product-analytics" className="text-xl font-semibold">
+            Product Analytics
+          </h2>
+
+          <p className="mt-1 text-sm text-muted-foreground">
+            Compare support performance across products.
+          </p>
+        </div>
+
+        <ProductDashboard />
+      </section>
 
       <section aria-label="Available reports" className="space-y-4">
         <div>
