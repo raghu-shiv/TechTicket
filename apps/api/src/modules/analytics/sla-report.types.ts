@@ -1,27 +1,22 @@
+export interface SlaReportMetric {
+  completed: number;
+  compliant: number;
+  breached: number;
+  complianceRate: number | null;
+}
+
 export interface SlaReportSummary {
   totalTracked: number;
 
   breached: number;
-  compliant: number;
-  complianceRate: number | null;
 
   atRisk: number;
   active: number;
   resolved: number;
 
-  firstResponse: {
-    completed: number;
-    compliant: number;
-    breached: number;
-    complianceRate: number | null;
-  };
+  firstResponse: SlaReportMetric;
 
-  resolution: {
-    completed: number;
-    compliant: number;
-    breached: number;
-    complianceRate: number | null;
-  };
+  resolution: SlaReportMetric;
 }
 
 export interface SlaReportResponse {

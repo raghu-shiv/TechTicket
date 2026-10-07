@@ -7,7 +7,7 @@ import type { OrganizationContext } from '../../common/organization/organization
 import { AnalyticsQueryService } from './analytics-query.service';
 import type { AnalyticsQueryInput } from './analytics.types';
 
-import type { SlaReportResponse, SlaReportSummary } from './sla-report.types';
+import type { SlaReportResponse } from './sla-report.types';
 
 import type {
   AnalyticsDashboardDistributionPoint,
@@ -1117,9 +1117,14 @@ export class AnalyticsService {
     const aggregate = rows[0];
 
     const totalTracked = Number(aggregate?.totalTracked ?? 0);
+
     const breached = Number(aggregate?.breached ?? 0);
 
-    const compliant = Math.max(totalTracked - breached, 0);
+    const atRisk = Number(aggregate?.atRisk ?? 0);
+
+    const active = Number(aggregate?.active ?? 0);
+
+    const resolved = Number(aggregate?.resolved ?? 0);
 
     const firstResponseCompleted = Number(
       aggregate?.firstResponseCompleted ?? 0,
@@ -1137,73 +1142,51 @@ export class AnalyticsService {
 
     const resolutionBreached = Number(aggregate?.resolutionBreached ?? 0);
 
-    const summary: SlaReportSummary = {
-      totalTracked,
+    const firstResponseComplianceRate =
+      firstResponseCompleted === 0
+        ? null
+        : Number(
+            ((firstResponseCompliant / firstResponseCompleted) * 100).toFixed(
+              2,
+            ),
+          );
 
-      breached,
-
-      compliant,
-
-      complianceRate:
-        totalTracked === 0
-          ? null
-          : Number(((compliant / totalTracked) * 100).toFixed(1)),
-
-      atRisk: Number(aggregate?.atRisk ?? 0),
-
-      active: Number(aggregate?.active ?? 0),
-
-      resolved: Number(aggregate?.resolved ?? 0),
-
-      firstResponse: {
-        completed: firstResponseCompleted,
-
-        compliant: firstResponseCompliant,
-
-        breached: firstResponseBreached,
-
-        complianceRate:
-          firstResponseCompleted === 0
-            ? null
-            : Number(
-                (
-                  (firstResponseCompliant / firstResponseCompleted) *
-                  100
-                ).toFixed(1),
-              ),
-      },
-
-      resolution: {
-        completed: resolutionCompleted,
-
-        compliant: resolutionCompliant,
-
-        breached: resolutionBreached,
-
-        complianceRate:
-          resolutionCompleted === 0
-            ? null
-            : Number(
-                ((resolutionCompliant / resolutionCompleted) * 100).toFixed(1),
-              ),
-      },
-    };
+    const resolutionComplianceRate =
+      resolutionCompleted === 0
+        ? null
+        : Number(
+            ((resolutionCompliant / resolutionCompleted) * 100).toFixed(2),
+          );
 
     return {
       data: {
-        summary,
+        summary: {
+          totalTracked,
+          breached,
+          atRisk,
+          active,
+          resolved,
+          firstResponse: {
+            completed: firstResponseCompleted,
+            compliant: firstResponseCompliant,
+            breached: firstResponseBreached,
+            complianceRate: firstResponseComplianceRate,
+          },
+          resolution: {
+            completed: resolutionCompleted,
+            compliant: resolutionCompliant,
+            breached: resolutionBreached,
+            complianceRate: resolutionComplianceRate,
+          },
+        },
       },
 
       meta: {
         query: {
           dateField: query.dateField,
-
           dateFrom: query.dateRange.from?.toISOString() ?? null,
-
           dateTo: query.dateRange.to?.toISOString() ?? null,
-
           organizationScoped: true,
-
           queryVersion: 1,
         },
       },

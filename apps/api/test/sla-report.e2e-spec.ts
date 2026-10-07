@@ -19,8 +19,6 @@ interface SlaReportResponse {
       totalTracked: number;
 
       breached: number;
-      compliant: number;
-      complianceRate: number | null;
 
       atRisk: number;
       active: number;
@@ -199,23 +197,31 @@ describe('SLA Reports API (e2e)', () => {
 
     const body = response.body as SlaReportResponse;
 
-    expect(body.data.summary).toEqual(
-      expect.objectContaining({
-        totalTracked: 0,
+    expect(body.data.summary).toEqual({
+      totalTracked: 0,
 
-        breached: 0,
+      breached: 0,
 
+      atRisk: 0,
+
+      active: 0,
+
+      resolved: 0,
+
+      firstResponse: {
+        completed: 0,
         compliant: 0,
-
+        breached: 0,
         complianceRate: null,
+      },
 
-        atRisk: 0,
-
-        active: 0,
-
-        resolved: 0,
-      }),
-    );
+      resolution: {
+        completed: 0,
+        compliant: 0,
+        breached: 0,
+        complianceRate: null,
+      },
+    });
   });
 
   it('should count SLA-tracked tickets only', async () => {
@@ -229,7 +235,7 @@ describe('SLA Reports API (e2e)', () => {
       resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
     });
 
-    await database.ticket.create({
+    const ticketWithoutSla = await database.ticket.create({
       data: {
         organizationId: fixture.organization.id,
         requesterId: fixture.requester.userId,
@@ -245,6 +251,8 @@ describe('SLA Reports API (e2e)', () => {
       },
     });
 
+    createdTicketIds.push(ticketWithoutSla.id);
+
     const response = await reportRequest().expect(200);
 
     const body = response.body as SlaReportResponse;
@@ -252,7 +260,7 @@ describe('SLA Reports API (e2e)', () => {
     expect(body.data.summary.totalTracked).toBe(1);
   });
 
-  it('should calculate compliant and breached SLA totals', async () => {
+  it('should calculate SLA breach and component compliance totals', async () => {
     const now = new Date();
 
     await createSlaTicket({
@@ -293,9 +301,16 @@ describe('SLA Reports API (e2e)', () => {
 
     expect(body.data.summary.breached).toBe(1);
 
-    expect(body.data.summary.compliant).toBe(1);
+    expect(body.data.summary.totalTracked).toBe(2);
 
-    expect(body.data.summary.complianceRate).toBe(50);
+    expect(body.data.summary.breached).toBe(1);
+
+    expect(body.data.summary.firstResponse).toEqual({
+      completed: 1,
+      compliant: 1,
+      breached: 1,
+      complianceRate: 100,
+    });
   });
 
   it('should expose first-response compliance independently from resolution compliance', async () => {
@@ -498,5 +513,201 @@ describe('SLA Reports API (e2e)', () => {
         to: '2026-10-01T00:00:00.000Z',
       })
       .expect(400);
+  });
+
+  it('should return null component compliance rates when no SLA activity exists', async () => {
+    const response = await reportRequest().expect(200);
+
+    const body = response.body as SlaReportResponse;
+
+    expect(body.data.summary).toMatchObject({
+      totalTracked: 0,
+      breached: 0,
+      atRisk: 0,
+      active: 0,
+      resolved: 0,
+
+      firstResponse: {
+        completed: 0,
+        compliant: 0,
+        breached: 0,
+        complianceRate: null,
+      },
+
+      resolution: {
+        completed: 0,
+        compliant: 0,
+        breached: 0,
+        complianceRate: null,
+      },
+    });
+  });
+
+  it('should calculate first-response summary independently', async () => {
+    const now = new Date();
+
+    await createSlaTicket({
+      title: 'First response compliant',
+
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+
+      firstRespondedAt: new Date(now.getTime() - 10 * 60 * 1000),
+    });
+
+    await createSlaTicket({
+      title: 'First response breached',
+
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+
+      firstResponseBreachedAt: new Date(now.getTime() - 5 * 60 * 1000),
+    });
+
+    const response = await reportRequest().expect(200);
+
+    const body = response.body as SlaReportResponse;
+
+    expect(body.data.summary.firstResponse.completed).toBe(1);
+    expect(body.data.summary.firstResponse.compliant).toBe(1);
+    expect(body.data.summary.firstResponse.breached).toBe(1);
+    expect(body.data.summary.firstResponse.complianceRate).toBe(100);
+  });
+
+  it('should calculate resolution summary independently', async () => {
+    const now = new Date();
+
+    const resolvedAt = new Date(now.getTime() - 30 * 60 * 1000);
+
+    await createSlaTicket({
+      title: 'Resolution compliant',
+
+      status: 'RESOLVED',
+
+      resolvedAt,
+
+      firstResponseDueAt: new Date(now.getTime() - 2 * 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+    });
+
+    await createSlaTicket({
+      title: 'Resolution breached',
+
+      status: 'RESOLVED',
+
+      resolvedAt,
+
+      firstResponseDueAt: new Date(now.getTime() - 2 * 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() - 60 * 60 * 1000),
+
+      resolutionBreachedAt: new Date(now.getTime() - 45 * 60 * 1000),
+    });
+
+    const response = await reportRequest().expect(200);
+
+    const body = response.body as SlaReportResponse;
+
+    expect(body.data.summary.resolution).toEqual({
+      completed: 2,
+      compliant: 1,
+      breached: 1,
+      complianceRate: 50,
+    });
+  });
+
+  it('should keep active, at-risk, breached, and resolved counts mutually consistent', async () => {
+    const now = new Date();
+
+    await createSlaTicket({
+      title: 'Active',
+
+      firstResponseDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 24 * 60 * 60 * 1000),
+    });
+
+    await createSlaTicket({
+      title: 'At risk',
+
+      firstResponseMinutes: 60,
+
+      resolutionMinutes: 240,
+
+      firstResponseDueAt: new Date(now.getTime() + 5 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+    });
+
+    await createSlaTicket({
+      title: 'Breached',
+
+      firstResponseDueAt: new Date(now.getTime() - 30 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+      firstResponseBreachedAt: new Date(now.getTime() - 15 * 60 * 1000),
+    });
+
+    await createSlaTicket({
+      title: 'Resolved',
+
+      status: 'RESOLVED',
+
+      resolvedAt: new Date(now.getTime() - 30 * 60 * 1000),
+
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+    });
+
+    const response = await reportRequest().expect(200);
+
+    const body = response.body as SlaReportResponse;
+
+    expect(body.data.summary.totalTracked).toBe(4);
+
+    expect(body.data.summary.active).toBe(1);
+
+    expect(body.data.summary.atRisk).toBe(1);
+
+    expect(body.data.summary.breached).toBe(1);
+
+    expect(body.data.summary.resolved).toBe(1);
+  });
+
+  it('should apply priority filtering to the SLA summary', async () => {
+    const now = new Date();
+
+    await createSlaTicket({
+      title: 'Urgent ticket',
+      priority: 'URGENT',
+
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+    });
+
+    await createSlaTicket({
+      title: 'Low ticket',
+      priority: 'LOW',
+
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+    });
+
+    const response = await reportRequest()
+      .query({
+        priority: 'URGENT',
+      })
+      .expect(200);
+
+    const body = response.body as SlaReportResponse;
+
+    expect(body.data.summary.totalTracked).toBe(1);
   });
 });

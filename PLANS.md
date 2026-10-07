@@ -353,16 +353,14 @@ Implementation boundary:
 
 Verification:
 
-```text
-SLA Reports API E2E             10/10 tests passed
-API lint                        0 warnings / 0 errors
-API production build            SUCCESS
+SLA Reports API E2E 10/10 tests passed
+API lint 0 warnings / 0 errors
+API production build SUCCESS
 
 Analytics/SLA regression:
-Test files                      5/5 passed
-Tests                           100/100 passed
-Failures                        0
-```
+Test files 5/5 passed
+Tests 100/100 passed
+Failures 0
 
 The regression suite covered:
 
@@ -377,18 +375,34 @@ SLA report dimensions, trends, breach analysis, filters, and reporting UI.
 
 ### 7-E.2 --- SLA Summary
 
-**NEXT**
+**COMPLETE AND VERIFIED**
 
 - Overall SLA tracked volume
-- Breached volume and rate
-- Compliant volume and rate
-- First-response compliance
-- Resolution compliance
-- At-risk volume where the existing snapshot/timing semantics support it
+- Breached volume
+- At-risk volume
+- Active volume
+- Resolved volume
+- First-response compliance:
+  - Completed
+  - Compliant
+  - Breached
+  - Compliance rate
+- Resolution compliance:
+  - Completed
+  - Compliant
+  - Breached
+  - Compliance rate
+
+**Verification**
+
+- SLA Reports E2E: 15/15 passed
+- API lint: 0 warnings, 0 errors
+- API build: passed
+- Combined analytics/SLA regression: 105/105 passed
 
 ### 7-E.3 --- SLA Trend
 
-**PLANNED**
+**NEXT**
 
 - SLA compliance trend over time
 - Breach volume trend
@@ -1292,11 +1306,8 @@ Phase 6-A through Phase 6-F are **COMPLETE AND VERIFIED**.
 
 The current implementation milestone is:
 
-**7-E.2 --- SLA Summary**
+**7-E.3 --- SLA Trend**
 
-- Overall SLA tracked volume
-- Breached volume and rate
-- Compliant volume and rate
-- First-response compliance
-- Resolution compliance
-- At-risk volume where the existing snapshot/timing semantics support it
+- SLA compliance trend over time
+- Breach volume trend
+- First-response vs resolution trend where supported
