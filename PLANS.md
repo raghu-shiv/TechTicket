@@ -443,15 +443,26 @@ Verification:
 
 ### 7-E.5 --- SLA by Team
 
-**NEXT**
+**COMPLETE AND VERIFIED**
 
 - SLA compliance by team
 - Breach volume/rate by team
 - First-response and resolution performance by team
+- Unassigned team bucket
+- Deterministic team ordering
+- Organization-scoped team aggregation
+- Shared `teamId` filtering
+
+Verification:
+
+- SLA Reports E2E: 33/33 passed
+- API lint: 0 warnings, 0 errors
+- API build: passed
+- Combined analytics/SLA regression: 123/123 passed across 5 test files
 
 ### 7-E.6 --- SLA by Assignee
 
-**PLANNED**
+**NEXT**
 
 - SLA compliance by assignee
 - Breach volume/rate by assignee
@@ -1331,8 +1342,8 @@ Phase 6-A through Phase 6-F are **COMPLETE AND VERIFIED**.
 
 The current implementation milestone is:
 
-**7-E.5 --- SLA by Team**
+**7-E.6 --- SLA by Assignee**
 
-- SLA compliance by team
-- Breach volume/rate by team
-- First-response and resolution performance by team
+- SLA compliance by assignee
+- Breach volume/rate by assignee
+- First-response and resolution performance by assignee
