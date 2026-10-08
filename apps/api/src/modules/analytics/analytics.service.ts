@@ -8,6 +8,7 @@ import { AnalyticsQueryService } from './analytics-query.service';
 import type { AnalyticsQueryInput } from './analytics.types';
 
 import type {
+  SlaReportAssigneePoint,
   SlaReportPriorityPoint,
   SlaReportResponse,
   SlaReportTeamPoint,
@@ -955,22 +956,23 @@ export class AnalyticsService {
         ? Prisma.sql`"Ticket"."updatedAt"`
         : Prisma.sql`"Ticket"."createdAt"`;
 
-    const [summaryRows, trendRows, priorityRows, teamRows] = await Promise.all([
-      this.database.$queryRaw<
-        Array<{
-          totalTracked: number;
-          breached: number;
-          active: number;
-          atRisk: number;
-          resolved: number;
-          firstResponseCompleted: number;
-          firstResponseCompliant: number;
-          firstResponseBreached: number;
-          resolutionCompleted: number;
-          resolutionCompliant: number;
-          resolutionBreached: number;
-        }>
-      >`
+    const [summaryRows, trendRows, priorityRows, teamRows, assigneeRows] =
+      await Promise.all([
+        this.database.$queryRaw<
+          Array<{
+            totalTracked: number;
+            breached: number;
+            active: number;
+            atRisk: number;
+            resolved: number;
+            firstResponseCompleted: number;
+            firstResponseCompliant: number;
+            firstResponseBreached: number;
+            resolutionCompleted: number;
+            resolutionCompliant: number;
+            resolutionBreached: number;
+          }>
+        >`
       WITH sla AS (
         SELECT
           "Ticket"."id",
@@ -1114,27 +1116,27 @@ export class AnalyticsService {
       FROM sla
     `,
 
-      this.database.$queryRaw<
-        Array<{
-          date: Date;
+        this.database.$queryRaw<
+          Array<{
+            date: Date;
 
-          tracked: number;
+            tracked: number;
 
-          breached: number;
+            breached: number;
 
-          firstResponseCompleted: number;
+            firstResponseCompleted: number;
 
-          firstResponseCompliant: number;
+            firstResponseCompliant: number;
 
-          firstResponseBreached: number;
+            firstResponseBreached: number;
 
-          resolutionCompleted: number;
+            resolutionCompleted: number;
 
-          resolutionCompliant: number;
+            resolutionCompliant: number;
 
-          resolutionBreached: number;
-        }>
-      >`
+            resolutionBreached: number;
+          }>
+        >`
       SELECT
         date_trunc('day', ${dateColumn}) AS "date",
 
@@ -1192,22 +1194,22 @@ export class AnalyticsService {
       LIMIT 366
     `,
 
-      this.database.$queryRaw<
-        Array<{
-          priority: string;
-          tracked: number;
-          breached: number;
-          atRisk: number;
-          active: number;
-          resolved: number;
-          firstResponseCompleted: number;
-          firstResponseCompliant: number;
-          firstResponseBreached: number;
-          resolutionCompleted: number;
-          resolutionCompliant: number;
-          resolutionBreached: number;
-        }>
-      >`
+        this.database.$queryRaw<
+          Array<{
+            priority: string;
+            tracked: number;
+            breached: number;
+            atRisk: number;
+            active: number;
+            resolved: number;
+            firstResponseCompleted: number;
+            firstResponseCompliant: number;
+            firstResponseBreached: number;
+            resolutionCompleted: number;
+            resolutionCompliant: number;
+            resolutionBreached: number;
+          }>
+        >`
 SELECT
   "Ticket"."priority"::text AS "priority",
 
@@ -1369,34 +1371,34 @@ ORDER BY
   END
 `,
 
-      this.database.$queryRaw<
-        Array<{
-          teamId: string | null;
-          teamName: string | null;
+        this.database.$queryRaw<
+          Array<{
+            teamId: string | null;
+            teamName: string | null;
 
-          tracked: number;
+            tracked: number;
 
-          breached: number;
+            breached: number;
 
-          atRisk: number;
+            atRisk: number;
 
-          active: number;
+            active: number;
 
-          resolved: number;
+            resolved: number;
 
-          firstResponseCompleted: number;
+            firstResponseCompleted: number;
 
-          firstResponseCompliant: number;
+            firstResponseCompliant: number;
 
-          firstResponseBreached: number;
+            firstResponseBreached: number;
 
-          resolutionCompleted: number;
+            resolutionCompleted: number;
 
-          resolutionCompliant: number;
+            resolutionCompliant: number;
 
-          resolutionBreached: number;
-        }>
-      >`
+            resolutionBreached: number;
+          }>
+        >`
       SELECT
         "Team"."id" AS "teamId",
 
@@ -1568,7 +1570,213 @@ ORDER BY
         END,
         "Team"."name" ASC NULLS LAST
       `,
-    ]);
+
+        this.database.$queryRaw<
+          Array<{
+            assigneeId: string | null;
+            assigneeName: string | null;
+
+            tracked: number;
+
+            breached: number;
+
+            atRisk: number;
+
+            active: number;
+
+            resolved: number;
+
+            firstResponseCompleted: number;
+
+            firstResponseCompliant: number;
+
+            firstResponseBreached: number;
+
+            resolutionCompleted: number;
+
+            resolutionCompliant: number;
+
+            resolutionBreached: number;
+          }>
+        >`
+SELECT
+  "Assignee"."id" AS "assigneeId",
+
+  "Assignee"."name" AS "assigneeName",
+
+  COUNT("TicketSla"."id")::int AS "tracked",
+
+  COUNT("TicketSla"."id") FILTER (
+    WHERE
+      "TicketSla"."firstResponseBreachedAt" IS NOT NULL
+      OR
+      "TicketSla"."resolutionBreachedAt" IS NOT NULL
+  )::int AS "breached",
+
+  COUNT("TicketSla"."id") FILTER (
+    WHERE
+      "Ticket"."resolvedAt" IS NULL
+
+      AND "TicketSla"."firstResponseBreachedAt" IS NULL
+      AND "TicketSla"."resolutionBreachedAt" IS NULL
+
+      AND (
+        (
+          "TicketSla"."firstRespondedAt" IS NULL
+          AND "TicketSla"."firstResponseDueAt" > ${now}
+
+          AND (
+            EXTRACT(
+              EPOCH FROM (
+                "TicketSla"."firstResponseDueAt" - ${now}
+              )
+            ) * 1000
+            <=
+            "TicketSla"."firstResponseMinutes"
+            * 60
+            * 1000
+            * 0.20
+          )
+        )
+
+        OR
+
+        (
+          "TicketSla"."resolutionDueAt" > ${now}
+
+          AND (
+            EXTRACT(
+              EPOCH FROM (
+                "TicketSla"."resolutionDueAt" - ${now}
+              )
+            ) * 1000
+            <=
+            "TicketSla"."resolutionMinutes"
+            * 60
+            * 1000
+            * 0.20
+          )
+        )
+      )
+  )::int AS "atRisk",
+
+  COUNT("TicketSla"."id") FILTER (
+    WHERE
+      "Ticket"."resolvedAt" IS NULL
+
+      AND "TicketSla"."firstResponseBreachedAt" IS NULL
+      AND "TicketSla"."resolutionBreachedAt" IS NULL
+
+      AND NOT (
+        (
+          "TicketSla"."firstRespondedAt" IS NULL
+          AND "TicketSla"."firstResponseDueAt" > ${now}
+
+          AND (
+            EXTRACT(
+              EPOCH FROM (
+                "TicketSla"."firstResponseDueAt" - ${now}
+              )
+            ) * 1000
+            <=
+            "TicketSla"."firstResponseMinutes"
+            * 60
+            * 1000
+            * 0.20
+          )
+        )
+
+        OR
+
+        (
+          "TicketSla"."resolutionDueAt" > ${now}
+
+          AND (
+            EXTRACT(
+              EPOCH FROM (
+                "TicketSla"."resolutionDueAt" - ${now}
+              )
+            ) * 1000
+            <=
+            "TicketSla"."resolutionMinutes"
+            * 60
+            * 1000
+            * 0.20
+          )
+        )
+      )
+  )::int AS "active",
+
+  COUNT("TicketSla"."id") FILTER (
+    WHERE
+      "Ticket"."resolvedAt" IS NOT NULL
+  )::int AS "resolved",
+
+  COUNT("TicketSla"."id") FILTER (
+    WHERE
+      "TicketSla"."firstRespondedAt" IS NOT NULL
+  )::int AS "firstResponseCompleted",
+
+  COUNT("TicketSla"."id") FILTER (
+    WHERE
+      "TicketSla"."firstRespondedAt" IS NOT NULL
+      AND "TicketSla"."firstRespondedAt"
+        <= "TicketSla"."firstResponseDueAt"
+      AND "TicketSla"."firstResponseBreachedAt" IS NULL
+  )::int AS "firstResponseCompliant",
+
+  COUNT("TicketSla"."id") FILTER (
+    WHERE
+      "TicketSla"."firstResponseBreachedAt" IS NOT NULL
+  )::int AS "firstResponseBreached",
+
+  COUNT("TicketSla"."id") FILTER (
+    WHERE
+      "Ticket"."resolvedAt" IS NOT NULL
+  )::int AS "resolutionCompleted",
+
+  COUNT("TicketSla"."id") FILTER (
+    WHERE
+      "Ticket"."resolvedAt" IS NOT NULL
+      AND "Ticket"."resolvedAt"
+        <= "TicketSla"."resolutionDueAt"
+      AND "TicketSla"."resolutionBreachedAt" IS NULL
+  )::int AS "resolutionCompliant",
+
+  COUNT("TicketSla"."id") FILTER (
+    WHERE
+      "TicketSla"."resolutionBreachedAt" IS NOT NULL
+  )::int AS "resolutionBreached"
+
+FROM "TicketSla"
+
+INNER JOIN "Ticket"
+  ON "Ticket"."id" = "TicketSla"."ticketId"
+
+LEFT JOIN "user" AS "Assignee"
+  ON "Assignee"."id" = "Ticket"."assigneeId"
+  AND EXISTS (
+    SELECT 1
+    FROM "Membership" AS "AssigneeMembership"
+    WHERE
+      "AssigneeMembership"."userId" = "Assignee"."id"
+      AND "AssigneeMembership"."organizationId" = ${query.organizationId}
+  )
+
+WHERE ${where}
+
+GROUP BY
+  "Assignee"."id",
+  "Assignee"."name"
+
+ORDER BY
+  CASE
+    WHEN "Assignee"."id" IS NULL THEN 1
+    ELSE 0
+  END,
+  "Assignee"."name" ASC NULLS LAST
+`,
+      ]);
 
     const aggregate = summaryRows[0];
 
@@ -1829,6 +2037,82 @@ ORDER BY
       };
     });
 
+    const byAssignee: SlaReportAssigneePoint[] = assigneeRows.map((row) => {
+      const tracked = Number(row.tracked);
+
+      const breached = Number(row.breached);
+
+      const firstResponseCompleted = Number(row.firstResponseCompleted);
+
+      const firstResponseCompliant = Number(row.firstResponseCompliant);
+
+      const firstResponseBreached = Number(row.firstResponseBreached);
+
+      const resolutionCompleted = Number(row.resolutionCompleted);
+
+      const resolutionCompliant = Number(row.resolutionCompliant);
+
+      const resolutionBreached = Number(row.resolutionBreached);
+
+      const isUnassigned = row.assigneeId === null;
+
+      return {
+        id: row.assigneeId,
+
+        key: row.assigneeId ?? '__UNASSIGNED__',
+
+        label: isUnassigned ? 'Unassigned' : (row.assigneeName ?? 'Unknown'),
+
+        tracked,
+
+        breached,
+
+        breachRate:
+          tracked === 0 ? 0 : Number(((breached / tracked) * 100).toFixed(2)),
+
+        atRisk: Number(row.atRisk),
+
+        active: Number(row.active),
+
+        resolved: Number(row.resolved),
+
+        firstResponse: {
+          completed: firstResponseCompleted,
+
+          compliant: firstResponseCompliant,
+
+          breached: firstResponseBreached,
+
+          complianceRate:
+            firstResponseCompleted === 0
+              ? null
+              : Number(
+                  (
+                    (firstResponseCompliant / firstResponseCompleted) *
+                    100
+                  ).toFixed(2),
+                ),
+        },
+
+        resolution: {
+          completed: resolutionCompleted,
+
+          compliant: resolutionCompliant,
+
+          breached: resolutionBreached,
+
+          complianceRate:
+            resolutionCompleted === 0
+              ? null
+              : Number(
+                  ((resolutionCompliant / resolutionCompleted) * 100).toFixed(
+                    2,
+                  ),
+                ),
+        },
+      };
+    });
+
     return {
       data: {
         summary: {
@@ -1862,12 +2146,10 @@ ORDER BY
             complianceRate: resolutionComplianceRate,
           },
         },
-
         trend,
-
         byPriority,
-
         byTeam,
+        byAssignee,
       },
 
       meta: {

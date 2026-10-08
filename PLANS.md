@@ -462,15 +462,24 @@ Verification:
 
 ### 7-E.6 --- SLA by Assignee
 
-**NEXT**
+**COMPLETE AND VERIFIED**
 
-- SLA compliance by assignee
-- Breach volume/rate by assignee
-- First-response and resolution performance by assignee
+- Assignee SLA metrics
+- Unassigned bucket
+- Deterministic ordering
+- Organization isolation
+- assigneeId filtering
+
+Verification:
+
+- 40/40 focused E2E
+- 130/130 combined regression
+- Build status
+- Current lint warning status
 
 ### 7-E.7 --- First Response vs Resolution
 
-**PLANNED**
+**NEXT**
 
 - Separate first-response compliance metrics
 - Separate resolution compliance metrics
@@ -1342,8 +1351,8 @@ Phase 6-A through Phase 6-F are **COMPLETE AND VERIFIED**.
 
 The current implementation milestone is:
 
-**7-E.6 --- SLA by Assignee**
+**7-E.7 --- First Response vs Resolution**
 
-- SLA compliance by assignee
-- Breach volume/rate by assignee
-- First-response and resolution performance by assignee
+- Separate first-response compliance metrics
+- Separate resolution compliance metrics
+- Breach comparison and performance breakdown

@@ -41,6 +41,23 @@ export interface SlaReportTeamPoint {
   resolution: SlaReportMetric;
 }
 
+export interface SlaReportAssigneePoint {
+  id: string | null;
+  key: string;
+  label: string;
+
+  tracked: number;
+  breached: number;
+  breachRate: number;
+
+  atRisk: number;
+  active: number;
+  resolved: number;
+
+  firstResponse: SlaReportMetric;
+  resolution: SlaReportMetric;
+}
+
 export interface SlaReportSummary {
   totalTracked: number;
   breached: number;
@@ -57,6 +74,7 @@ export interface SlaReportResponse {
     trend: SlaReportTrendPoint[];
     byPriority: SlaReportPriorityPoint[];
     byTeam: SlaReportTeamPoint[];
+    byAssignee: SlaReportAssigneePoint[];
   };
 
   meta: {

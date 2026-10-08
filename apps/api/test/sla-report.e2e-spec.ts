@@ -13,6 +13,40 @@ import {
   type OrganizationTestFixture,
 } from './helpers/organization.helper.js';
 
+interface SlaReportAssigneePoint {
+  id: string | null;
+
+  key: string;
+
+  label: string;
+
+  tracked: number;
+
+  breached: number;
+
+  breachRate: number;
+
+  atRisk: number;
+
+  active: number;
+
+  resolved: number;
+
+  firstResponse: {
+    completed: number;
+    compliant: number;
+    breached: number;
+    complianceRate: number | null;
+  };
+
+  resolution: {
+    completed: number;
+    compliant: number;
+    breached: number;
+    complianceRate: number | null;
+  };
+}
+
 interface SlaReportTeamPoint {
   id: string | null;
 
@@ -78,6 +112,8 @@ interface SlaReportResponse {
     byPriority: unknown[];
 
     byTeam: SlaReportTeamPoint[];
+
+    byAssignee: SlaReportAssigneePoint[];
   };
 
   meta: {
@@ -158,6 +194,8 @@ describe('SLA Reports API (e2e)', () => {
 
     teamId?: string | null;
 
+    assigneeId?: string | null;
+
     createdAt?: Date;
     resolvedAt?: Date | null;
 
@@ -186,6 +224,8 @@ describe('SLA Reports API (e2e)', () => {
         type: 'INCIDENT',
 
         teamId: input.teamId ?? null,
+
+        assigneeId: input.assigneeId ?? null,
 
         createdAt: input.createdAt ?? new Date(),
         resolvedAt: input.resolvedAt ?? null,
@@ -224,6 +264,10 @@ describe('SLA Reports API (e2e)', () => {
       expect.objectContaining({
         data: expect.objectContaining({
           summary: expect.any(Object),
+          trend: expect.any(Array),
+          byPriority: expect.any(Array),
+          byTeam: expect.any(Array),
+          byAssignee: expect.any(Array),
         }),
 
         meta: expect.objectContaining({
@@ -270,6 +314,7 @@ describe('SLA Reports API (e2e)', () => {
     expect(body.data.trend).toEqual([]);
     expect(body.data.byPriority).toEqual([]);
     expect(body.data.byTeam).toEqual([]);
+    expect(body.data.byAssignee).toEqual([]);
   });
 
   it('should count SLA-tracked tickets only', async () => {
@@ -1752,6 +1797,368 @@ describe('SLA Reports API (e2e)', () => {
     expect(body.data.byTeam).toEqual([
       expect.objectContaining({
         id: teamA.id,
+        tracked: 1,
+      }),
+    ]);
+  });
+
+  it('should return SLA performance grouped by assignee', async () => {
+    const now = new Date();
+
+    const agent = await database.user.findUniqueOrThrow({
+      where: {
+        id: fixture.agent.userId,
+      },
+    });
+
+    const admin = await database.user.findUniqueOrThrow({
+      where: {
+        id: fixture.admin.userId,
+      },
+    });
+
+    await createSlaTicket({
+      title: 'Agent ticket',
+
+      assigneeId: fixture.agent.userId,
+
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+    });
+
+    await createSlaTicket({
+      title: 'Admin ticket',
+
+      assigneeId: fixture.admin.userId,
+
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+    });
+
+    const response = await reportRequest().expect(200);
+
+    const body = response.body as SlaReportResponse;
+
+    expect(body.data.byAssignee).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: fixture.agent.userId,
+          key: fixture.agent.userId,
+          label: agent.name,
+          tracked: 1,
+          breached: 0,
+        }),
+
+        expect.objectContaining({
+          id: fixture.admin.userId,
+          key: fixture.admin.userId,
+          label: admin.name,
+          tracked: 1,
+          breached: 0,
+        }),
+      ]),
+    );
+  });
+
+  it('should calculate breach volume and rate independently by assignee', async () => {
+    const now = new Date();
+
+    await createSlaTicket({
+      title: 'Breached assignee ticket',
+
+      assigneeId: fixture.agent.userId,
+
+      firstResponseDueAt: new Date(now.getTime() - 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+
+      firstResponseBreachedAt: new Date(now.getTime() - 30 * 60 * 1000),
+    });
+
+    await createSlaTicket({
+      title: 'Compliant assignee ticket',
+
+      assigneeId: fixture.agent.userId,
+
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+
+      firstRespondedAt: new Date(now.getTime() - 5 * 60 * 1000),
+    });
+
+    const response = await reportRequest().expect(200);
+
+    const body = response.body as SlaReportResponse;
+
+    const row = body.data.byAssignee.find(
+      (item) => item.id === fixture.agent.userId,
+    );
+
+    expect(row).toEqual(
+      expect.objectContaining({
+        tracked: 2,
+        breached: 1,
+        breachRate: 50,
+      }),
+    );
+  });
+
+  it('should calculate first-response and resolution performance independently by assignee', async () => {
+    const now = new Date();
+
+    await createSlaTicket({
+      title: 'Resolved compliant assignee ticket',
+
+      assigneeId: fixture.agent.userId,
+
+      status: 'RESOLVED',
+
+      resolvedAt: new Date(now.getTime() - 2 * 60 * 1000),
+
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+
+      firstRespondedAt: new Date(now.getTime() - 5 * 60 * 1000),
+    });
+
+    await createSlaTicket({
+      title: 'Response breached assignee ticket',
+
+      assigneeId: fixture.agent.userId,
+
+      firstResponseDueAt: new Date(now.getTime() - 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+
+      firstResponseBreachedAt: new Date(now.getTime() - 30 * 60 * 1000),
+    });
+
+    const response = await reportRequest().expect(200);
+
+    const body = response.body as SlaReportResponse;
+
+    const row = body.data.byAssignee.find(
+      (item) => item.id === fixture.agent.userId,
+    );
+
+    expect(row).toBeDefined();
+
+    expect(row?.firstResponse).toEqual({
+      completed: 1,
+      compliant: 1,
+      breached: 1,
+      complianceRate: 100,
+    });
+
+    expect(row?.resolution).toEqual({
+      completed: 1,
+      compliant: 1,
+      breached: 0,
+      complianceRate: 100,
+    });
+  });
+
+  it('should include an unassigned assignee bucket', async () => {
+    const now = new Date();
+
+    await createSlaTicket({
+      title: 'Unassigned ticket',
+
+      assigneeId: null,
+
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+    });
+
+    const response = await reportRequest().expect(200);
+
+    const body = response.body as SlaReportResponse;
+
+    const unassigned = body.data.byAssignee.find(
+      (item) => item.key === '__UNASSIGNED__',
+    );
+
+    expect(unassigned).toEqual(
+      expect.objectContaining({
+        id: null,
+        key: '__UNASSIGNED__',
+        label: 'Unassigned',
+        tracked: 1,
+      }),
+    );
+  });
+
+  it('should return assignees in deterministic order', async () => {
+    const now = new Date();
+
+    await createSlaTicket({
+      title: 'Admin ticket',
+
+      assigneeId: fixture.admin.userId,
+
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+    });
+
+    await createSlaTicket({
+      title: 'Agent ticket',
+
+      assigneeId: fixture.agent.userId,
+
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+    });
+
+    const response = await reportRequest().expect(200);
+
+    const body = response.body as SlaReportResponse;
+
+    const rows = body.data.byAssignee.filter(
+      (item) =>
+        item.id === fixture.admin.userId || item.id === fixture.agent.userId,
+    );
+
+    expect(rows.map((item) => item.label)).toEqual(
+      rows.map((item) => item.label).sort((a, b) => a.localeCompare(b)),
+    );
+  });
+
+  it('should keep SLA assignee aggregation organization-scoped', async () => {
+    const now = new Date();
+
+    await createSlaTicket({
+      title: 'Own organization ticket',
+
+      assigneeId: fixture.agent.userId,
+
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+    });
+
+    const foreign = await createOrganizationTestFixture(app);
+
+    try {
+      await database.ticket.create({
+        data: {
+          organizationId: foreign.organization.id,
+
+          requesterId: foreign.requester.userId,
+
+          assigneeId: foreign.agent.userId,
+
+          ticketNumber: `FOREIGN-ASSIGNEE-${randomUUID()
+            .slice(0, 8)
+            .toUpperCase()}`,
+
+          title: 'Foreign assignee ticket',
+
+          description: 'Foreign assignee ticket',
+
+          priority: 'HIGH',
+
+          status: 'OPEN',
+
+          type: 'INCIDENT',
+
+          createdAt: now,
+
+          sla: {
+            create: {
+              firstResponseMinutes: 60,
+
+              resolutionMinutes: 240,
+
+              firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+              resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+            },
+          },
+        },
+      });
+
+      const response = await reportRequest().expect(200);
+
+      const body = response.body as SlaReportResponse;
+
+      expect(body.data.byAssignee).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: fixture.agent.userId,
+            tracked: 1,
+          }),
+        ]),
+      );
+
+      expect(
+        body.data.byAssignee.some((item) => item.id === foreign.agent.userId),
+      ).toBe(false);
+    } finally {
+      await database.organization.delete({
+        where: {
+          id: foreign.organization.id,
+        },
+      });
+
+      await database.user.deleteMany({
+        where: {
+          id: {
+            in: [
+              foreign.owner.userId,
+              foreign.admin.userId,
+              foreign.agent.userId,
+              foreign.requester.userId,
+            ],
+          },
+        },
+      });
+    }
+  });
+
+  it('should apply the shared assigneeId filter to SLA assignee analytics', async () => {
+    const now = new Date();
+
+    await createSlaTicket({
+      title: 'Agent ticket',
+
+      assigneeId: fixture.agent.userId,
+
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+    });
+
+    await createSlaTicket({
+      title: 'Admin ticket',
+
+      assigneeId: fixture.admin.userId,
+
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+    });
+
+    const response = await reportRequest()
+      .query({
+        assigneeId: fixture.agent.userId,
+      })
+      .expect(200);
+
+    const body = response.body as SlaReportResponse;
+
+    expect(body.data.summary.totalTracked).toBe(1);
+
+    expect(body.data.byAssignee).toEqual([
+      expect.objectContaining({
+        id: fixture.agent.userId,
+        key: fixture.agent.userId,
         tracked: 1,
       }),
     ]);
