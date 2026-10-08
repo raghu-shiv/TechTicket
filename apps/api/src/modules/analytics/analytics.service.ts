@@ -1822,6 +1822,30 @@ ORDER BY
             ((resolutionCompliant / resolutionCompleted) * 100).toFixed(2),
           );
 
+    const firstResponseBreachRate =
+      firstResponseCompleted === 0
+        ? null
+        : Number(
+            ((firstResponseBreached / firstResponseCompleted) * 100).toFixed(2),
+          );
+
+    const resolutionBreachRate =
+      resolutionCompleted === 0
+        ? null
+        : Number(((resolutionBreached / resolutionCompleted) * 100).toFixed(2));
+
+    const complianceGapPercentagePoints =
+      firstResponseComplianceRate === null || resolutionComplianceRate === null
+        ? null
+        : Number(
+            (firstResponseComplianceRate - resolutionComplianceRate).toFixed(2),
+          );
+
+    const breachGapPercentagePoints =
+      firstResponseBreachRate === null || resolutionBreachRate === null
+        ? null
+        : Number((firstResponseBreachRate - resolutionBreachRate).toFixed(2));
+
     const trend: SlaReportTrendPoint[] = trendRows.map((row) => {
       const rowTracked = Number(row.tracked);
 
@@ -2146,9 +2170,34 @@ ORDER BY
             complianceRate: resolutionComplianceRate,
           },
         },
+
+        comparison: {
+          firstResponse: {
+            completed: firstResponseCompleted,
+            compliant: firstResponseCompliant,
+            breached: firstResponseBreached,
+            complianceRate: firstResponseComplianceRate,
+            breachRate: firstResponseBreachRate,
+          },
+
+          resolution: {
+            completed: resolutionCompleted,
+            compliant: resolutionCompliant,
+            breached: resolutionBreached,
+            complianceRate: resolutionComplianceRate,
+            breachRate: resolutionBreachRate,
+          },
+
+          complianceGapPercentagePoints,
+          breachGapPercentagePoints,
+        },
+
         trend,
+
         byPriority,
+
         byTeam,
+
         byAssignee,
       },
 

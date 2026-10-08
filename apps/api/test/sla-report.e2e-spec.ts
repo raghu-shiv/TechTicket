@@ -2163,4 +2163,290 @@ describe('SLA Reports API (e2e)', () => {
       }),
     ]);
   });
+
+  it('should return the first-response vs resolution comparison contract', async () => {
+    const response = await reportRequest().expect(200);
+
+    const body = response.body as SlaReportResponse;
+
+    expect(body.data.comparison).toEqual({
+      firstResponse: {
+        completed: expect.any(Number),
+        compliant: expect.any(Number),
+        breached: expect.any(Number),
+        complianceRate: null,
+        breachRate: null,
+      },
+
+      resolution: {
+        completed: expect.any(Number),
+        compliant: expect.any(Number),
+        breached: expect.any(Number),
+        complianceRate: null,
+        breachRate: null,
+      },
+
+      complianceGapPercentagePoints: null,
+      breachGapPercentagePoints: null,
+    });
+  });
+
+  it('should compare first-response and resolution performance independently', async () => {
+    const now = new Date();
+
+    await createSlaTicket({
+      title: 'Fast first response, compliant resolution',
+
+      status: 'RESOLVED',
+
+      resolvedAt: new Date(now.getTime() - 10 * 60 * 1000),
+
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+
+      firstRespondedAt: new Date(now.getTime() - 30 * 60 * 1000),
+    });
+
+    await createSlaTicket({
+      title: 'Late first response',
+
+      firstResponseDueAt: new Date(now.getTime() - 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+
+      firstResponseBreachedAt: new Date(now.getTime() - 30 * 60 * 1000),
+    });
+
+    const response = await reportRequest().expect(200);
+
+    const body = response.body as SlaReportResponse;
+
+    expect(body.data.comparison.firstResponse).toEqual({
+      completed: 1,
+      compliant: 1,
+      breached: 1,
+      complianceRate: 100,
+      breachRate: 100,
+    });
+
+    expect(body.data.comparison.resolution).toEqual({
+      completed: 1,
+      compliant: 1,
+      breached: 0,
+      complianceRate: 100,
+      breachRate: 0,
+    });
+
+    expect(body.data.comparison.complianceGapPercentagePoints).toBe(0);
+
+    expect(body.data.comparison.breachGapPercentagePoints).toBe(100);
+  });
+
+  it('should calculate the compliance gap in percentage points', async () => {
+    const now = new Date();
+
+    await createSlaTicket({
+      title: 'Compliant both',
+
+      status: 'RESOLVED',
+
+      resolvedAt: new Date(now.getTime() - 10 * 60 * 1000),
+
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+
+      firstRespondedAt: new Date(now.getTime() - 30 * 60 * 1000),
+    });
+
+    await createSlaTicket({
+      title: 'Resolution breached',
+
+      status: 'RESOLVED',
+
+      resolvedAt: new Date(now.getTime() + 5 * 60 * 60 * 1000),
+
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() - 60 * 60 * 1000),
+
+      firstRespondedAt: new Date(now.getTime() - 30 * 60 * 1000),
+
+      resolutionBreachedAt: new Date(now.getTime() - 30 * 60 * 1000),
+    });
+
+    const response = await reportRequest().expect(200);
+
+    const body = response.body as SlaReportResponse;
+
+    expect(body.data.comparison.complianceGapPercentagePoints).toBe(50);
+  });
+
+  it('should calculate the breach gap independently from the compliance gap', async () => {
+    const now = new Date();
+
+    await createSlaTicket({
+      title: 'First response breached',
+
+      firstResponseDueAt: new Date(now.getTime() - 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+
+      firstResponseBreachedAt: new Date(now.getTime() - 30 * 60 * 1000),
+    });
+
+    await createSlaTicket({
+      title: 'Resolution breached',
+
+      status: 'RESOLVED',
+
+      resolvedAt: new Date(now.getTime() + 5 * 60 * 60 * 1000),
+
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() - 60 * 60 * 1000),
+
+      firstRespondedAt: new Date(now.getTime() - 30 * 60 * 1000),
+
+      resolutionBreachedAt: new Date(now.getTime() - 30 * 60 * 1000),
+    });
+
+    const response = await reportRequest().expect(200);
+
+    const body = response.body as SlaReportResponse;
+
+    expect(body.data.comparison.firstResponse.breachRate).toBe(100);
+
+    expect(body.data.comparison.resolution.breachRate).toBe(100);
+
+    expect(body.data.comparison.breachGapPercentagePoints).toBe(0);
+  });
+
+  it('should return null comparison rates and gaps when there is no completed SLA activity', async () => {
+    const response = await reportRequest().expect(200);
+
+    const body = response.body as SlaReportResponse;
+
+    expect(body.data.comparison).toEqual({
+      firstResponse: {
+        completed: 0,
+        compliant: 0,
+        breached: 0,
+        complianceRate: null,
+        breachRate: null,
+      },
+
+      resolution: {
+        completed: 0,
+        compliant: 0,
+        breached: 0,
+        complianceRate: null,
+        breachRate: null,
+      },
+
+      complianceGapPercentagePoints: null,
+
+      breachGapPercentagePoints: null,
+    });
+  });
+
+  it('should keep first-response vs resolution comparison organization-scoped', async () => {
+    const now = new Date();
+
+    await createSlaTicket({
+      title: 'Own organization ticket',
+
+      status: 'RESOLVED',
+
+      resolvedAt: new Date(now.getTime() - 5 * 60 * 1000),
+
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+
+      firstRespondedAt: new Date(now.getTime() - 10 * 60 * 1000),
+    });
+
+    const foreign = await createOrganizationTestFixture(app);
+
+    try {
+      await database.ticket.create({
+        data: {
+          organizationId: foreign.organization.id,
+
+          requesterId: foreign.requester.userId,
+
+          ticketNumber: `FOREIGN-COMP-${randomUUID()
+            .slice(0, 8)
+            .toUpperCase()}`,
+
+          title: 'Foreign comparison ticket',
+
+          description: 'Foreign comparison ticket',
+
+          priority: 'HIGH',
+
+          status: 'OPEN',
+
+          type: 'INCIDENT',
+
+          createdAt: now,
+
+          sla: {
+            create: {
+              firstResponseMinutes: 60,
+
+              resolutionMinutes: 240,
+
+              firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+
+              resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+
+              firstResponseBreachedAt: new Date(now.getTime() - 30 * 60 * 1000),
+            },
+          },
+        },
+      });
+
+      const response = await reportRequest().expect(200);
+
+      const body = response.body as SlaReportResponse;
+
+      expect(body.data.comparison.firstResponse).toEqual({
+        completed: 1,
+        compliant: 1,
+        breached: 0,
+        complianceRate: 100,
+        breachRate: 0,
+      });
+
+      expect(body.data.comparison.resolution).toEqual({
+        completed: 1,
+        compliant: 1,
+        breached: 0,
+        complianceRate: 100,
+        breachRate: 0,
+      });
+    } finally {
+      await database.organization.delete({
+        where: {
+          id: foreign.organization.id,
+        },
+      });
+
+      await database.user.deleteMany({
+        where: {
+          id: {
+            in: [
+              foreign.owner.userId,
+              foreign.admin.userId,
+              foreign.agent.userId,
+              foreign.requester.userId,
+            ],
+          },
+        },
+      });
+    }
+  });
 });

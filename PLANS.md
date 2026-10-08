@@ -479,15 +479,25 @@ Verification:
 
 ### 7-E.7 --- First Response vs Resolution
 
-**NEXT**
+**COMPLETE AND VERIFIED**
 
 - Separate first-response compliance metrics
 - Separate resolution compliance metrics
 - Breach comparison and performance breakdown
+- Compliance and breach gap calculations in percentage points
+- Null-safe comparison metrics when no completed SLA activity exists
+- Organization-scoped first-response vs resolution comparison
+
+Verification:
+
+- SLA Reports E2E: 46/46 passed
+- API lint: 0 warnings, 0 errors
+- API build: passed
+- Combined analytics/SLA regression: 136/136 passed across 5 test files
 
 ### 7-E.8 --- Breach Analysis
 
-**PLANNED**
+**NEXT**
 
 - Breach volume and rate
 - At-risk volume
@@ -1351,8 +1361,9 @@ Phase 6-A through Phase 6-F are **COMPLETE AND VERIFIED**.
 
 The current implementation milestone is:
 
-**7-E.7 --- First Response vs Resolution**
+**7-E.8 --- Breach Analysis**
 
-- Separate first-response compliance metrics
-- Separate resolution compliance metrics
-- Breach comparison and performance breakdown
+- Breach volume and rate
+- At-risk volume
+- Breach dimensions and trends
+- SLA performance drill-down where supported by existing ticket access

@@ -5,6 +5,18 @@ export interface SlaReportMetric {
   complianceRate: number | null;
 }
 
+export interface SlaReportComparisonMetric extends SlaReportMetric {
+  breachRate: number | null;
+}
+
+export interface SlaReportComparison {
+  firstResponse: SlaReportComparisonMetric;
+  resolution: SlaReportComparisonMetric;
+
+  complianceGapPercentagePoints: number | null;
+  breachGapPercentagePoints: number | null;
+}
+
 export interface SlaReportTrendPoint {
   date: string;
   tracked: number;
@@ -45,15 +57,12 @@ export interface SlaReportAssigneePoint {
   id: string | null;
   key: string;
   label: string;
-
   tracked: number;
   breached: number;
   breachRate: number;
-
   atRisk: number;
   active: number;
   resolved: number;
-
   firstResponse: SlaReportMetric;
   resolution: SlaReportMetric;
 }
@@ -71,6 +80,7 @@ export interface SlaReportSummary {
 export interface SlaReportResponse {
   data: {
     summary: SlaReportSummary;
+    comparison: SlaReportComparison;
     trend: SlaReportTrendPoint[];
     byPriority: SlaReportPriorityPoint[];
     byTeam: SlaReportTeamPoint[];
