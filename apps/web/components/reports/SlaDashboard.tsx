@@ -1,13 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import {
-  AlertTriangle,
-  CheckCircle2,
-  Clock3,
-  Timer,
-  XCircle,
-} from "lucide-react";
+
+import { AlertTriangle, Clock3, Timer, XCircle } from "lucide-react";
+
 import { useState } from "react";
 
 import {
@@ -27,32 +23,55 @@ import {
 } from "@/components/shared";
 
 import { useOrganizations } from "@/hooks/use-organizations";
+
 import { useSlaDashboard } from "@/hooks/use-sla-dashboard";
 
 import type { SlaDashboardView } from "@/types/sla-dashboard";
 
 const views: Array<{
   value: SlaDashboardView;
+
   label: string;
 }> = [
   {
     value: "ALL",
+
     label: "All",
   },
+
   {
     value: "ACTIVE",
+
     label: "Active",
   },
+
   {
     value: "AT_RISK",
+
     label: "At Risk",
   },
+
   {
     value: "BREACHED",
+
     label: "Breached",
   },
+
+  {
+    value: "FIRST_RESPONSE_BREACHED",
+
+    label: "First Response Breached",
+  },
+
+  {
+    value: "RESOLUTION_BREACHED",
+
+    label: "Resolution Breached",
+  },
+
   {
     value: "RESOLVED",
+
     label: "Resolved",
   },
 ];
@@ -68,15 +87,20 @@ function formatRate(rate: number | null) {
 function formatDate(value: string) {
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: "medium",
+
     timeStyle: "short",
   }).format(new Date(value));
 }
 
 function getTicketSlaState(ticket: {
   resolvedAt: string | null;
+
   firstResponseBreachedAt: string | null;
+
   resolutionBreachedAt: string | null;
+
   firstResponseDueAt: string;
+
   resolutionDueAt: string;
 }) {
   if (ticket.firstResponseBreachedAt || ticket.resolutionBreachedAt) {
@@ -115,7 +139,9 @@ export function SlaDashboard() {
 
   const dashboardQuery = useSlaDashboard(organizationId, {
     view,
+
     page,
+
     limit: 25,
   });
 
@@ -136,7 +162,7 @@ export function SlaDashboard() {
   if (!organizationId) {
     return (
       <EmptyState
-        icon={CheckCircle2}
+        icon={Clock3}
         title="No organization available"
         description="Your account is not associated with an organization."
       />
@@ -164,7 +190,13 @@ export function SlaDashboard() {
   const result = dashboardQuery.data;
 
   if (!result) {
-    return <LoadingState />;
+    return (
+      <EmptyState
+        icon={Clock3}
+        title="No SLA data"
+        description="No SLA dashboard data is available."
+      />
+    );
   }
 
   const metrics = result.data.metrics;
@@ -269,6 +301,7 @@ export function SlaDashboard() {
                   variant={view === item.value ? "default" : "outline"}
                   onClick={() => {
                     setView(item.value);
+
                     setPage(1);
                   }}
                 >
@@ -282,7 +315,7 @@ export function SlaDashboard() {
         <CardContent>
           {result.data.tickets.length === 0 ? (
             <EmptyState
-              icon={CheckCircle2}
+              icon={Clock3}
               title="No SLA tickets"
               description="No tickets match the selected SLA view."
             />
@@ -310,10 +343,14 @@ export function SlaDashboard() {
                     {result.data.tickets.map((ticket) => {
                       const state = getTicketSlaState({
                         resolvedAt: ticket.resolvedAt,
+
                         firstResponseBreachedAt:
                           ticket.firstResponse.breachedAt,
+
                         resolutionBreachedAt: ticket.resolution.breachedAt,
+
                         firstResponseDueAt: ticket.firstResponse.dueAt,
+
                         resolutionDueAt: ticket.resolution.dueAt,
                       });
 

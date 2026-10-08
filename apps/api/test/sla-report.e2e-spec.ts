@@ -315,6 +315,40 @@ describe('SLA Reports API (e2e)', () => {
     expect(body.data.byPriority).toEqual([]);
     expect(body.data.byTeam).toEqual([]);
     expect(body.data.byAssignee).toEqual([]);
+    expect(body.data.breachAnalysis).toEqual({
+      summary: {
+        tracked: 0,
+        breached: 0,
+        breachRate: 0,
+        atRisk: 0,
+        atRiskRate: 0,
+      },
+
+      firstResponse: {
+        breached: 0,
+        breachRate: 0,
+      },
+
+      resolution: {
+        breached: 0,
+        breachRate: 0,
+      },
+
+      trend: [],
+
+      dimensions: {
+        priority: [],
+        team: [],
+        assignee: [],
+      },
+
+      drillDown: {
+        allBreached: '/reports/sla?view=BREACHED',
+        atRisk: '/reports/sla?view=AT_RISK',
+        firstResponseBreached: '/reports/sla?view=FIRST_RESPONSE_BREACHED',
+        resolutionBreached: '/reports/sla?view=RESOLUTION_BREACHED',
+      },
+    });
   });
 
   it('should count SLA-tracked tickets only', async () => {
@@ -2428,6 +2462,246 @@ describe('SLA Reports API (e2e)', () => {
         complianceRate: 100,
         breachRate: 0,
       });
+    } finally {
+      await database.organization.delete({
+        where: {
+          id: foreign.organization.id,
+        },
+      });
+
+      await database.user.deleteMany({
+        where: {
+          id: {
+            in: [
+              foreign.owner.userId,
+              foreign.admin.userId,
+              foreign.agent.userId,
+              foreign.requester.userId,
+            ],
+          },
+        },
+      });
+    }
+  });
+
+  it('should return the breach analysis contract', async () => {
+    const response = await reportRequest().expect(200);
+
+    const body = response.body as SlaReportResponse;
+
+    expect(body.data.breachAnalysis).toEqual(
+      expect.objectContaining({
+        summary: expect.objectContaining({
+          tracked: expect.any(Number),
+          breached: expect.any(Number),
+          breachRate: expect.any(Number),
+          atRisk: expect.any(Number),
+          atRiskRate: expect.any(Number),
+        }),
+
+        firstResponse: expect.objectContaining({
+          breached: expect.any(Number),
+          breachRate: expect.any(Number),
+        }),
+
+        resolution: expect.objectContaining({
+          breached: expect.any(Number),
+          breachRate: expect.any(Number),
+        }),
+
+        trend: expect.any(Array),
+
+        dimensions: expect.objectContaining({
+          priority: expect.any(Array),
+          team: expect.any(Array),
+          assignee: expect.any(Array),
+        }),
+
+        drillDown: expect.objectContaining({
+          allBreached: '/reports/sla?view=BREACHED',
+          atRisk: '/reports/sla?view=AT_RISK',
+          firstResponseBreached: '/reports/sla?view=FIRST_RESPONSE_BREACHED',
+          resolutionBreached: '/reports/sla?view=RESOLUTION_BREACHED',
+        }),
+      }),
+    );
+  });
+
+  it('should calculate breach volume and rate', async () => {
+    const now = new Date();
+
+    await createSlaTicket({
+      title: 'Compliant',
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+    });
+
+    await createSlaTicket({
+      title: 'Breached',
+      firstResponseDueAt: new Date(now.getTime() - 60 * 60 * 1000),
+      resolutionDueAt: new Date(now.getTime() - 30 * 60 * 1000),
+      firstResponseBreachedAt: new Date(now.getTime() - 20 * 60 * 1000),
+    });
+
+    const response = await reportRequest().expect(200);
+
+    const body = response.body as SlaReportResponse;
+
+    expect(body.data.breachAnalysis.summary.tracked).toBe(2);
+    expect(body.data.breachAnalysis.summary.breached).toBe(1);
+    expect(body.data.breachAnalysis.summary.breachRate).toBe(50);
+  });
+
+  it('should calculate at-risk volume and rate', async () => {
+    const now = new Date();
+
+    await createSlaTicket({
+      title: 'At risk',
+      firstResponseDueAt: new Date(now.getTime() + 3 * 60 * 1000),
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+      firstResponseMinutes: 20,
+    });
+
+    await createSlaTicket({
+      title: 'Active',
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+      firstResponseMinutes: 120,
+    });
+
+    const response = await reportRequest().expect(200);
+
+    const body = response.body as SlaReportResponse;
+
+    expect(body.data.breachAnalysis.summary.tracked).toBe(2);
+    expect(body.data.breachAnalysis.summary.atRisk).toBe(1);
+    expect(body.data.breachAnalysis.summary.atRiskRate).toBe(50);
+  });
+
+  it('should calculate first-response and resolution breach breakdown', async () => {
+    const now = new Date();
+
+    await createSlaTicket({
+      title: 'First response breached',
+      firstResponseDueAt: new Date(now.getTime() - 60 * 60 * 1000),
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+      firstResponseBreachedAt: new Date(now.getTime() - 30 * 60 * 1000),
+    });
+
+    await createSlaTicket({
+      title: 'Resolution breached',
+      status: 'RESOLVED',
+      resolvedAt: new Date(now.getTime() - 10 * 60 * 1000),
+      firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+      resolutionDueAt: new Date(now.getTime() - 60 * 60 * 1000),
+      firstRespondedAt: new Date(now.getTime() - 30 * 60 * 1000),
+      resolutionBreachedAt: new Date(now.getTime() - 20 * 60 * 1000),
+    });
+
+    const response = await reportRequest().expect(200);
+
+    const body = response.body as SlaReportResponse;
+
+    expect(body.data.breachAnalysis.firstResponse.breached).toBe(1);
+    expect(body.data.breachAnalysis.resolution.breached).toBe(1);
+  });
+
+  it('should calculate breach analysis by day', async () => {
+    const dayOne = new Date('2026-10-01T10:00:00.000Z');
+    const dayTwo = new Date('2026-10-02T10:00:00.000Z');
+
+    await createSlaTicket({
+      title: 'Day one breach',
+      createdAt: dayOne,
+      firstResponseDueAt: new Date(dayOne.getTime() - 60 * 60 * 1000),
+      resolutionDueAt: new Date(dayOne.getTime() + 4 * 60 * 60 * 1000),
+      firstResponseBreachedAt: new Date(dayOne.getTime() - 20 * 60 * 1000),
+    });
+
+    await createSlaTicket({
+      title: 'Day two active',
+      createdAt: dayTwo,
+      firstResponseDueAt: new Date(dayTwo.getTime() + 60 * 60 * 1000),
+      resolutionDueAt: new Date(dayTwo.getTime() + 4 * 60 * 60 * 1000),
+    });
+
+    const response = await reportRequest()
+      .query({
+        from: '2026-10-01T00:00:00.000Z',
+        to: '2026-10-02T23:59:59.999Z',
+      })
+      .expect(200);
+
+    const body = response.body as SlaReportResponse;
+
+    expect(body.data.breachAnalysis.trend).toHaveLength(2);
+
+    expect(body.data.breachAnalysis.trend[0]).toMatchObject({
+      tracked: 1,
+      breached: 1,
+      breachRate: 100,
+    });
+
+    expect(body.data.breachAnalysis.trend[1]).toMatchObject({
+      tracked: 1,
+      breached: 0,
+      breachRate: 0,
+    });
+  });
+
+  it('should keep breach analysis organization-scoped', async () => {
+    const now = new Date();
+
+    await createSlaTicket({
+      title: 'Own breach',
+      firstResponseDueAt: new Date(now.getTime() - 60 * 60 * 1000),
+      resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+      firstResponseBreachedAt: new Date(now.getTime() - 20 * 60 * 1000),
+    });
+
+    const foreign = await createOrganizationTestFixture(app);
+
+    try {
+      await database.ticket.create({
+        data: {
+          organizationId: foreign.organization.id,
+          requesterId: foreign.requester.userId,
+          ticketNumber: `FOREIGN-BREACH-${randomUUID()
+            .slice(0, 8)
+            .toUpperCase()}`,
+          title: 'Foreign breach',
+          description: 'Foreign breach',
+          priority: 'URGENT',
+          status: 'OPEN',
+          type: 'INCIDENT',
+          sla: {
+            create: {
+              firstResponseMinutes: 60,
+              resolutionMinutes: 240,
+              firstResponseDueAt: new Date(now.getTime() - 60 * 60 * 1000),
+              resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+              firstResponseBreachedAt: new Date(now.getTime() - 30 * 60 * 1000),
+            },
+          },
+        },
+      });
+
+      const response = await reportRequest().expect(200);
+
+      const body = response.body as SlaReportResponse;
+
+      expect(body.data.breachAnalysis.summary.tracked).toBe(1);
+      expect(body.data.breachAnalysis.summary.breached).toBe(1);
+
+      expect(body.data.breachAnalysis.dimensions.priority).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            key: 'MEDIUM',
+            tracked: 1,
+            breached: 1,
+          }),
+        ]),
+      );
     } finally {
       await database.organization.delete({
         where: {

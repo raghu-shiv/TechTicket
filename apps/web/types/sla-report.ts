@@ -12,7 +12,6 @@ export interface SlaReportComparisonMetric extends SlaReportMetric {
 export interface SlaReportComparison {
   firstResponse: SlaReportComparisonMetric;
   resolution: SlaReportComparisonMetric;
-
   complianceGapPercentagePoints: number | null;
   breachGapPercentagePoints: number | null;
 }
@@ -67,15 +66,9 @@ export interface SlaReportAssigneePoint {
   resolution: SlaReportMetric;
 }
 
-export interface SlaReportSummary {
-  totalTracked: number;
-  breached: number;
-  atRisk: number;
-  active: number;
-  resolved: number;
-  firstResponse: SlaReportMetric;
-  resolution: SlaReportMetric;
-}
+/* -------------------------------------------------------------------------- */
+/* 7-E.8 — Breach Analysis                                                   */
+/* -------------------------------------------------------------------------- */
 
 export interface SlaBreachDimensionPoint {
   tracked: number;
@@ -83,6 +76,11 @@ export interface SlaBreachDimensionPoint {
   breachRate: number;
   atRisk: number;
   atRiskRate: number;
+}
+
+export interface SlaBreachPriorityPoint extends SlaBreachDimensionPoint {
+  key: string;
+  label: string;
 }
 
 export interface SlaBreachNamedDimensionPoint extends SlaBreachDimensionPoint {
@@ -117,15 +115,8 @@ export interface SlaBreachAnalysis {
   trend: SlaBreachTrendPoint[];
 
   dimensions: {
-    priority: Array<
-      SlaBreachDimensionPoint & {
-        key: string;
-        label: string;
-      }
-    >;
-
+    priority: SlaBreachPriorityPoint[];
     team: SlaBreachNamedDimensionPoint[];
-
     assignee: SlaBreachNamedDimensionPoint[];
   };
 
@@ -139,22 +130,37 @@ export interface SlaBreachAnalysis {
 
 export interface SlaReportResponse {
   data: {
-    summary: SlaReportSummary;
+    summary: {
+      totalTracked: number;
+      breached: number;
+      atRisk: number;
+      active: number;
+      resolved: number;
+
+      firstResponse: SlaReportMetric;
+      resolution: SlaReportMetric;
+    };
+
     comparison: SlaReportComparison;
+
     trend: SlaReportTrendPoint[];
+
     byPriority: SlaReportPriorityPoint[];
+
     byTeam: SlaReportTeamPoint[];
+
     byAssignee: SlaReportAssigneePoint[];
+
     breachAnalysis: SlaBreachAnalysis;
   };
 
   meta: {
     query: {
-      dateField: 'createdAt' | 'updatedAt';
+      dateField: "createdAt" | "updatedAt";
       dateFrom: string | null;
       dateTo: string | null;
       organizationScoped: true;
-      queryVersion: 1;
+      queryVersion: number;
     };
   };
 }
