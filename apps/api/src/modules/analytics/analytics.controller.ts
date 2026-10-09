@@ -9,7 +9,7 @@ import { OrganizationGuard } from '../../common/organization/organization.guard'
 import type { OrganizationContext } from '../../common/organization/organization.types';
 
 import { AnalyticsQueryDto } from './dto/analytics-query.dto';
-
+import { TatReportQueryDto } from './dto/tat-report-query.dto';
 import { AnalyticsService } from './analytics.service';
 
 @Controller('reports/analytics')
@@ -59,5 +59,16 @@ export class AnalyticsController {
     query: AnalyticsQueryDto,
   ) {
     return this.analyticsService.getSlaReport(context, query);
+  }
+
+  @Get('tat')
+  getTatReport(
+    @OrganizationContextParam()
+    context: OrganizationContext,
+
+    @Query()
+    query: TatReportQueryDto,
+  ) {
+    return this.analyticsService.getTatReport(context, query);
   }
 }

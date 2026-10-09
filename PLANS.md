@@ -567,83 +567,112 @@ Verification:
 
 ## 7-F --- TAT Reports
 
-**IN PROGRESS — NEXT IMPLEMENTATION MILESTONE**
+**COMPLETE AND VERIFIED — 7-F.1 THROUGH 7-F.6**
 
-Build a dedicated Time-to-Action (TAT) reporting surface for actual elapsed
-operational time. TAT is distinct from SLA compliance: it measures how long an
-operational milestone actually took, while an SLA target is the allowed or
-contractual duration used to determine compliance/breach.
+Implemented a dedicated Time-to-Action (TAT) reporting surface for actual
+elapsed operational time. TAT is distinct from SLA compliance: it measures
+how long an operational milestone actually took, while an SLA target is the
+allowed or contractual duration used to determine compliance or breach.
 
-### Metric definitions and calculation rules
+### Implementation sequence and completion
 
-- **Time to first response:** elapsed time from ticket creation to the first
-  authoritative first-response event/timestamp. Candidate definition:
-  `firstResponseAt - createdAt`, only after the schema and event semantics are
-  confirmed. Do not substitute an SLA due time or target duration.
-- **Time to resolution:** elapsed time from ticket creation to the authoritative
-  resolution timestamp. Candidate definition: `resolvedAt - createdAt`, only
-  after the actual field and status-transition semantics are confirmed.
-- **Average TAT:** arithmetic mean of valid elapsed durations in the selected
-  cohort; report the eligible sample count.
-- **Median TAT:** 50th percentile of valid elapsed durations; calculate from
-  the underlying ticket-level durations, not from averages of grouped values.
-- **Percentiles:** expose clearly labelled percentile values (at minimum P50;
-  additional percentiles such as P75, P90, and P95 should be confirmed during
-  API contract design). Document the percentile method and use it consistently.
-- **Dimensions:** calculate TAT by priority, team, employee/assignee, and
-  product. Preserve explicit unassigned/no-team and unclassified-product
-  buckets where meaningful; do not treat ticket type as a product surrogate.
-- **Trend:** aggregate actual elapsed TAT over a documented date bucket and
-  date-field basis. Define whether cohorts are grouped by ticket creation or
-  completion date before implementation and keep the selected basis explicit.
-- **Resolved-ticket drill-down:** link aggregate results to the existing
-  organization-scoped Ticket Library query, preserving the relevant dimension
-  and date filters.
+#### 7-F.1 — Confirm metric semantics
 
-### Data and scope rules
+**COMPLETE**
 
-- First implementation task: inspect the current Prisma schema, ticket service,
-  activity model, and existing Analytics/Product Dashboard calculations to
-  identify authoritative timestamps and avoid inventing field names or events.
-- Use only persisted, trustworthy timestamps. If first response is represented
-  by activity history rather than a dedicated field, define and test the
-  authoritative event selection before aggregation.
-- A TAT duration is actual elapsed time, not the SLA target, remaining time,
-  due time, compliance rate, or breach status. SLA policy/snapshot data may be
-  joined only for a separate comparison, never as the TAT source of truth.
-- Exclude tickets from a metric when its required endpoint timestamp is
-  missing; do not silently treat missing timestamps as zero. Open tickets may
-  contribute to first-response TAT only if a first response exists, but must
-  not contribute to completed time-to-resolution statistics until resolved.
-- Reject or explicitly handle negative/inconsistent timestamp intervals.
-- Confirm whether elapsed duration means wall-clock time or business-calendar
-  time. Do not silently apply business hours or pause rules unless an existing
-  authoritative domain rule requires them.
-- Preserve organization isolation, authentication/authorization, shared date
-  and ticket-dimension filters, empty/no-data behavior, and stable pagination.
-- Do not introduce duplicate ticket, activity, SLA, or product persistence.
+- First-response TAT is `TicketSla.firstRespondedAt - Ticket.createdAt`.
+- Resolution TAT is `Ticket.resolvedAt - Ticket.createdAt`.
+- Durations are actual elapsed time in minutes; SLA targets, due times,
+  remaining time, compliance, and breach status are not TAT inputs.
+- Missing endpoint timestamps are excluded from the relevant metric sample.
+- Negative elapsed durations are excluded as invalid.
+- First-response and resolution metrics use their own eligible ticket samples.
+- Cohort selection uses the report's date-range/date-field and ticket-dimension
+  filters.
+- Percentiles are calculated from valid ticket-level durations, not from
+  averages of grouped values, and are exposed as labelled percentile metrics.
 
-### Planned report coverage
+#### 7-F.2 — TAT API contract
 
-- Time to first response and time to resolution
-- Average, median, and documented percentiles
-- TAT by priority, team, employee/assignee, and product
-- TAT trend over time
-- Resolved-ticket drill-down
-- Filtered results, sample counts, and explicit missing-data behavior
+**COMPLETE**
 
-### Verification boundary
+- Added `tat-report.types.ts` for the report response contract.
+- Added `TatReportQueryDto`, reusing the existing analytics query DTO and
+  normalization/filter system.
+- Added the organization-scoped `GET /api/v1/reports/analytics/tat` endpoint.
+- Preserved the shared analytics date-range and ticket-dimension filter model.
 
-- Unit/API tests for timestamp selection, duration math, averages, medians,
-  percentile method, grouping, trend buckets, and null/inconsistent timestamps
-- E2E coverage for authentication, organization isolation, filters, empty data,
-  and dimension-level aggregation correctness
-- Drill-down URL and Ticket Library filter-preservation tests
-- Backend TypeScript, lint, and production build
-- Frontend TypeScript, lint, tests, and production build
-- Regression tests for Analytics Dashboard, Product Dashboard, and SLA Reports
+#### 7-F.3 — Aggregations
 
-TAT reporting must never equate an SLA target duration with actual elapsed TAT.
+**COMPLETE**
+
+- Summary metrics for first-response and resolution TAT.
+- Average, median/P50, and supported additional percentiles.
+- TAT trends over time.
+- Breakdowns by priority, team, assignee, and product.
+- Eligible sample counts and explicit handling of missing/invalid durations.
+- Organization-scoped aggregation and existing analytics filter behavior.
+
+#### 7-F.4 — Resolved-ticket drill-down
+
+**COMPLETE**
+
+- Added resolved-ticket drill-down using actual resolution timestamps and
+  elapsed resolution duration.
+- The count and paginated rows use the same organization scope and filter
+  conditions so totals and returned rows remain consistent.
+- Preserved the applicable date and ticket-dimension filters.
+
+#### 7-F.5 — Frontend API and UI
+
+**COMPLETE**
+
+- Added the typed frontend API client and independent React Query hook.
+- Added the TAT report UI at `/reports/tat`.
+- Added the report landing-page link.
+- Added frontend tests for report contracts, query behavior, and UI behavior.
+
+#### 7-F.6 — Verification
+
+**COMPLETE**
+
+Verification results recorded for this milestone:
+
+```text
+TAT API E2E                 12/12 tests passed
+API lint                    0 warnings / 0 errors
+API production build        PASS
+Frontend TypeScript         PASS
+Frontend lint               PASS
+Frontend tests              14 test files, 188/188 tests passed
+Frontend production build   PASS
+Next.js route generation    /reports/tat present
+```
+
+The frontend suite includes 13 focused TAT report tests. Verification covers
+the report contract and UI tests, filtering and metric behavior, and the
+organization-scoped reporting boundary exercised by the TAT API E2E tests.
+The attached full E2E log contains external email-provider `422` log messages
+during existing tests; these are application log errors, not reported TAT test
+failures.
+
+### Final metric and data boundary
+
+- First-response TAT: `TicketSla.firstRespondedAt - Ticket.createdAt`.
+- Resolution TAT: `Ticket.resolvedAt - Ticket.createdAt`.
+- Durations are measured in elapsed minutes.
+- Missing endpoint timestamps do not become zero-valued samples.
+- Negative intervals are excluded as invalid.
+- SLA targets and due times are never substituted for actual elapsed TAT.
+- Existing ticket, SLA, and product persistence is reused; no duplicate
+  operational persistence is introduced.
+- Authentication, authorization, and organization isolation remain required.
+- The resolved-ticket count and page query share the same organization scope
+  and filter conditions.
+
+7-F.1 through 7-F.6 are complete and verified. TAT Reports is ready for use;
+Phase 7 as a whole remains in progress until its remaining milestones and the
+full Phase 7 verification boundary are completed.
 
 ## 7-G --- Usage Reports
 

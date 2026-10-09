@@ -28,6 +28,13 @@ import type {
   ProductAnalyticsTrendPoint,
 } from './product-analytics.types';
 
+import type {
+  TatDimensionPoint,
+  TatMetric,
+  TatReportResponse,
+  TatTrendPoint,
+} from './tat-report.types';
+
 export interface AnalyticsFoundationMetadata {
   dataSource: 'tickets';
   organizationScoped: true;
@@ -2710,6 +2717,738 @@ ORDER BY
 
           organizationScoped: true,
           queryVersion: 1,
+        },
+      },
+    };
+  }
+
+  private mapTatMetric(row: {
+    sampleSize: number;
+    averageMinutes: number | null;
+    medianMinutes: number | null;
+    p75Minutes: number | null;
+    p90Minutes: number | null;
+    p95Minutes: number | null;
+  }): TatMetric {
+    const numericOrNull = (value: number | null) =>
+      value === null ? null : Number(Number(value).toFixed(2));
+
+    return {
+      sampleSize: Number(row.sampleSize),
+      averageMinutes: numericOrNull(row.averageMinutes),
+      medianMinutes: numericOrNull(row.medianMinutes),
+      p75Minutes: numericOrNull(row.p75Minutes),
+      p90Minutes: numericOrNull(row.p90Minutes),
+      p95Minutes: numericOrNull(row.p95Minutes),
+    };
+  }
+
+  async getTatReport(
+    context: OrganizationContext,
+    input: AnalyticsQueryInput = {},
+  ): Promise<TatReportResponse> {
+    const query = this.queryService.normalize(context, input);
+    const where = this.queryService.buildTicketWhere(query);
+
+    /*
+     * Build one authoritative duration row per ticket before aggregation.
+     * Negative intervals are excluded as invalid data.
+     *
+     * TAT uses TicketSla.firstRespondedAt and Ticket.resolvedAt.
+     * SLA target minutes/due timestamps are intentionally not selected.
+     */
+    const validTickets = Prisma.sql`
+    SELECT
+      "Ticket"."id",
+      "Ticket"."ticketNumber",
+      "Ticket"."title",
+      "Ticket"."status"::text AS "status",
+      "Ticket"."priority"::text AS "priority",
+      "Ticket"."type"::text AS "type",
+      "Ticket"."organizationId",
+      "Ticket"."teamId",
+      "Team"."name" AS "teamName",
+      "Ticket"."assigneeId",
+      "Assignee"."name" AS "assigneeName",
+      "Ticket"."productId",
+      "Product"."name" AS "productName",
+      "Ticket"."createdAt",
+      "Ticket"."updatedAt",
+      "Ticket"."resolvedAt",
+      "TicketSla"."firstRespondedAt",
+
+      EXTRACT(EPOCH FROM (
+        "TicketSla"."firstRespondedAt" - "Ticket"."createdAt"
+      )) / 60.0 AS "firstResponseMinutes",
+
+      EXTRACT(EPOCH FROM (
+        "Ticket"."resolvedAt" - "Ticket"."createdAt"
+      )) / 60.0 AS "resolutionMinutes"
+
+    FROM "Ticket"
+
+    LEFT JOIN "TicketSla"
+      ON "TicketSla"."ticketId" = "Ticket"."id"
+
+    LEFT JOIN "Team"
+      ON "Team"."id" = "Ticket"."teamId"
+
+    LEFT JOIN "user" AS "Assignee"
+      ON "Assignee"."id" = "Ticket"."assigneeId"
+
+    LEFT JOIN "Product"
+      ON "Product"."id" = "Ticket"."productId"
+
+    WHERE ${where}
+  `;
+
+    type MetricRow = {
+      sampleSize: number;
+      averageMinutes: number | null;
+      medianMinutes: number | null;
+      p75Minutes: number | null;
+      p90Minutes: number | null;
+      p95Minutes: number | null;
+    };
+
+    /*
+     * PostgreSQL cannot use a SELECT alias in the same SELECT list, so compute
+     * first-response and resolution metric sets in independent CTE queries.
+     */
+    const [
+      totalsRows,
+      firstResponseRows,
+      resolutionRows,
+      trendRows,
+      priorityRows,
+      teamRows,
+      assigneeRows,
+      productRows,
+      drillDownRows,
+    ] = await Promise.all([
+      this.database.$queryRaw<
+        Array<{
+          ticketCount: number;
+          resolvedTicketCount: number;
+        }>
+      >`
+      WITH valid AS (${validTickets})
+      SELECT
+        COUNT(*)::int AS "ticketCount",
+        COUNT(*) FILTER (
+          WHERE "resolvedAt" IS NOT NULL
+        )::int AS "resolvedTicketCount"
+      FROM valid
+    `,
+
+      this.database.$queryRaw<Array<MetricRow>>`
+      WITH valid AS (${validTickets})
+      SELECT
+        COUNT(*) FILTER (
+          WHERE "firstResponseMinutes" >= 0
+        )::int AS "sampleSize",
+        AVG("firstResponseMinutes") FILTER (
+          WHERE "firstResponseMinutes" >= 0
+        ) AS "averageMinutes",
+        percentile_cont(0.50) WITHIN GROUP (
+          ORDER BY "firstResponseMinutes"
+        ) FILTER (WHERE "firstResponseMinutes" >= 0) AS "medianMinutes",
+        percentile_cont(0.75) WITHIN GROUP (
+          ORDER BY "firstResponseMinutes"
+        ) FILTER (WHERE "firstResponseMinutes" >= 0) AS "p75Minutes",
+        percentile_cont(0.90) WITHIN GROUP (
+          ORDER BY "firstResponseMinutes"
+        ) FILTER (WHERE "firstResponseMinutes" >= 0) AS "p90Minutes",
+        percentile_cont(0.95) WITHIN GROUP (
+          ORDER BY "firstResponseMinutes"
+        ) FILTER (WHERE "firstResponseMinutes" >= 0) AS "p95Minutes"
+      FROM valid
+    `,
+
+      this.database.$queryRaw<Array<MetricRow>>`
+      WITH valid AS (${validTickets})
+      SELECT
+        COUNT(*) FILTER (
+          WHERE "resolutionMinutes" >= 0
+        )::int AS "sampleSize",
+        AVG("resolutionMinutes") FILTER (
+          WHERE "resolutionMinutes" >= 0
+        ) AS "averageMinutes",
+        percentile_cont(0.50) WITHIN GROUP (
+          ORDER BY "resolutionMinutes"
+        ) FILTER (WHERE "resolutionMinutes" >= 0) AS "medianMinutes",
+        percentile_cont(0.75) WITHIN GROUP (
+          ORDER BY "resolutionMinutes"
+        ) FILTER (WHERE "resolutionMinutes" >= 0) AS "p75Minutes",
+        percentile_cont(0.90) WITHIN GROUP (
+          ORDER BY "resolutionMinutes"
+        ) FILTER (WHERE "resolutionMinutes" >= 0) AS "p90Minutes",
+        percentile_cont(0.95) WITHIN GROUP (
+          ORDER BY "resolutionMinutes"
+        ) FILTER (WHERE "resolutionMinutes" >= 0) AS "p95Minutes"
+      FROM valid
+    `,
+
+      this.database.$queryRaw<
+        Array<{
+          date: Date;
+          createdTickets: number;
+
+          frSampleSize: number;
+          frAverage: number | null;
+          frMedian: number | null;
+          frP75: number | null;
+          frP90: number | null;
+          frP95: number | null;
+
+          rSampleSize: number;
+          rAverage: number | null;
+          rMedian: number | null;
+          rP75: number | null;
+          rP90: number | null;
+          rP95: number | null;
+        }>
+      >`
+      WITH valid AS (${validTickets})
+      SELECT
+        date_trunc('day', "createdAt") AS "date",
+        COUNT(*)::int AS "createdTickets",
+
+        COUNT(*) FILTER (
+          WHERE "firstResponseMinutes" >= 0
+        )::int AS "frSampleSize",
+        AVG("firstResponseMinutes") FILTER (
+          WHERE "firstResponseMinutes" >= 0
+        ) AS "frAverage",
+        percentile_cont(0.50) WITHIN GROUP (
+          ORDER BY "firstResponseMinutes"
+        ) FILTER (WHERE "firstResponseMinutes" >= 0) AS "frMedian",
+        percentile_cont(0.75) WITHIN GROUP (
+          ORDER BY "firstResponseMinutes"
+        ) FILTER (WHERE "firstResponseMinutes" >= 0) AS "frP75",
+        percentile_cont(0.90) WITHIN GROUP (
+          ORDER BY "firstResponseMinutes"
+        ) FILTER (WHERE "firstResponseMinutes" >= 0) AS "frP90",
+        percentile_cont(0.95) WITHIN GROUP (
+          ORDER BY "firstResponseMinutes"
+        ) FILTER (WHERE "firstResponseMinutes" >= 0) AS "frP95",
+
+        COUNT(*) FILTER (
+          WHERE "resolutionMinutes" >= 0
+        )::int AS "rSampleSize",
+        AVG("resolutionMinutes") FILTER (
+          WHERE "resolutionMinutes" >= 0
+        ) AS "rAverage",
+        percentile_cont(0.50) WITHIN GROUP (
+          ORDER BY "resolutionMinutes"
+        ) FILTER (WHERE "resolutionMinutes" >= 0) AS "rMedian",
+        percentile_cont(0.75) WITHIN GROUP (
+          ORDER BY "resolutionMinutes"
+        ) FILTER (WHERE "resolutionMinutes" >= 0) AS "rP75",
+        percentile_cont(0.90) WITHIN GROUP (
+          ORDER BY "resolutionMinutes"
+        ) FILTER (WHERE "resolutionMinutes" >= 0) AS "rP90",
+        percentile_cont(0.95) WITHIN GROUP (
+          ORDER BY "resolutionMinutes"
+        ) FILTER (WHERE "resolutionMinutes" >= 0) AS "rP95"
+
+      FROM valid
+      GROUP BY date_trunc('day', "createdAt")
+      ORDER BY "date" ASC
+    `,
+
+      this.database.$queryRaw<
+        Array<{
+          priority: string;
+          resolvedTickets: number;
+          frSampleSize: number;
+          frAverage: number | null;
+          frMedian: number | null;
+          frP75: number | null;
+          frP90: number | null;
+          frP95: number | null;
+          rSampleSize: number;
+          rAverage: number | null;
+          rMedian: number | null;
+          rP75: number | null;
+          rP90: number | null;
+          rP95: number | null;
+        }>
+      >`
+      WITH valid AS (${validTickets})
+      SELECT
+        "priority",
+        COUNT(*) FILTER (
+          WHERE "resolvedAt" IS NOT NULL
+        )::int AS "resolvedTickets",
+
+        COUNT(*) FILTER (
+          WHERE "firstResponseMinutes" >= 0
+        )::int AS "frSampleSize",
+        AVG("firstResponseMinutes") FILTER (
+          WHERE "firstResponseMinutes" >= 0
+        ) AS "frAverage",
+        percentile_cont(0.50) WITHIN GROUP (
+          ORDER BY "firstResponseMinutes"
+        ) FILTER (WHERE "firstResponseMinutes" >= 0) AS "frMedian",
+        percentile_cont(0.75) WITHIN GROUP (
+          ORDER BY "firstResponseMinutes"
+        ) FILTER (WHERE "firstResponseMinutes" >= 0) AS "frP75",
+        percentile_cont(0.90) WITHIN GROUP (
+          ORDER BY "firstResponseMinutes"
+        ) FILTER (WHERE "firstResponseMinutes" >= 0) AS "frP90",
+        percentile_cont(0.95) WITHIN GROUP (
+          ORDER BY "firstResponseMinutes"
+        ) FILTER (WHERE "firstResponseMinutes" >= 0) AS "frP95",
+
+        COUNT(*) FILTER (
+          WHERE "resolutionMinutes" >= 0
+        )::int AS "rSampleSize",
+        AVG("resolutionMinutes") FILTER (
+          WHERE "resolutionMinutes" >= 0
+        ) AS "rAverage",
+        percentile_cont(0.50) WITHIN GROUP (
+          ORDER BY "resolutionMinutes"
+        ) FILTER (WHERE "resolutionMinutes" >= 0) AS "rMedian",
+        percentile_cont(0.75) WITHIN GROUP (
+          ORDER BY "resolutionMinutes"
+        ) FILTER (WHERE "resolutionMinutes" >= 0) AS "rP75",
+        percentile_cont(0.90) WITHIN GROUP (
+          ORDER BY "resolutionMinutes"
+        ) FILTER (WHERE "resolutionMinutes" >= 0) AS "rP90",
+        percentile_cont(0.95) WITHIN GROUP (
+          ORDER BY "resolutionMinutes"
+        ) FILTER (WHERE "resolutionMinutes" >= 0) AS "rP95"
+
+      FROM valid
+      GROUP BY "priority"
+      ORDER BY CASE "priority"
+        WHEN 'URGENT' THEN 1
+        WHEN 'HIGH' THEN 2
+        WHEN 'MEDIUM' THEN 3
+        WHEN 'LOW' THEN 4
+        ELSE 5
+      END
+    `,
+
+      this.database.$queryRaw<
+        Array<{
+          id: string | null;
+          label: string | null;
+          resolvedTickets: number;
+          frSampleSize: number;
+          frAverage: number | null;
+          frMedian: number | null;
+          frP75: number | null;
+          frP90: number | null;
+          frP95: number | null;
+          rSampleSize: number;
+          rAverage: number | null;
+          rMedian: number | null;
+          rP75: number | null;
+          rP90: number | null;
+          rP95: number | null;
+        }>
+      >`
+      WITH valid AS (${validTickets})
+      SELECT
+        "teamId" AS "id",
+        COALESCE("teamName", 'Unassigned') AS "label",
+        COUNT(*) FILTER (
+          WHERE "resolvedAt" IS NOT NULL
+        )::int AS "resolvedTickets",
+
+        COUNT(*) FILTER (
+          WHERE "firstResponseMinutes" >= 0
+        )::int AS "frSampleSize",
+        AVG("firstResponseMinutes") FILTER (
+          WHERE "firstResponseMinutes" >= 0
+        ) AS "frAverage",
+        percentile_cont(0.50) WITHIN GROUP (
+          ORDER BY "firstResponseMinutes"
+        ) FILTER (WHERE "firstResponseMinutes" >= 0) AS "frMedian",
+        percentile_cont(0.75) WITHIN GROUP (
+          ORDER BY "firstResponseMinutes"
+        ) FILTER (WHERE "firstResponseMinutes" >= 0) AS "frP75",
+        percentile_cont(0.90) WITHIN GROUP (
+          ORDER BY "firstResponseMinutes"
+        ) FILTER (WHERE "firstResponseMinutes" >= 0) AS "frP90",
+        percentile_cont(0.95) WITHIN GROUP (
+          ORDER BY "firstResponseMinutes"
+        ) FILTER (WHERE "firstResponseMinutes" >= 0) AS "frP95",
+
+        COUNT(*) FILTER (
+          WHERE "resolutionMinutes" >= 0
+        )::int AS "rSampleSize",
+        AVG("resolutionMinutes") FILTER (
+          WHERE "resolutionMinutes" >= 0
+        ) AS "rAverage",
+        percentile_cont(0.50) WITHIN GROUP (
+          ORDER BY "resolutionMinutes"
+        ) FILTER (WHERE "resolutionMinutes" >= 0) AS "rMedian",
+        percentile_cont(0.75) WITHIN GROUP (
+          ORDER BY "resolutionMinutes"
+        ) FILTER (WHERE "resolutionMinutes" >= 0) AS "rP75",
+        percentile_cont(0.90) WITHIN GROUP (
+          ORDER BY "resolutionMinutes"
+        ) FILTER (WHERE "resolutionMinutes" >= 0) AS "rP90",
+        percentile_cont(0.95) WITHIN GROUP (
+          ORDER BY "resolutionMinutes"
+        ) FILTER (WHERE "resolutionMinutes" >= 0) AS "rP95"
+
+      FROM valid
+      GROUP BY "teamId", "teamName"
+      ORDER BY "resolvedTickets" DESC, "label" ASC
+    `,
+
+      this.database.$queryRaw<
+        Array<{
+          id: string | null;
+          label: string | null;
+          resolvedTickets: number;
+          frSampleSize: number;
+          frAverage: number | null;
+          frMedian: number | null;
+          frP75: number | null;
+          frP90: number | null;
+          frP95: number | null;
+          rSampleSize: number;
+          rAverage: number | null;
+          rMedian: number | null;
+          rP75: number | null;
+          rP90: number | null;
+          rP95: number | null;
+        }>
+      >`
+      WITH valid AS (${validTickets})
+      SELECT
+        "assigneeId" AS "id",
+        COALESCE("assigneeName", 'Unassigned') AS "label",
+        COUNT(*) FILTER (
+          WHERE "resolvedAt" IS NOT NULL
+        )::int AS "resolvedTickets",
+
+        COUNT(*) FILTER (
+          WHERE "firstResponseMinutes" >= 0
+        )::int AS "frSampleSize",
+        AVG("firstResponseMinutes") FILTER (
+          WHERE "firstResponseMinutes" >= 0
+        ) AS "frAverage",
+        percentile_cont(0.50) WITHIN GROUP (
+          ORDER BY "firstResponseMinutes"
+        ) FILTER (WHERE "firstResponseMinutes" >= 0) AS "frMedian",
+        percentile_cont(0.75) WITHIN GROUP (
+          ORDER BY "firstResponseMinutes"
+        ) FILTER (WHERE "firstResponseMinutes" >= 0) AS "frP75",
+        percentile_cont(0.90) WITHIN GROUP (
+          ORDER BY "firstResponseMinutes"
+        ) FILTER (WHERE "firstResponseMinutes" >= 0) AS "frP90",
+        percentile_cont(0.95) WITHIN GROUP (
+          ORDER BY "firstResponseMinutes"
+        ) FILTER (WHERE "firstResponseMinutes" >= 0) AS "frP95",
+
+        COUNT(*) FILTER (
+          WHERE "resolutionMinutes" >= 0
+        )::int AS "rSampleSize",
+        AVG("resolutionMinutes") FILTER (
+          WHERE "resolutionMinutes" >= 0
+        ) AS "rAverage",
+        percentile_cont(0.50) WITHIN GROUP (
+          ORDER BY "resolutionMinutes"
+        ) FILTER (WHERE "resolutionMinutes" >= 0) AS "rMedian",
+        percentile_cont(0.75) WITHIN GROUP (
+          ORDER BY "resolutionMinutes"
+        ) FILTER (WHERE "resolutionMinutes" >= 0) AS "rP75",
+        percentile_cont(0.90) WITHIN GROUP (
+          ORDER BY "resolutionMinutes"
+        ) FILTER (WHERE "resolutionMinutes" >= 0) AS "rP90",
+        percentile_cont(0.95) WITHIN GROUP (
+          ORDER BY "resolutionMinutes"
+        ) FILTER (WHERE "resolutionMinutes" >= 0) AS "rP95"
+
+      FROM valid
+      GROUP BY "assigneeId", "assigneeName"
+      ORDER BY "resolvedTickets" DESC, "label" ASC
+    `,
+
+      this.database.$queryRaw<
+        Array<{
+          id: string | null;
+          label: string | null;
+          resolvedTickets: number;
+          frSampleSize: number;
+          frAverage: number | null;
+          frMedian: number | null;
+          frP75: number | null;
+          frP90: number | null;
+          frP95: number | null;
+          rSampleSize: number;
+          rAverage: number | null;
+          rMedian: number | null;
+          rP75: number | null;
+          rP90: number | null;
+          rP95: number | null;
+        }>
+      >`
+      WITH valid AS (${validTickets})
+      SELECT
+        "productId" AS "id",
+        COALESCE("productName", 'Unclassified') AS "label",
+        COUNT(*) FILTER (
+          WHERE "resolvedAt" IS NOT NULL
+        )::int AS "resolvedTickets",
+
+        COUNT(*) FILTER (
+          WHERE "firstResponseMinutes" >= 0
+        )::int AS "frSampleSize",
+        AVG("firstResponseMinutes") FILTER (
+          WHERE "firstResponseMinutes" >= 0
+        ) AS "frAverage",
+        percentile_cont(0.50) WITHIN GROUP (
+          ORDER BY "firstResponseMinutes"
+        ) FILTER (WHERE "firstResponseMinutes" >= 0) AS "frMedian",
+        percentile_cont(0.75) WITHIN GROUP (
+          ORDER BY "firstResponseMinutes"
+        ) FILTER (WHERE "firstResponseMinutes" >= 0) AS "frP75",
+        percentile_cont(0.90) WITHIN GROUP (
+          ORDER BY "firstResponseMinutes"
+        ) FILTER (WHERE "firstResponseMinutes" >= 0) AS "frP90",
+        percentile_cont(0.95) WITHIN GROUP (
+          ORDER BY "firstResponseMinutes"
+        ) FILTER (WHERE "firstResponseMinutes" >= 0) AS "frP95",
+
+        COUNT(*) FILTER (
+          WHERE "resolutionMinutes" >= 0
+        )::int AS "rSampleSize",
+        AVG("resolutionMinutes") FILTER (
+          WHERE "resolutionMinutes" >= 0
+        ) AS "rAverage",
+        percentile_cont(0.50) WITHIN GROUP (
+          ORDER BY "resolutionMinutes"
+        ) FILTER (WHERE "resolutionMinutes" >= 0) AS "rMedian",
+        percentile_cont(0.75) WITHIN GROUP (
+          ORDER BY "resolutionMinutes"
+        ) FILTER (WHERE "resolutionMinutes" >= 0) AS "rP75",
+        percentile_cont(0.90) WITHIN GROUP (
+          ORDER BY "resolutionMinutes"
+        ) FILTER (WHERE "resolutionMinutes" >= 0) AS "rP90",
+        percentile_cont(0.95) WITHIN GROUP (
+          ORDER BY "resolutionMinutes"
+        ) FILTER (WHERE "resolutionMinutes" >= 0) AS "rP95"
+
+      FROM valid
+      GROUP BY "productId", "productName"
+      ORDER BY "resolvedTickets" DESC, "label" ASC
+    `,
+
+      /*
+       * First page of resolved-ticket detail is returned by this report.
+       * A dedicated paginated drill-down route can reuse this query shape
+       * if the UI later needs a separate all-results page.
+       */
+      this.database.$queryRaw<
+        Array<{
+          id: string;
+          ticketNumber: string;
+          title: string;
+          status: string;
+          priority: string;
+          createdAt: Date;
+          firstRespondedAt: Date | null;
+          resolvedAt: Date;
+          resolutionMinutes: number;
+          teamId: string | null;
+          teamName: string | null;
+          assigneeId: string | null;
+          assigneeName: string | null;
+          productId: string | null;
+          productName: string | null;
+        }>
+      >`
+      WITH valid AS (${validTickets})
+      SELECT
+        "id",
+        "ticketNumber",
+        "title",
+        "status",
+        "priority",
+        "createdAt",
+        "firstRespondedAt",
+        "resolvedAt",
+        "resolutionMinutes",
+        "teamId",
+        "teamName",
+        "assigneeId",
+        "assigneeName",
+        "productId",
+        "productName"
+      FROM valid
+      WHERE
+        "resolvedAt" IS NOT NULL
+        AND "resolutionMinutes" >= 0
+      ORDER BY "resolvedAt" DESC, "id" ASC
+      LIMIT ${query.limit}
+      OFFSET ${this.queryService.offset(query)}
+    `,
+    ]);
+
+    const totals = totalsRows[0];
+    const firstResponse = this.mapTatMetric(firstResponseRows[0]);
+    const resolution = this.mapTatMetric(resolutionRows[0]);
+
+    const mapDimension = (row: {
+      id: string | null;
+      label: string | null;
+      resolvedTickets: number;
+      frSampleSize: number;
+      frAverage: number | null;
+      frMedian: number | null;
+      frP75: number | null;
+      frP90: number | null;
+      frP95: number | null;
+      rSampleSize: number;
+      rAverage: number | null;
+      rMedian: number | null;
+      rP75: number | null;
+      rP90: number | null;
+      rP95: number | null;
+    }): TatDimensionPoint => ({
+      id: row.id,
+      key: row.id ?? '__UNASSIGNED__',
+      label: row.label ?? 'Unknown',
+      resolvedTickets: Number(row.resolvedTickets),
+      firstResponse: this.mapTatMetric({
+        sampleSize: row.frSampleSize,
+        averageMinutes: row.frAverage,
+        medianMinutes: row.frMedian,
+        p75Minutes: row.frP75,
+        p90Minutes: row.frP90,
+        p95Minutes: row.frP95,
+      }),
+      resolution: this.mapTatMetric({
+        sampleSize: row.rSampleSize,
+        averageMinutes: row.rAverage,
+        medianMinutes: row.rMedian,
+        p75Minutes: row.rP75,
+        p90Minutes: row.rP90,
+        p95Minutes: row.rP95,
+      }),
+    });
+
+    const trend: TatTrendPoint[] = trendRows.map((row) => ({
+      date: row.date.toISOString(),
+      createdTickets: Number(row.createdTickets),
+      firstResponse: this.mapTatMetric({
+        sampleSize: row.frSampleSize,
+        averageMinutes: row.frAverage,
+        medianMinutes: row.frMedian,
+        p75Minutes: row.frP75,
+        p90Minutes: row.frP90,
+        p95Minutes: row.frP95,
+      }),
+      resolution: this.mapTatMetric({
+        sampleSize: row.rSampleSize,
+        averageMinutes: row.rAverage,
+        medianMinutes: row.rMedian,
+        p75Minutes: row.rP75,
+        p90Minutes: row.rP90,
+        p95Minutes: row.rP95,
+      }),
+    }));
+
+    /*
+     * For category grouping, we use a common result shape. Priority has no
+     * nullable ID and is therefore emitted using the priority string as key.
+     */
+    const byPriority = priorityRows.map((row) => ({
+      key: row.priority,
+      label: row.priority.replaceAll('_', ' '),
+      resolvedTickets: Number(row.resolvedTickets),
+      firstResponse: this.mapTatMetric({
+        sampleSize: row.frSampleSize,
+        averageMinutes: row.frAverage,
+        medianMinutes: row.frMedian,
+        p75Minutes: row.frP75,
+        p90Minutes: row.frP90,
+        p95Minutes: row.frP95,
+      }),
+      resolution: this.mapTatMetric({
+        sampleSize: row.rSampleSize,
+        averageMinutes: row.rAverage,
+        medianMinutes: row.rMedian,
+        p75Minutes: row.rP75,
+        p90Minutes: row.rP90,
+        p95Minutes: row.rP95,
+      }),
+    }));
+
+    const resolvedTickets = drillDownRows.map((row) => ({
+      id: row.id,
+      ticketNumber: row.ticketNumber,
+      title: row.title,
+      status: row.status,
+      priority: row.priority,
+      createdAt: row.createdAt.toISOString(),
+      firstRespondedAt: row.firstRespondedAt?.toISOString() ?? null,
+      resolvedAt: row.resolvedAt.toISOString(),
+      resolutionMinutes: Number(Number(row.resolutionMinutes).toFixed(2)),
+      team: row.teamId
+        ? { id: row.teamId, name: row.teamName ?? 'Unknown' }
+        : null,
+      assignee: row.assigneeId
+        ? { id: row.assigneeId, name: row.assigneeName ?? 'Unknown' }
+        : null,
+      product: row.productId
+        ? { id: row.productId, name: row.productName ?? 'Unknown' }
+        : null,
+    }));
+
+    const total = Number(totals?.resolvedTicketCount ?? 0);
+
+    return {
+      data: {
+        summary: {
+          ticketCount: Number(totals?.ticketCount ?? 0),
+          resolvedTicketCount: total,
+          firstResponse,
+          resolution,
+        },
+
+        trend,
+
+        byPriority,
+        byTeam: teamRows.map(mapDimension),
+        byAssignee: assigneeRows.map(mapDimension),
+        byProduct: productRows.map(mapDimension),
+
+        resolvedTickets,
+      },
+
+      meta: {
+        pagination: {
+          page: query.page,
+          limit: query.limit,
+          total,
+          totalPages: Math.ceil(total / query.limit),
+        },
+
+        query: {
+          dateField: query.dateField,
+          dateFrom: query.dateRange.from?.toISOString() ?? null,
+          dateTo: query.dateRange.to?.toISOString() ?? null,
+          priority: query.dimensions.priority ?? null,
+          status: query.dimensions.status ?? null,
+          type: query.dimensions.type ?? null,
+          teamId: query.dimensions.teamId ?? null,
+          assigneeId: query.dimensions.assigneeId ?? null,
+          requesterId: query.dimensions.requesterId ?? null,
+          productId: query.dimensions.productId ?? null,
+          unassigned: query.dimensions.unassigned ?? null,
+          unassignedTeam: query.dimensions.unassignedTeam ?? null,
+          organizationScoped: true,
+          queryVersion: 1,
+          durationUnit: 'minutes',
+          trendCohort: 'createdAt',
         },
       },
     };
