@@ -541,18 +541,26 @@ Verification:
 
 ### 7-E.10 --- SLA Reports UI
 
-**NEXT**
+**COMPLETE AND VERIFIED**
 
-- Dedicated SLA Reports presentation using the verified API contract
-- Summary KPIs
-- Trend visualization
-- Priority/team/assignee breakdowns
-- First-response vs resolution comparison
-- Breach/at-risk presentation
-- Ticket drill-down where supported
+- Dedicated SLA Reports presentation using the verified SLA analytics API contract
+- Summary KPIs for tracked, breached, at-risk, active, and resolved tickets
+- SLA trend visualization
+- Priority, team, and assignee breakdowns
+- First-response versus resolution SLA comparison
+- Breach and at-risk analysis with supported drill-down links
+- Existing report filters, URL synchronization, and date-range validation
+- Separate `/reports/sla-reports` route for SLA reporting
+- Preserved `/reports/sla` as the operational SLA Dashboard
+- No changes to authoritative SLA persistence or backend aggregation
 
-The SLA Reports surface must not replace or alter the existing operational SLA
-Dashboard; it extends reporting using the same authoritative SLA data.
+Verification:
+
+- Frontend TypeScript check: Passed
+- Frontend lint: Passed
+- Frontend unit tests: **175 passed across 13 test files**
+- Frontend production build: Passed
+- Next.js route generation: Both SLA routes present
 
 ## 7-F --- TAT Reports
 
@@ -1388,15 +1396,24 @@ Phase 6-A through Phase 6-F are **COMPLETE AND VERIFIED**.
 
 The current implementation milestone is:
 
-**7-E.10 --- SLA Reports UI**
+**7-F --- TAT Reports**
 
-- Dedicated SLA Reports presentation using the verified API contract
-- Summary KPIs
-- Trend visualization
-- Priority/team/assignee breakdowns
-- First-response vs resolution comparison
-- Breach/at-risk presentation
-- Ticket drill-down where supported
+Time-to-action/performance reporting using timestamps already captured by
+the ticket domain.
 
-The SLA Reports surface must not replace or alter the existing operational SLA
-Dashboard; it extends reporting using the same authoritative SLA data.
+Planned metrics:
+
+- Time to first response
+- Time to resolution
+- Average TAT
+- Median TAT
+- Percentile TAT where useful
+- TAT by priority
+- TAT by team
+- TAT by assignee
+- TAT by product/category where supported
+- TAT trends over time
+- Resolved-ticket drill-down
+
+Metric definitions must explicitly distinguish actual elapsed TAT from SLA
+target duration.

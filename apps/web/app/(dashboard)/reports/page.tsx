@@ -1,4 +1,10 @@
-import { BarChart3, ChevronRight, Clock3, TicketCheck } from "lucide-react";
+import {
+  BarChart3,
+  ChevronRight,
+  Clock3,
+  ShieldAlert,
+  TicketCheck,
+} from "lucide-react";
 import Link from "next/link";
 
 import { AnalyticsDashboard } from "@/components/reports/AnalyticsDashboard";
@@ -9,9 +15,17 @@ const reports = [
   {
     title: "SLA Dashboard",
     description:
-      "Monitor SLA performance, active and at-risk tickets, breaches, compliance, and resolution performance.",
+      "Monitor active, at-risk, and breached SLA tickets, compliance, and operational performance.",
     icon: Clock3,
     href: "/reports/sla",
+    status: "Available",
+  },
+  {
+    title: "SLA Reports",
+    description:
+      "Analyze SLA trends, compliance, breach rates, at-risk tickets, and performance by priority, team, and assignee.",
+    icon: ShieldAlert,
+    href: "/reports/sla-reports",
     status: "Available",
   },
   {

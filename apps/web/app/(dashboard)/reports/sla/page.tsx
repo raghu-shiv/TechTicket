@@ -1,15 +1,15 @@
 import { PageHeader } from "@/components/shared";
-import { SlaReport } from "@/components/reports/SlaReport";
+import { SlaDashboard } from "@/components/reports/SlaDashboard";
 
-export default function SlaReportPage() {
+export default function SlaDashboardPage() {
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader
-        title="SLA Reports"
-        description="Analyze SLA compliance, breaches, at-risk tickets, and performance."
+        title="SLA Dashboard"
+        description="Monitor active, at-risk, and breached SLA tickets, compliance, and operational performance."
       />
 
-      <SlaReport />
+      <SlaDashboard />
     </div>
   );
 }
