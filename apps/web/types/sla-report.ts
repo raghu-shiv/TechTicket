@@ -159,6 +159,19 @@ export interface SlaReportResponse {
       dateField: "createdAt" | "updatedAt";
       dateFrom: string | null;
       dateTo: string | null;
+
+      status: string | null;
+      priority: string | null;
+      type: string | null;
+
+      teamId: string | null;
+      assigneeId: string | null;
+      requesterId: string | null;
+      productId: string | null;
+
+      unassigned: boolean | null;
+      unassignedTeam: boolean | null;
+
       organizationScoped: true;
       queryVersion: number;
     };

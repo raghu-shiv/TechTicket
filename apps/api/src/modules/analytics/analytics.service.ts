@@ -2695,6 +2695,19 @@ ORDER BY
           dateField: query.dateField,
           dateFrom: query.dateRange.from?.toISOString() ?? null,
           dateTo: query.dateRange.to?.toISOString() ?? null,
+
+          status: query.dimensions.status ?? null,
+          priority: query.dimensions.priority ?? null,
+          type: query.dimensions.type ?? null,
+
+          teamId: query.dimensions.teamId ?? null,
+          assigneeId: query.dimensions.assigneeId ?? null,
+          requesterId: query.dimensions.requesterId ?? null,
+          productId: query.dimensions.productId ?? null,
+
+          unassigned: query.dimensions.unassigned ?? null,
+          unassignedTeam: query.dimensions.unassignedTeam ?? null,
+
           organizationScoped: true,
           queryVersion: 1,
         },

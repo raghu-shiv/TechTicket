@@ -2723,4 +2723,190 @@ describe('SLA Reports API (e2e)', () => {
       });
     }
   });
+
+  describe('shared analytics filters', () => {
+    it('should filter SLA tickets by status', async () => {
+      const now = new Date();
+
+      await createSlaTicket({
+        title: 'Open SLA ticket',
+        status: 'OPEN',
+        firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+        resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+      });
+
+      await createSlaTicket({
+        title: 'Resolved SLA ticket',
+        status: 'RESOLVED',
+        resolvedAt: now,
+        firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+        resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+      });
+
+      const response = await reportRequest()
+        .query({ status: 'OPEN' })
+        .expect(200);
+
+      const body = response.body as SlaReportResponse;
+
+      expect(body.data.summary.totalTracked).toBe(1);
+    });
+
+    it('should filter SLA tickets by priority', async () => {
+      const now = new Date();
+
+      await createSlaTicket({
+        title: 'High-priority SLA ticket',
+        priority: 'HIGH',
+        firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+        resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+      });
+
+      await createSlaTicket({
+        title: 'Low-priority SLA ticket',
+        priority: 'LOW',
+        firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+        resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+      });
+
+      const response = await reportRequest()
+        .query({ priority: 'HIGH' })
+        .expect(200);
+
+      const body = response.body as SlaReportResponse;
+
+      expect(body.data.summary.totalTracked).toBe(1);
+    });
+
+    it('should filter SLA tickets by type', async () => {
+      const now = new Date();
+
+      const incident = await createSlaTicket({
+        title: 'Incident SLA ticket',
+        firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+        resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+      });
+
+      // The createSlaTicket helper uses INCIDENT as its default ticket type.
+      expect(incident).toBeDefined();
+
+      const response = await reportRequest()
+        .query({ type: 'INCIDENT' })
+        .expect(200);
+
+      const body = response.body as SlaReportResponse;
+
+      expect(body.data.summary.totalTracked).toBe(1);
+    });
+
+    it('should filter SLA tickets by requester ID', async () => {
+      const now = new Date();
+
+      await createSlaTicket({
+        title: 'Requester-filtered SLA ticket',
+        firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+        resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+      });
+
+      const response = await reportRequest()
+        .query({ requesterId: fixture.requester.userId })
+        .expect(200);
+
+      const body = response.body as SlaReportResponse;
+
+      expect(body.data.summary.totalTracked).toBe(1);
+    });
+
+    it('should filter SLA tickets with no assignee', async () => {
+      const now = new Date();
+
+      await createSlaTicket({
+        title: 'Unassigned SLA ticket',
+        assigneeId: null,
+        firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+        resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+      });
+
+      const response = await reportRequest()
+        .query({ unassigned: 'true' })
+        .expect(200);
+
+      const body = response.body as SlaReportResponse;
+
+      expect(body.data.summary.totalTracked).toBe(1);
+    });
+
+    it('should filter SLA tickets with no team', async () => {
+      const now = new Date();
+
+      await createSlaTicket({
+        title: 'Ticket without a team',
+        teamId: null,
+        firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+        resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+      });
+
+      const response = await reportRequest()
+        .query({ unassignedTeam: 'true' })
+        .expect(200);
+
+      const body = response.body as SlaReportResponse;
+
+      expect(body.data.summary.totalTracked).toBe(1);
+    });
+
+    it('should reject assigneeId combined with unassigned', async () => {
+      await reportRequest()
+        .query({
+          assigneeId: fixture.agent.userId,
+          unassigned: 'true',
+        })
+        .expect(400);
+    });
+
+    it('should reject teamId combined with unassignedTeam', async () => {
+      await reportRequest()
+        .query({
+          teamId: 'some-team-id',
+          unassignedTeam: 'true',
+        })
+        .expect(400);
+    });
+
+    it('should return zero tracked tickets for a non-matching product ID', async () => {
+      const now = new Date();
+
+      await createSlaTicket({
+        title: 'SLA ticket without matching product',
+        firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+        resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+      });
+
+      const response = await reportRequest()
+        .query({ productId: 'non-matching-product-id' })
+        .expect(200);
+
+      const body = response.body as SlaReportResponse;
+
+      expect(body.data.summary.totalTracked).toBe(0);
+    });
+
+    it('should return zero tracked tickets for a non-matching team ID', async () => {
+      const now = new Date();
+
+      await createSlaTicket({
+        title: 'SLA ticket without matching team',
+        firstResponseDueAt: new Date(now.getTime() + 60 * 60 * 1000),
+        resolutionDueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000),
+      });
+
+      const response = await reportRequest()
+        .query({ teamId: 'non-matching-team-id' })
+        .expect(200);
+
+      const body = response.body as SlaReportResponse;
+
+      expect(body.data.summary.totalTracked).toBe(0);
+    });
+  });
 });

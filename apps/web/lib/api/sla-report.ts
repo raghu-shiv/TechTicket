@@ -7,15 +7,18 @@ export interface GetSlaReportParams {
   from?: string;
   to?: string;
   dateField?: "createdAt" | "updatedAt";
+
   priority?: string;
+  status?: string;
+  type?: string;
+
   teamId?: string;
   assigneeId?: string;
   requesterId?: string;
-  status?: string;
-  type?: string;
+  productId?: string;
+
   unassigned?: boolean;
   unassignedTeam?: boolean;
-  productId?: string;
 }
 
 function buildQuery(params: GetSlaReportParams): string {
