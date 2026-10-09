@@ -8,17 +8,19 @@ approval workflows.
 
 ## Current Status
 
-**Phase 4 --- Workflow is complete and verified through Phase 4-J ---
-Ticket History Refinement. Phase 5-A through Phase 5-F are COMPLETE AND
-VERIFIED. Phase 6-A through Phase 6-F — SLA Policy Management, Ticket SLA
-Timer Experience, SLA Warnings, SLA Breach Operations, SLA Dashboard, and
-Full SLA Verification — are COMPLETE AND VERIFIED. Phase 7-A and 7-B are
-COMPLETE AND VERIFIED, and 7-C.0 through 7-C.4 — Product Analytics — are
-COMPLETE AND VERIFIED.**
+**Phase 4 — Workflow is complete and verified through Phase 4-J — Ticket
+History Refinement. Phase 5-A through Phase 5-F are COMPLETE AND VERIFIED.
+Phase 6-A through Phase 6-F — SLA Policy Management, Ticket SLA Timer
+Experience, SLA Warnings, SLA Breach Operations, SLA Dashboard, and Full SLA
+Verification — are COMPLETE AND VERIFIED. Phase 7-A through 7-C.4 — Analytics
+Foundation, Analytics Dashboard, and Product Analytics — are COMPLETE AND
+VERIFIED. Phase 7-E.1 through 7-E.10 — SLA Reports — are COMPLETE AND
+VERIFIED.**
 
-Phase 6 — SLA is **COMPLETE AND VERIFIED**. Phase 7 — Analytics is the
-current implementation phase, with 7-E.1 — SLA Reports Foundation + API
-Contract + Backend Aggregation Design next.
+Phase 7 — Analytics is still in progress. The next implementation milestone
+is **7-F — TAT Reports**, a separate reporting surface for actual elapsed
+operational time, explicitly distinguished from SLA target duration and
+compliance.
 
 Latest verified backend state:
 
@@ -480,16 +482,29 @@ http://localhost:3000
 
 The reporting surface currently includes:
 
-- `/reports` — Reports landing page
-- `/reports/sla` — SLA Dashboard
+- `/reports` — Reports landing page and analytics dashboards
+- `/reports/sla` — operational SLA Dashboard for active, at-risk, breached,
+  and resolved SLA ticket views
+- `/reports/sla-reports` — SLA compliance and breach reporting, including
+  summary metrics, trends, priority/team/assignee breakdowns, and analysis
 
-The SLA Dashboard is backed by organization-scoped server-side aggregation
-and paginated ticket drill-down. Phase 7 now extends this reporting surface
-with the verified Analytics Foundation and Analytics Dashboard. Product
-analytics is enabled by the verified Product Taxonomy Foundation; the Product
-Dashboard API is the next implementation milestone. Future Phase 7 work
-includes employee analytics, SLA/TAT/usage/Ticket Library reports, and
-controlled exports.
+The SLA Dashboard and SLA Reports are separate surfaces. Both reuse existing
+organization-scoped ticket/SLA data; SLA Reports do not introduce duplicate
+SLA persistence. Frontend TypeScript, lint, 175 tests across 13 test files,
+and the production build passed for the current SLA Reports UI checkpoint.
+Manual browser verification of filters, visualizations, and drill-down behavior
+remains recommended. Some breach-analysis links include a `view` query
+parameter; preselection of that view in the operational dashboard is not
+claimed as verified.
+
+The next report is **7-F — TAT Reports**. TAT measures actual elapsed time
+between operational timestamps (for example, ticket creation and first
+response/resolution). It is not the SLA target duration, remaining time,
+compliance rate, or breach status. The first implementation step is to inspect
+the schema and activity history to identify authoritative timestamps before
+settling the API contract. Planned metrics include first-response and
+resolution TAT, average/median/percentiles, breakdowns by priority/team/
+employee/product, trends, and resolved-ticket drill-down.
 
 ## Repository Structure
 
@@ -913,7 +928,7 @@ Frontend tests                  7/7 files, 86/86 tests passed
 Frontend production build       SUCCESS
 ```
 
-Phase 6 — SLA is complete and verified. Phase 7 — Analytics is in progress; 7-C Product Analytics is complete and verified, and 7-E.1 SLA Reports Foundation + API Contract + Backend Aggregation Design is next.
+Phase 6 — SLA is complete and verified. Phase 7 — Analytics is in progress; 7-A through 7-C.4 and 7-E.1 through 7-E.10 are complete and verified. The next implementation milestone is 7-F — TAT Reports.
 
 ## Phase 7 — Analytics
 
@@ -1047,17 +1062,47 @@ Agent/employee performance and workload reporting.
 
 ### 7-E — SLA Reports
 
-**PLANNED**
+**COMPLETE AND VERIFIED**
 
-Broader SLA compliance, breach, at-risk, trend, and drill-down reporting
-using the existing `TicketSla` snapshot semantics.
+The dedicated `/reports/sla-reports` route provides SLA summary KPIs, trends,
+priority/team/assignee breakdowns, first-response versus resolution SLA
+comparison, filters, breach/at-risk analysis, and drill-down links. The
+operational SLA Dashboard remains at `/reports/sla`.
+
+Frontend verification: TypeScript PASS, lint PASS, 175 tests passed across 13
+test files, and production build PASS. Manual browser verification remains
+recommended; dashboard view-query preselection is not claimed as verified.
 
 ### 7-F — TAT Reports
 
-**PLANNED**
+**IN PROGRESS — NEXT IMPLEMENTATION MILESTONE**
 
-Time-to-first-response, time-to-resolution, average/median/percentile TAT,
-dimension-level TAT, trends, and resolved-ticket drill-down.
+Dedicated actual-elapsed-time reporting, separate from SLA compliance.
+
+Metric definitions:
+
+- **Time to first response:** first authoritative response timestamp minus
+  ticket creation timestamp, after schema/event semantics are confirmed.
+- **Time to resolution:** authoritative resolution timestamp minus ticket
+  creation timestamp, after the real field and transition semantics are
+  confirmed.
+- **Average TAT:** arithmetic mean of valid ticket-level elapsed durations.
+- **Median TAT:** 50th percentile of the valid ticket-level durations.
+- **Percentiles:** labelled percentile values (candidate P50/P75/P90/P95),
+  with the calculation method documented and consistently applied.
+- **Dimensions:** priority, team, employee/assignee, and product.
+- **Trend:** elapsed-time aggregates over an explicitly selected date basis.
+- **Drill-down:** resolved tickets linked to the existing organization-scoped
+  Ticket Library with relevant filters preserved.
+
+The first task is to inspect the Prisma schema, ticket service, activity model,
+and existing analytics calculations for authoritative timestamp sources.
+Missing endpoint timestamps must not be treated as zero; unresolved tickets
+must not enter completed resolution-time statistics. TAT is actual elapsed
+time, not SLA target duration, due/remaining time, compliance, or breach state.
+Confirm wall-clock versus business-calendar semantics before implementation.
+Preserve organization isolation, authorization, shared filters, empty states,
+and avoid duplicate domain persistence.
 
 ### 7-G — Usage Reports
 
@@ -1184,8 +1229,8 @@ TypeScript, builds, full regression, and documentation.
 -   7-C.3 Product Drill-down --- **COMPLETE AND VERIFIED**
 -   7-C.4 Product Verification --- **COMPLETE AND VERIFIED**
 -   7-D Employee Dashboard --- **PLANNED**
--   7-E SLA Reports --- **IN PROGRESS — 7-E.1 NEXT**
--   7-F TAT Reports --- **PLANNED**
+-   7-E SLA Reports --- **COMPLETE AND VERIFIED**
+-   7-F TAT Reports --- **IN PROGRESS — NEXT IMPLEMENTATION**
 -   7-G Usage Reports --- **PLANNED**
 -   7-H Ticket Library Reports --- **PLANNED**
 -   7-I Exports --- **PLANNED**
@@ -1255,6 +1300,8 @@ Phase 7-C.1 Product Dashboard API    COMPLETE AND VERIFIED
 Phase 7-C.2 Product Dashboard UI     COMPLETE AND VERIFIED
 Phase 7-C.3 Product Drill-down        COMPLETE AND VERIFIED
 Phase 7-C.4 Product Verification      COMPLETE AND VERIFIED
+Phase 7-E SLA Reports UI              COMPLETE AND VERIFIED
+Phase 7-F TAT Reports                 IN PROGRESS — NEXT IMPLEMENTATION
 ```
 
 ## Phase 6 — SLA
@@ -1283,16 +1330,18 @@ Implementation boundary:
 
 Phase 4 is complete.
 Phase 5-A through Phase 5-F are **COMPLETE AND VERIFIED**.
-Phase 6-A — SLA Policy Management is **COMPLETE AND VERIFIED**.
-Phase 6-B — Ticket SLA Timer Experience is **COMPLETE AND VERIFIED**.
-Phase 6-C — SLA Warnings is **COMPLETE AND VERIFIED**.
-Phase 6-D — SLA Breach Operations is **COMPLETE AND VERIFIED**.
+Phase 6-A through Phase 6-F are **COMPLETE AND VERIFIED**.
+Phase 7-A through 7-C.4 are **COMPLETE AND VERIFIED**.
+Phase 7-E.1 through 7-E.10 — SLA Reports — are **COMPLETE AND VERIFIED**.
 
 The current implementation milestone is:
 
-**7-E.1 — SLA Reports Foundation + API Contract + Backend Aggregation Design**
+**7-F — TAT Reports**
 
-Continue from the verified Analytics and SLA foundations. Reuse the existing
-organization-scoped analytics/query infrastructure, `TicketSla` snapshot data,
-and SLA Dashboard semantics. Do not introduce duplicate SLA persistence or
-invent new SLA business rules.
+Start by inspecting the schema and ticket/activity services for authoritative
+first-response and resolution timestamps. Define and test actual elapsed TAT
+independently of SLA target durations and compliance. Implement average,
+median, documented percentiles, priority/team/employee/product breakdowns,
+trends, and resolved-ticket drill-down while preserving organization-scoped
+query boundaries and existing Ticket Library behavior. Complete backend and
+frontend verification before marking this milestone complete.
