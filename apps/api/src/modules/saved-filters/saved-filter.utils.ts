@@ -16,6 +16,8 @@ export function normalizeSavedFilter(
     teamId: filters.teamId?.trim() || undefined,
     requesterId: filters.requesterId?.trim() || undefined,
 
+    productId: filters.productId?.trim() || undefined,
+
     unassigned: filters.unassigned,
     unassignedTeam: filters.unassignedTeam,
     slaBreached: filters.slaBreached,

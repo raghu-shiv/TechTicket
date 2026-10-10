@@ -21,6 +21,10 @@ import { DatabaseService } from '../../database/database.service';
 import type { OrganizationContext } from '../../common/organization/organization.types';
 import { TicketActivityService } from './ticket-activity.service';
 import { TICKET_EVENTS } from './ticket-events';
+import {
+  buildTicketLibraryWhere,
+  type TicketLibraryFilters,
+} from './ticket-library-query';
 
 interface CreateTicketInput {
   title: string;
@@ -48,32 +52,11 @@ export class TicketsService {
 
   async findAll(
     context: OrganizationContext,
-    filters: {
-      page?: number;
-      limit?: number;
-      search?: string;
-      createdFrom?: string;
-      createdTo?: string;
-      updatedFrom?: string;
-      updatedTo?: string;
-      sortBy?: string;
-      sortOrder?: string;
-      status?: TicketStatus;
-      priority?: TicketPriority;
-      type?: TicketType;
-      assigneeId?: string;
-      teamId?: string;
-      productId?: string;
-      requesterId?: string;
-      unassigned?: boolean;
-      unassignedTeam?: boolean;
-      slaBreached?: boolean;
-    } = {},
+    filters: TicketLibraryFilters = {},
   ) {
     const page = filters.page ?? 1;
     const limit = filters.limit ?? 20;
     const skip = (page - 1) * limit;
-    const search = filters.search?.trim();
 
     if (filters.assigneeId !== undefined && filters.unassigned !== undefined) {
       throw new BadRequestException(
@@ -86,13 +69,6 @@ export class TicketsService {
         'teamId cannot be used with unassignedTeam',
       );
     }
-
-    const searchTerms = search
-      ? search
-          .split(/\s+/)
-          .map((term) => term.replace(/[&|!<>():*]/g, ''))
-          .filter(Boolean)
-      : [];
 
     const createdFrom = filters.createdFrom
       ? new Date(filters.createdFrom)
@@ -135,127 +111,7 @@ export class TicketsService {
       [key: string]: 'asc' | 'desc';
     };
 
-    const where = {
-      organizationId: context.organizationId,
-
-      ...(filters.productId !== undefined && {
-        productId: filters.productId,
-      }),
-
-      ...(search && {
-        OR: [
-          {
-            ticketNumber: {
-              contains: search,
-              mode: 'insensitive' as const,
-            },
-          },
-          ...(searchTerms.length > 0
-            ? [
-                {
-                  AND: searchTerms.map((term) => ({
-                    OR: [
-                      {
-                        title: {
-                          search: term,
-                        },
-                      },
-                      {
-                        description: {
-                          search: term,
-                        },
-                      },
-                    ],
-                  })),
-                },
-              ]
-            : []),
-        ],
-      }),
-
-      ...(createdFrom || createdTo
-        ? {
-            createdAt: {
-              ...(createdFrom && { gte: createdFrom }),
-              ...(createdTo && { lte: createdTo }),
-            },
-          }
-        : {}),
-
-      ...(updatedFrom || updatedTo
-        ? {
-            updatedAt: {
-              ...(updatedFrom && { gte: updatedFrom }),
-              ...(updatedTo && { lte: updatedTo }),
-            },
-          }
-        : {}),
-
-      ...(filters.status !== undefined && {
-        status: filters.status,
-      }),
-
-      ...(filters.priority !== undefined && {
-        priority: filters.priority,
-      }),
-
-      ...(filters.type !== undefined && {
-        type: filters.type,
-      }),
-
-      ...(filters.assigneeId !== undefined && {
-        assigneeId: filters.assigneeId,
-      }),
-
-      ...(filters.teamId !== undefined && {
-        teamId: filters.teamId,
-      }),
-
-      ...(filters.requesterId !== undefined && {
-        requesterId: filters.requesterId,
-      }),
-      /*
-       * Unassigned queue contract:
-       *
-       * unassigned=true
-       *   -> only tickets with no individual assignee.
-       *
-       * unassigned=false
-       *   -> only tickets with an individual assignee.
-       *
-       * The queue is always organization-scoped by the base
-       * organizationId predicate above.
-       *
-       * This intentionally does not depend on team assignment:
-       * a ticket may have a teamId while remaining individually
-       * unassigned.
-       *
-       * assigneeId and unassigned are mutually exclusive and are
-       * validated above.
-       */
-      ...(filters.unassigned !== undefined && {
-        assigneeId: filters.unassigned ? null : { not: null },
-      }),
-      ...(filters.unassignedTeam !== undefined && {
-        teamId: filters.unassignedTeam ? null : { not: null },
-      }),
-      ...(filters.slaBreached === true && {
-        sla: {
-          OR: [
-            {
-              firstResponseBreachedAt: {
-                not: null,
-              },
-            },
-            {
-              resolutionBreachedAt: {
-                not: null,
-              },
-            },
-          ],
-        },
-      }),
-    };
+    const where = buildTicketLibraryWhere(context, filters);
 
     const [tickets, total] = await Promise.all([
       this.database.ticket.findMany({

@@ -2,6 +2,7 @@ import {
   BarChart3,
   ChevronRight,
   Clock3,
+  ListFilter,
   ShieldAlert,
   TicketCheck,
   Timer,
@@ -35,6 +36,14 @@ const reports = [
       "Analyze actual first-response and resolution times, percentiles, trends, and performance by priority, team, assignee, and product.",
     icon: Timer,
     href: "/reports/tat",
+    status: "Available",
+  },
+  {
+    title: "Ticket Library Reports",
+    description:
+      "Explore tickets by status, priority, team, employee, date, unassigned state, and saved-filter criteria. Drill down into matching Ticket Library results.",
+    icon: ListFilter,
+    href: "/reports/ticket-library",
     status: "Available",
   },
   {

@@ -115,6 +115,12 @@ export function searchParamsToSavedFilter(
     definition.teamId = teamId;
   }
 
+  const productId = searchParams.get("productId")?.trim();
+
+  if (productId) {
+    definition.productId = productId;
+  }
+
   const requesterId = searchParams.get("requesterId")?.trim();
 
   if (requesterId) {
@@ -202,6 +208,8 @@ export function savedFilterToTicketParams(
     teamId: filters.teamId,
     requesterId: filters.requesterId,
 
+    productId: filters.productId,
+
     unassigned: filters.unassigned,
     unassignedTeam: filters.unassignedTeam,
     slaBreached: filters.slaBreached,
@@ -263,6 +271,7 @@ export function hasSavedFilterCriteria(
     filters.type ||
     filters.assigneeId ||
     filters.teamId ||
+    filters.productId ||
     filters.requesterId ||
     filters.unassigned ||
     filters.unassignedTeam ||

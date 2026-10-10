@@ -369,6 +369,18 @@ function TicketsContent() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  const teamIdParam = searchParams.get("teamId") ?? "";
+  const assigneeIdParam = searchParams.get("assigneeId") ?? "";
+  const requesterIdParam = searchParams.get("requesterId") ?? "";
+
+  const unassignedTeamParam = searchParams.get("unassignedTeam");
+  const unassignedTeam = unassignedTeamParam === "true";
+
+  const createdFromParam = searchParams.get("createdFrom") ?? "";
+  const createdToParam = searchParams.get("createdTo") ?? "";
+  const updatedFromParam = searchParams.get("updatedFrom") ?? "";
+  const updatedToParam = searchParams.get("updatedTo") ?? "";
+
   const organizationsQuery = useOrganizations();
 
   const organizationId = organizationsQuery.data?.[0]?.organizationId;
@@ -684,6 +696,48 @@ function TicketsContent() {
       });
     }
 
+    if (teamIdParam) {
+      filters.push({
+        key: "teamId",
+        label: `Team ID: ${teamIdParam}`,
+      });
+    }
+
+    if (assigneeIdParam) {
+      filters.push({
+        key: "assigneeId",
+        label: `Assignee ID: ${assigneeIdParam}`,
+      });
+    }
+
+    if (requesterIdParam) {
+      filters.push({
+        key: "requesterId",
+        label: `Requester ID: ${requesterIdParam}`,
+      });
+    }
+
+    if (unassignedTeam) {
+      filters.push({
+        key: "unassignedTeam",
+        label: "No team assigned",
+      });
+    }
+
+    if (createdFromParam || createdToParam) {
+      filters.push({
+        key: "createdFrom",
+        label: `Created: ${createdFromParam || "any"} – ${createdToParam || "any"}`,
+      });
+    }
+
+    if (updatedFromParam || updatedToParam) {
+      filters.push({
+        key: "updatedFrom",
+        label: `Updated: ${updatedFromParam || "any"} – ${updatedToParam || "any"}`,
+      });
+    }
+
     if (unassigned) {
       filters.push({
         key: "unassigned",
@@ -708,6 +762,14 @@ function TicketsContent() {
     unassigned,
     slaBreached,
     selectedProduct,
+    teamIdParam,
+    assigneeIdParam,
+    requesterIdParam,
+    unassignedTeam,
+    createdFromParam,
+    createdToParam,
+    updatedFromParam,
+    updatedToParam,
   ]);
 
   const hasFilters = activeFilters.length > 0;
@@ -727,8 +789,20 @@ function TicketsContent() {
       priority: priority || undefined,
       type: type || undefined,
       productId: productId || undefined,
+
+      teamId: teamIdParam || undefined,
+      assigneeId: assigneeIdParam || undefined,
+      requesterId: requesterIdParam || undefined,
+
+      createdFrom: createdFromParam || undefined,
+      createdTo: createdToParam || undefined,
+      updatedFrom: updatedFromParam || undefined,
+      updatedTo: updatedToParam || undefined,
+
       unassigned: unassigned || undefined,
+      unassignedTeam: unassignedTeam || undefined,
       slaBreached: slaBreached || undefined,
+
       sortBy,
       sortOrder,
     }),
@@ -739,7 +813,15 @@ function TicketsContent() {
       priority,
       type,
       productId,
+      teamIdParam,
+      assigneeIdParam,
+      requesterIdParam,
+      createdFromParam,
+      createdToParam,
+      updatedFromParam,
+      updatedToParam,
       unassigned,
+      unassignedTeam,
       slaBreached,
       sortBy,
       sortOrder,

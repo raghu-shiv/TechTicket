@@ -16,6 +16,7 @@ export interface SavedFilterDefinition {
   type?: TicketType;
   assigneeId?: string;
   teamId?: string;
+  productId?: string;
   requesterId?: string;
   unassigned?: boolean;
   unassignedTeam?: boolean;

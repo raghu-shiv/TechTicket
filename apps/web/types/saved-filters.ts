@@ -21,6 +21,8 @@ export interface SavedFilterDefinition {
   teamId?: string;
   requesterId?: string;
 
+  productId?: string;
+
   unassigned?: boolean;
   unassignedTeam?: boolean;
   slaBreached?: boolean;

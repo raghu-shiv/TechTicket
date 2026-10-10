@@ -11,11 +11,16 @@ import type { OrganizationContext } from '../../common/organization/organization
 import { AnalyticsQueryDto } from './dto/analytics-query.dto';
 import { TatReportQueryDto } from './dto/tat-report-query.dto';
 import { AnalyticsService } from './analytics.service';
+import { TicketLibraryReportQueryDto } from './dto/ticket-library-report-query.dto';
+import { TicketLibraryReportsService } from './ticket-library-reports.service';
 
 @Controller('reports/analytics')
 @UseGuards(AuthGuard, OrganizationGuard)
 export class AnalyticsController {
-  constructor(private readonly analyticsService: AnalyticsService) {}
+  constructor(
+    private readonly analyticsService: AnalyticsService,
+    private readonly ticketLibraryReportsService: TicketLibraryReportsService,
+  ) {}
 
   @Get('dashboard')
   getDashboard(
@@ -70,5 +75,15 @@ export class AnalyticsController {
     query: TatReportQueryDto,
   ) {
     return this.analyticsService.getTatReport(context, query);
+  }
+
+  @Get('ticket-library')
+  getTicketLibraryReport(
+    @OrganizationContextParam()
+    context: OrganizationContext,
+    @Query()
+    query: TicketLibraryReportQueryDto,
+  ) {
+    return this.ticketLibraryReportsService.getReport(context, query);
   }
 }

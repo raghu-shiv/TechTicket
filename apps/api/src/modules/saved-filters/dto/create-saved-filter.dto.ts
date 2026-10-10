@@ -80,6 +80,10 @@ export class SavedFilterDefinitionDto implements SavedFilterDefinition {
 
   @IsOptional()
   @IsString()
+  productId?: string;
+
+  @IsOptional()
+  @IsString()
   requesterId?: string;
 
   @IsOptional()
