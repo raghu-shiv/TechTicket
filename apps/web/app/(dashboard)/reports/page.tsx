@@ -6,6 +6,7 @@ import {
   ShieldAlert,
   TicketCheck,
   Timer,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -47,6 +48,14 @@ const reports = [
     status: "Available",
   },
   {
+    title: "Employee Dashboard",
+    description:
+      "Review agent workload distribution, response and resolution performance, SLA compliance, reopen activity, and authorized team comparisons.",
+    icon: Users,
+    href: "/reports/employees",
+    status: "Available",
+  },
+  {
     title: "Ticket Performance",
     description:
       "Analyze ticket volume, status distribution, priorities, and operational trends.",
@@ -72,12 +81,10 @@ export default function ReportsPage() {
           <h2 id="overall-analytics" className="text-xl font-semibold">
             Overall Analytics
           </h2>
-
           <p className="mt-1 text-sm text-muted-foreground">
             Organization-wide ticket and service performance.
           </p>
         </div>
-
         <AnalyticsDashboard />
       </section>
 
@@ -86,19 +93,16 @@ export default function ReportsPage() {
           <h2 id="product-analytics" className="text-xl font-semibold">
             Product Analytics
           </h2>
-
           <p className="mt-1 text-sm text-muted-foreground">
             Compare support performance across products.
           </p>
         </div>
-
         <ProductDashboard />
       </section>
 
       <section aria-label="Available reports" className="space-y-4">
         <div>
           <h2 className="text-lg font-semibold">Additional Reports</h2>
-
           <p className="mt-1 text-sm text-muted-foreground">
             Explore specialized reports and operational views.
           </p>
@@ -108,7 +112,6 @@ export default function ReportsPage() {
           {reports.map((report) => {
             const Icon = report.icon;
             const available = report.status === "Available";
-
             const content = (
               <Card
                 className={
@@ -122,7 +125,6 @@ export default function ReportsPage() {
                     <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-muted">
                       <Icon className="size-5 text-muted-foreground" />
                     </div>
-
                     <span
                       className={
                         available
@@ -133,15 +135,12 @@ export default function ReportsPage() {
                       {report.status}
                     </span>
                   </div>
-
                   <div className="mt-5 flex-1">
                     <h2 className="text-base font-semibold">{report.title}</h2>
-
                     <p className="mt-2 text-sm leading-6 text-muted-foreground">
                       {report.description}
                     </p>
                   </div>
-
                   {available && (
                     <div className="mt-6 flex items-center text-sm font-medium text-primary">
                       View report

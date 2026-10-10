@@ -12,13 +12,14 @@ approval workflows.
 History Refinement. Phase 5-A through Phase 5-F are COMPLETE AND VERIFIED.
 Phase 6-A through Phase 6-F — SLA Policy Management, Ticket SLA Timer
 Experience, SLA Warnings, SLA Breach Operations, SLA Dashboard, and Full SLA
-Verification — are COMPLETE AND VERIFIED. Phase 7-A through 7-C.4 — Analytics
-Foundation, Analytics Dashboard, and Product Analytics — are COMPLETE AND
-VERIFIED. Phase 7-E.1 through 7-E.10 — SLA Reports —, Phase 7-F — TAT
-Reports —, and Phase 7-H — Ticket Library Reports — are COMPLETE AND VERIFIED.**
+Verification — are COMPLETE AND VERIFIED. Phase 7-A through 7-D — Analytics
+Foundation, Analytics Dashboard, Product Analytics, and Employee Dashboard —
+are COMPLETE AND VERIFIED. Phase 7-E.1 through 7-E.10 — SLA Reports —,
+Phase 7-F — TAT Reports —, and Phase 7-H — Ticket Library Reports — are also
+COMPLETE AND VERIFIED.**
 
 Phase 7 — Analytics remains in progress overall. The next implementation is
-7-D — Employee Dashboard. TAT Reports remains a separate reporting surface for
+7-G — Usage Reports. TAT Reports remains a separate reporting surface for
 actual elapsed operational time, explicitly distinguished from SLA target
 duration and compliance.
 
@@ -60,6 +61,10 @@ Latest verified backend state:
 -   Ticket Library Reports API and UI, including shared-query filtered counts,
     status/priority/team/assignee facets, created/updated date buckets, saved-
     filter matching counts, and filter-preserving drill-down into `/tickets`
+-   Employee Dashboard API and UI at `/reports/employees`, including employee
+    workload, first-response/resolution performance, SLA compliance/breaches,
+    reopen-history metrics, resolution trends, and authorized employee/team
+    comparisons
 
 See [`PLANS.md`](./PLANS.md) for the detailed implementation tracker.
 
@@ -488,10 +493,35 @@ http://localhost:3000
 The reporting surface currently includes:
 
 - `/reports` — Reports landing page and analytics dashboards
+- `/reports/employees` — Employee workload and performance dashboard, including
+  ticket counts, response/resolution performance, SLA metrics, reopen history,
+  current workload distribution, resolution trends, and authorized team comparison
 - `/reports/sla` — operational SLA Dashboard for active, at-risk, breached,
   and resolved SLA ticket views
 - `/reports/sla-reports` — SLA compliance and breach reporting, including
   summary metrics, trends, priority/team/assignee breakdowns, and analysis
+
+The Employee Dashboard reuses existing ticket, SLA snapshot, membership,
+team, and ticket activity data without introducing duplicate reporting
+persistence. `OWNER`/`ADMIN` can view employee/team comparisons within the active
+organization; `AGENT` sees only their own metrics, and `REQUESTER` access is
+denied. These boundaries are enforced by the API rather than relying only on
+frontend control visibility.
+
+Employee Dashboard verification:
+
+```text
+Focused API E2E                 5/5 tests passed
+API lint                        0 warnings / 0 errors
+API production build            PASS
+Frontend TypeScript             PASS
+Frontend lint                   PASS
+Frontend tests                  15 files, 194/194 tests passed
+Frontend production build       PASS
+Next.js static page generation  17/17 pages passed
+Route                           /reports/employees present
+Manual UI verification          PASS (user-confirmed)
+```
 
 The SLA Dashboard and SLA Reports are separate surfaces. Both reuse existing
 organization-scoped ticket/SLA data; SLA Reports do not introduce duplicate
@@ -943,7 +973,7 @@ Frontend tests                  7/7 files, 86/86 tests passed
 Frontend production build       SUCCESS
 ```
 
-Phase 6 — SLA is complete and verified. Phase 7 — Analytics remains in progress overall; 7-A through 7-C.4, 7-E.1 through 7-E.10, and 7-F TAT Reports are complete and verified.
+Phase 6 — SLA is complete and verified. Phase 7 — Analytics remains in progress overall; 7-A through 7-D, 7-E.1 through 7-E.10, 7-F TAT Reports, and 7-H Ticket Library Reports are complete and verified.
 
 ## Phase 7 — Analytics
 
@@ -1071,9 +1101,59 @@ regression compatibility.
 
 ### 7-D — Employee Dashboard
 
-**NEXT IMPLEMENTATION — PLANNED**
+**COMPLETE AND VERIFIED**
 
-Agent/employee performance and workload reporting.
+Implemented the dashboard at `/reports/employees` backed by the
+organization-scoped `GET /api/v1/reports/analytics/employees` endpoint. It
+reuses existing ticket, SLA snapshot, membership, team, and ticket activity
+data without adding duplicate reporting persistence.
+
+Implemented metrics and views:
+
+- Assigned tickets, open workload, and resolved tickets
+- Average first-response time and average resolution time, excluding missing or
+  negative duration samples
+- Overall, first-response, and resolution SLA compliance/breach metrics
+- Reopened-ticket counts derived from existing `STATUS_CHANGED` audit entries
+  representing a transition from `RESOLVED`/`CLOSED` back to
+  `IN_PROGRESS`/`PENDING`
+- Live current workload counts for assigned `OPEN`, `IN_PROGRESS`, and `PENDING`
+  tickets
+- Resolution trend grouped by actual `resolvedAt` date
+- Workload distribution with proportional bars and numeric counts
+- Employee selection and team comparison for authorized roles
+
+Permission boundaries:
+
+- `OWNER`/`ADMIN` can view organization-wide employee analytics and compare
+  agents/teams only within the active organization.
+- `AGENT` can view only their own metrics; employee selection is rejected for
+  other agents, and organization-wide employee/team comparisons are not exposed.
+  Team filtering is limited to teams the agent belongs to.
+- `REQUESTER` access is denied.
+- The API derives organization scope from authenticated organization context and
+  validates employee/team selection server-side.
+
+Verification:
+
+```text
+Employee Dashboard API E2E      5/5 tests passed
+API lint                        0 warnings / 0 errors
+API production build            PASS
+Frontend TypeScript             PASS
+Frontend lint                   PASS
+Frontend tests                  15/15 files, 194/194 tests passed
+Frontend production build       PASS
+Next.js static page generation  17/17 pages passed
+Route                           /reports/employees present
+Manual UI verification          PASS (user-confirmed)
+```
+
+The focused API E2E tests cover organization-scoped metrics and selection,
+cross-organization isolation, AGENT self-only access, REQUESTER denial,
+non-agent selection rejection, and inverted date-range validation. The supplied
+checkpoint records focused Employee Dashboard API E2E coverage; a post-7-D full
+API E2E regression total was not supplied.
 
 ### 7-E — SLA Reports
 
@@ -1291,7 +1371,7 @@ TypeScript, builds, full regression, and documentation.
 -   7-C.2 Product Dashboard UI --- **COMPLETE AND VERIFIED**
 -   7-C.3 Product Drill-down --- **COMPLETE AND VERIFIED**
 -   7-C.4 Product Verification --- **COMPLETE AND VERIFIED**
--   7-D Employee Dashboard --- **PLANNED**
+-   7-D Employee Dashboard --- **COMPLETE AND VERIFIED**
 -   7-E SLA Reports --- **COMPLETE AND VERIFIED**
 -   7-F TAT Reports --- **COMPLETE AND VERIFIED**
 -   7-G Usage Reports --- **PLANNED**
@@ -1363,6 +1443,7 @@ Phase 7-C.1 Product Dashboard API    COMPLETE AND VERIFIED
 Phase 7-C.2 Product Dashboard UI     COMPLETE AND VERIFIED
 Phase 7-C.3 Product Drill-down        COMPLETE AND VERIFIED
 Phase 7-C.4 Product Verification      COMPLETE AND VERIFIED
+Phase 7-D Employee Dashboard          COMPLETE AND VERIFIED
 Phase 7-E SLA Reports UI              COMPLETE AND VERIFIED
 Phase 7-F TAT Reports                 COMPLETE AND VERIFIED
 Phase 7-H Ticket Library Reports       COMPLETE AND VERIFIED
@@ -1395,12 +1476,13 @@ Implementation boundary:
 Phase 4 is complete.
 Phase 5-A through Phase 5-F are **COMPLETE AND VERIFIED**.
 Phase 6-A through Phase 6-F are **COMPLETE AND VERIFIED**.
-Phase 7-A through 7-C.4 are **COMPLETE AND VERIFIED**.
+Phase 7-A through 7-D — Analytics Foundation, Analytics Dashboard, Product
+Analytics, and Employee Dashboard — are **COMPLETE AND VERIFIED**.
 Phase 7-E.1 through 7-E.10 — SLA Reports — are **COMPLETE AND VERIFIED**.
 Phase 7-F — TAT Reports — is **COMPLETE AND VERIFIED**.
 Phase 7-H — Ticket Library Reports — is **COMPLETE AND VERIFIED**.
 
-Phase 7 remains in progress overall. The next implementation is **7-D —
-Employee Dashboard**, covering employee workload and performance reporting
-within the existing organization and permission boundaries. 7-G Usage Reports,
-7-I Exports, and 7-J Full Analytics Verification remain planned for later.
+Phase 7 remains in progress overall. The next implementation is **7-G — Usage
+Reports**, using persisted ticket/activity, comment, attachment, approval,
+notification, and supported user-activity data. 7-I Exports and 7-J Full
+Analytics Verification remain planned for later.

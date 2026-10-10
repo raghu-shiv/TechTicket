@@ -285,26 +285,75 @@ Failures 0
 
 ## 7-D --- Employee Dashboard
 
-**NEXT IMPLEMENTATION — PLANNED**
+**COMPLETE AND VERIFIED**
 
-Agent/employee performance and workload reporting.
+Implemented the Employee Dashboard UI at `/reports/employees` and the
+organization-scoped reporting endpoint `GET /api/v1/reports/analytics/employees`.
+The implementation reuses existing ticket, SLA snapshot, membership, team, and
+ticket activity data; no duplicate reporting persistence or Prisma migration
+was introduced.
 
-Planned reporting:
+Implemented reporting:
 
-- Assigned ticket volume
-- Open workload
-- Resolved volume
-- Unassigned-to-assigned workload flow
-- First-response performance
-- Resolution/TAT performance
-- SLA compliance
-- SLA breach count
-- Average and median resolution time
-- Reopen volume/rate where supported by existing data
-- Workload distribution across employees
-- Team comparison where authorized
+- Assigned tickets, open workload, and resolved tickets
+- Average first-response time from `Ticket.createdAt` to
+  `TicketSla.firstRespondedAt`
+- Average resolution time from `Ticket.createdAt` to `Ticket.resolvedAt`
+- Overall SLA compliance and breach metrics, with first-response and resolution
+  completion/compliance reported independently
+- Reopened-ticket counts derived from recorded `STATUS_CHANGED` activity
+  entries transitioning from `RESOLVED`/`CLOSED` to `IN_PROGRESS`/`PENDING`
+- Current workload as a live count of assigned `OPEN`, `IN_PROGRESS`, and
+  `PENDING` tickets
+- Resolution trend grouped by the actual `resolvedAt` date
+- Employee workload distribution with proportional bars and numeric counts
+- Employee selection and team comparison for authorized organization roles
+- Existing report filtering and date-range validation
 
-Employee analytics must preserve organization and permission boundaries.
+Metric boundaries:
+
+- Missing or negative first-response/resolution durations are excluded from
+  their respective averages; they are not converted to zero-minute samples.
+- Resolution trend uses the resolution event date, not the ticket creation date.
+- Current workload is a live snapshot and is not restricted by the selected
+  report date range/status cohort; applicable dimensions such as team and
+  priority can still constrain it.
+- Reopen counts are derived from existing audit history; no dedicated reopen
+  persistence model was added.
+
+Authorization and organization isolation are enforced server-side:
+
+- `OWNER` and `ADMIN` may view organization-wide employee analytics and compare
+  agents/teams within the active organization.
+- `AGENT` may view only their own employee metrics; requests to select another
+  employee are rejected. Organization-wide employee directories and team
+  comparisons are not exposed to agents, and team filtering is limited to
+  teams they belong to.
+- `REQUESTER` access is denied.
+- Employee/team selection is validated against the active organization context;
+  the report never trusts a caller-supplied organization ID.
+
+Verification:
+
+```text
+Employee Dashboard API E2E      5/5 tests passed
+API lint                        0 warnings / 0 errors
+API production build            PASS
+Frontend TypeScript             PASS
+Frontend lint                   PASS
+Frontend tests                  15/15 files, 194/194 tests passed
+Frontend production build       PASS
+Next.js static page generation  17/17 pages passed
+Route                           /reports/employees present
+Manual UI verification          PASS (user-confirmed)
+```
+
+The focused API E2E suite verified organization-scoped metrics and employee
+selection, cross-organization isolation, AGENT self-only access, REQUESTER
+denial/non-agent selection rejection, and inverted date-range validation.
+The user confirmed all verification commands passed and the UI was verified.
+This checkpoint records focused Employee Dashboard API E2E coverage; a
+post-7-D full API E2E regression total was not supplied.
 
 ## 7-E --- SLA Reports
 
@@ -1068,6 +1117,7 @@ Phase 7-C.1 Product Dashboard API    COMPLETE AND VERIFIED
 Phase 7-C.2 Product Dashboard UI     COMPLETE AND VERIFIED
 Phase 7-C.3 Product Drill-down        COMPLETE AND VERIFIED
 Phase 7-C.4 Product Verification      COMPLETE AND VERIFIED
+Phase 7-D Employee Dashboard          COMPLETE AND VERIFIED
 Phase 7-E SLA Reports UI              COMPLETE AND VERIFIED
 Phase 7-F TAT Reports                 COMPLETE AND VERIFIED
 Phase 7-H Ticket Library Reports       COMPLETE AND VERIFIED
@@ -1516,22 +1566,20 @@ Phase 7 — Analytics is the next implementation phase.
 Phase 4 is complete.
 Phase 5-A through Phase 5-F are **COMPLETE AND VERIFIED**.
 Phase 6-A through Phase 6-F are **COMPLETE AND VERIFIED**.
-Phase 7-A through 7-C.4 are **COMPLETE AND VERIFIED**.
+Phase 7-A through 7-D — Analytics Foundation, Analytics Dashboard, Product
+Analytics, and Employee Dashboard — are **COMPLETE AND VERIFIED**.
 Phase 7-E.1 through 7-E.10 — SLA Reports — are **COMPLETE AND VERIFIED**.
 Phase 7-F — TAT Reports — is **COMPLETE AND VERIFIED**.
 Phase 7-H — Ticket Library Reports — is **COMPLETE AND VERIFIED**.
 
 The next implementation milestone is:
 
-**7-D --- Employee Dashboard**
+**7-G --- Usage Reports**
 
-Agent/employee performance and workload reporting. Planned reporting includes
-assigned ticket volume, open workload, resolved volume, unassigned-to-assigned
-workload flow, first-response and resolution/TAT performance, SLA compliance
-and breach counts, average and median resolution time, reopen metrics where
-supported by existing data, employee workload distribution, and authorized
-team comparison. Preserve organization and permission boundaries and reuse the
-existing ticket, SLA, and analytics domain data.
+Organization usage analytics using persisted ticket/activity, comment,
+attachment, approval, notification, and supported user-activity data. Only
+metrics supported by existing persisted data should be exposed. Preserve the
+established organization and permission boundaries.
 
-Phase 7 remains in progress overall. 7-G Usage Reports, 7-I Exports, and 7-J
-Full Analytics Verification remain planned for later milestones.
+Phase 7 remains in progress overall. 7-I Exports and 7-J Full Analytics
+Verification remain planned for later milestones.
