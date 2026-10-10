@@ -2817,6 +2817,7 @@ ORDER BY
      */
     const [
       totalsRows,
+      drillDownCountRows,
       firstResponseRows,
       resolutionRows,
       trendRows,
@@ -2840,6 +2841,16 @@ ORDER BY
         )::int AS "resolvedTicketCount"
       FROM valid
     `,
+
+      this.database.$queryRaw<Array<{ total: number }>>`
+  WITH valid AS (${validTickets})
+  SELECT
+    COUNT(*)::int AS "total"
+  FROM valid
+  WHERE
+    "resolvedAt" IS NOT NULL
+    AND "resolutionMinutes" >= 0
+`,
 
       this.database.$queryRaw<Array<MetricRow>>`
       WITH valid AS (${validTickets})
@@ -3403,13 +3414,15 @@ ORDER BY
         : null,
     }));
 
-    const total = Number(totals?.resolvedTicketCount ?? 0);
+    const resolvedTicketCount = Number(totals?.resolvedTicketCount ?? 0);
+
+    const paginationTotal = Number(drillDownCountRows[0]?.total ?? 0);
 
     return {
       data: {
         summary: {
           ticketCount: Number(totals?.ticketCount ?? 0),
-          resolvedTicketCount: total,
+          resolvedTicketCount,
           firstResponse,
           resolution,
         },
@@ -3428,8 +3441,8 @@ ORDER BY
         pagination: {
           page: query.page,
           limit: query.limit,
-          total,
-          totalPages: Math.ceil(total / query.limit),
+          total: paginationTotal,
+          totalPages: Math.ceil(paginationTotal / query.limit),
         },
 
         query: {

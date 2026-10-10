@@ -4,6 +4,7 @@ import {
   Clock3,
   ShieldAlert,
   TicketCheck,
+  Timer,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -26,6 +27,14 @@ const reports = [
       "Analyze SLA trends, compliance, breach rates, at-risk tickets, and performance by priority, team, and assignee.",
     icon: ShieldAlert,
     href: "/reports/sla-reports",
+    status: "Available",
+  },
+  {
+    title: "TAT Reports",
+    description:
+      "Analyze actual first-response and resolution times, percentiles, trends, and performance by priority, team, assignee, and product.",
+    icon: Timer,
+    href: "/reports/tat",
     status: "Available",
   },
   {

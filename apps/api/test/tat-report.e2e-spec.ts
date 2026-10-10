@@ -514,13 +514,22 @@ describe('TAT Reports API (e2e)', () => {
 
     const body = response.body as TatReportResponse;
 
+    // Missing or negative elapsed durations are excluded from metric samples.
     expect(body.data.summary.firstResponse.sampleSize).toBe(0);
     expect(body.data.summary.firstResponse.averageMinutes).toBeNull();
 
     expect(body.data.summary.resolution.sampleSize).toBe(0);
     expect(body.data.summary.resolution.averageMinutes).toBeNull();
 
+    // The resolved ticket remains part of the cohort summary.
+    expect(body.data.summary.ticketCount).toBe(2);
+    expect(body.data.summary.resolvedTicketCount).toBe(1);
+
+    // But a negative-resolution ticket cannot appear in the drill-down,
+    // and must not inflate its pagination total.
     expect(body.data.resolvedTickets).toEqual([]);
+    expect(body.meta.pagination.total).toBe(0);
+    expect(body.meta.pagination.totalPages).toBe(0);
   });
 
   it('does not require an SLA snapshot to count a ticket in the cohort', async () => {

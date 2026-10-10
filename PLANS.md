@@ -696,7 +696,7 @@ Only metrics supported by persisted data should be exposed.
 
 ## 7-H --- Ticket Library Reports
 
-**PLANNED**
+**NEXT**
 
 Analytics built around the existing Ticket Library query model.
 
@@ -1049,10 +1049,10 @@ Phase 7-C.2 Product Dashboard UI     COMPLETE AND VERIFIED
 Phase 7-C.3 Product Drill-down        COMPLETE AND VERIFIED
 Phase 7-C.4 Product Verification      COMPLETE AND VERIFIED
 Phase 7-E SLA Reports UI              COMPLETE AND VERIFIED
-Phase 7-F TAT Reports                 IN PROGRESS — NEXT IMPLEMENTATION
+Phase 7-F TAT Reports                 COMPLETE AND VERIFIED
 ```
 
-# Latest Verification Commands
+# Verification Commands and Historical Baseline
 
 ```powershell
 docker compose exec api npm run test:e2e
@@ -1064,7 +1064,7 @@ docker compose exec web npm run test
 docker compose exec web npm run build
 ```
 
-Latest API E2E verification:
+Previous Phase 5-F API E2E checkpoint (historical baseline):
 
 ```text
 E2E test files       21/21 passed
@@ -1072,11 +1072,23 @@ E2E tests            249/249 passed
 Failures             0
 ```
 
-Latest frontend verification:
+Current frontend/TAT verification:
 
 ```text
-Lint                 PASS
+TypeScript check     PASS
 Production build     SUCCESS
+/report/tat route     PRESENT
+TAT UI               MANUALLY VERIFIED
+```
+
+Latest TAT milestone verification:
+
+```text
+Focused TAT API E2E  12/12 passed
+Full API E2E         PASS (user-confirmed; exact total not recorded here)
+Frontend TypeScript  PASS
+Frontend build       PASS
+TAT route/UI         VERIFIED
 ```
 
 ## Phase 5-F Verification Checklist
@@ -1488,13 +1500,21 @@ Phase 7-E.1 through 7-E.10 — SLA Reports — are **COMPLETE AND VERIFIED**.
 
 The current implementation milestone is:
 
-**7-F --- TAT Reports**
+**7-H --- Ticket Library Reports**
 
-Start by inspecting the authoritative ticket and activity timestamp sources.
-Define actual elapsed first-response and resolution durations before building
-aggregation or UI. Keep TAT independent from SLA target duration/compliance,
-reuse organization-scoped analytics and Ticket Library query infrastructure,
-and verify calculations, filters, organization isolation, drill-down, tests,
-lint, TypeScript, and production builds. Manual browser verification of the
-SLA Reports UI remains recommended; automated checks do not establish every
-runtime interaction.
+Analytics built around the existing Ticket Library query model.
+
+Planned reporting:
+
+- Ticket volume by status
+- Ticket volume by priority
+- Ticket volume by team
+- Ticket volume by assignee
+- Ticket volume by created date
+- Unassigned volume
+- Saved-filter/reporting integration where appropriate
+- Filtered result counts
+- Drill-down into `/tickets`
+
+The existing URL-backed Ticket Library query remains the operational source
+of truth for ticket filtering.
