@@ -191,4 +191,36 @@ describe('Analytics exports API (e2e)', () => {
       to: '2026-10-01T00:00:00.000Z',
     }).expect(400);
   });
+
+  it('neutralizes spreadsheet formulas in exported CSV text fields', async () => {
+    const createdAt = new Date('2040-01-02T12:00:00.000Z');
+
+    const ticket = await database.ticket.create({
+      data: {
+        organizationId: fixture.organization.id,
+        requesterId: fixture.requester.userId,
+        ticketNumber: `EXPORT-${randomUUID().slice(0, 8).toUpperCase()}`,
+        title: '=HYPERLINK("https://example.com","click")',
+        description: 'CSV formula-injection regression test',
+        status: 'OPEN',
+        priority: 'MEDIUM',
+        type: 'INCIDENT',
+        createdAt,
+        updatedAt: createdAt,
+      },
+    });
+
+    createdTicketIds.push(ticket.id);
+
+    const response = await exportRequest('foundation', {
+      format: 'csv',
+      from: '2040-01-02T00:00:00.000Z',
+      to: '2040-01-02T23:59:59.999Z',
+    }).expect(200);
+
+    expect(response.headers['content-type']).toContain('text/csv');
+
+    // The apostrophe is added before the formula-triggering equals sign.
+    expect(response.text).toContain("'=HYPERLINK");
+  });
 });

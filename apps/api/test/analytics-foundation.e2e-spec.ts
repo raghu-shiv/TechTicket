@@ -778,4 +778,41 @@ describe('Analytics Foundation API (e2e)', () => {
     expect(body.meta.total).toBe(0);
     expect(body.meta.totalPages).toBe(0);
   });
+
+  it('includes tickets exactly at both date boundaries and excludes tickets outside them', async () => {
+    const from = new Date('2026-10-01T00:00:00.000Z');
+    const to = new Date('2026-10-02T00:00:00.000Z');
+
+    const beforeFrom = await createTicket({
+      title: 'One millisecond before analytics range',
+      createdAt: new Date(from.getTime() - 1),
+    });
+
+    const atFrom = await createTicket({
+      title: 'Exactly at analytics range start',
+      createdAt: from,
+    });
+
+    const atTo = await createTicket({
+      title: 'Exactly at analytics range end',
+      createdAt: to,
+    });
+
+    const afterTo = await createTicket({
+      title: 'One millisecond after analytics range',
+      createdAt: new Date(to.getTime() + 1),
+    });
+
+    const response = await getAnalytics({
+      from: from.toISOString(),
+      to: to.toISOString(),
+    });
+
+    const ids = getTicketIds(response);
+
+    expect(ids).toContain(atFrom.id);
+    expect(ids).toContain(atTo.id);
+    expect(ids).not.toContain(beforeFrom.id);
+    expect(ids).not.toContain(afterTo.id);
+  });
 });
