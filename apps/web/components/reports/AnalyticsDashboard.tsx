@@ -29,6 +29,7 @@ import {
 
 import { useOrganizations } from "@/hooks/use-organizations";
 import { useAnalyticsDashboard } from "@/hooks/use-analytics-dashboard";
+import { ReportExportButton } from "./ReportExportButton";
 
 function formatRate(rate: number | null) {
   return rate === null ? "—" : `${rate.toFixed(1)}%`;
@@ -192,6 +193,13 @@ export function AnalyticsDashboard() {
               onChange={(event) => setTo(event.target.value)}
             />
           </div>
+          <ReportExportButton
+            report="dashboard"
+            params={{
+              from: from ? `${from}T00:00:00.000Z` : undefined,
+              to: to ? `${to}T23:59:59.999Z` : undefined,
+            }}
+          />
         </div>
       </div>
 

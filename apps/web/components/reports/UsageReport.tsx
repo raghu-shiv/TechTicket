@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { useOrganizations } from "@/hooks/use-organizations";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
+import { ReportExportButton } from "@/components/reports/ReportExportButton";
 
 export interface UsageReportSummary {
   ticketsCreated: number;
@@ -235,6 +236,14 @@ export function UsageReport() {
               Clear date filters
             </button>
           )}
+          <ReportExportButton
+            report="usage"
+            disabled={invalidDateRange}
+            params={{
+              from: from || undefined,
+              to: to || undefined,
+            }}
+          />
         </CardContent>
       </Card>
 

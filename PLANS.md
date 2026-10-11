@@ -791,49 +791,57 @@ The report reuses the shared Ticket Library filtering model rather than introduc
 
 Verification:
 
-```text
-Focused Ticket Library Reports API E2E   2/2 tests passed
-Full API E2E regression                  31 files, 506/506 tests passed
-Frontend drill-down tests                6/6 tests passed
-Full frontend test suite                 15 files, 194/194 tests passed
-API lint                                 0 warnings / 0 errors
-API production build                     PASS
-Frontend TypeScript check                PASS
-Frontend lint                            PASS
-Frontend production build                PASS
-Static page generation                   16/16 pages passed
-Route                                    /reports/ticket-library present
-Manual UI verification                   PASS (user-confirmed)
-```
+Focused Ticket Library Reports API E2E 2/2 tests passed
+Full API E2E regression 31 files, 506/506 tests passed
+Frontend drill-down tests 6/6 tests passed
+Full frontend test suite 15 files, 194/194 tests passed
+API lint 0 warnings / 0 errors
+API production build PASS
+Frontend TypeScript check PASS
+Frontend lint PASS
+Frontend production build PASS
+Static page generation 16/16 pages passed
+Route /reports/ticket-library present
+Manual UI verification PASS (user-confirmed)
 
 The full API E2E run emitted non-failing Resend HTTP 422 logs for `example.com` test recipients; all 506 test assertions passed. The user confirmed all tests passed and the UI behaved as expected.
 
 ## 7-I --- Exports
 
-**PLANNED**
+**COMPLETED AND VERIFIED**
 
 Provide controlled exports for analytics/reporting datasets.
 
-Planned formats:
+Implemented formats:
 
 - CSV
-- XLSX where justified
-- JSON where useful for machine-readable reporting
+- JSON for machine-readable reporting
 
 Export requirements:
 
-- Reuse the same organization-scoped query/metric definitions as on-screen
-  reports
+- Reuse the same organization-scoped query/metric definitions as on-screen reports
 - Preserve active filters and date ranges
 - Enforce authorization server-side
 - Prevent cross-organization exports
-- Stream large exports where appropriate
-- Define stable column/field contracts
+- Stream export serialization where appropriate
+- Define stable CSV and JSON field contracts
 - Add export authorization and data-integrity tests
+
+Verification:
+
+- Analytics export E2E tests passed
+- Usage report E2E tests passed
+- TAT report E2E tests passed
+- Backend TypeScript build passed
+- Backend lint passed with no errors or warnings
+- Frontend lint, tests, TypeScript, and production build passed
+- UI verification completed successfully
+
+Implementation note: Export serialization is streamed, but the existing report payload is assembled in memory before serialization. Batch/cursor-based database streaming for very large exports remains a potential future enhancement.
 
 ## 7-J --- Full Analytics Verification
 
-**PLANNED**
+**NEXT**
 
 Final Phase 7 verification boundary:
 
@@ -1598,23 +1606,28 @@ Phase 7-H — Ticket Library Reports — is **COMPLETE AND VERIFIED**.
 
 The next implementation milestone is:
 
-**7-I --- Exports**
+**7-J --- Full Analytics Verification**
 
-Provide controlled exports for analytics/reporting datasets.
+Final Phase 7 verification boundary:
 
-Planned formats:
+- Analytics unit tests
+- Focused report E2E tests
+- Organization isolation
+- Permission coverage
+- Date/time boundary cases
+- Empty/no-data states
+- Aggregation correctness
+- Drill-down correctness
+- Export correctness
+- Backend TypeScript
+- Backend lint
+- Backend production build
+- Frontend TypeScript
+- Frontend lint
+- Frontend tests
+- Frontend production build
+- Full regression
+- Final documentation checkpoint
 
-- CSV
-- XLSX where justified
-- JSON where useful for machine-readable reporting
-
-Export requirements:
-
-- Reuse the same organization-scoped query/metric definitions as on-screen
-  reports
-- Preserve active filters and date ranges
-- Enforce authorization server-side
-- Prevent cross-organization exports
-- Stream large exports where appropriate
-- Define stable column/field contracts
-- Add export authorization and data-integrity tests
+Phase 7 should not be marked complete until the complete verification
+boundary passes.

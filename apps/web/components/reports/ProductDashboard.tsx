@@ -31,6 +31,7 @@ import {
 import { useOrganizations } from "@/hooks/use-organizations";
 import { useProductAnalytics } from "@/hooks/use-product-analytics";
 import type { ProductAnalyticsProduct } from "@/types/product-analytics";
+import { ReportExportButton } from "./ReportExportButton";
 
 function formatRate(rate: number | null) {
   return rate === null ? "—" : `${rate.toFixed(1)}%`;
@@ -228,6 +229,15 @@ export function ProductDashboard() {
               ))}
             </select>
           </div>
+
+          <ReportExportButton
+            report="products"
+            params={{
+              from: from ? `${from}T00:00:00.000Z` : undefined,
+              to: to ? `${to}T23:59:59.999Z` : undefined,
+              productId: productId || undefined,
+            }}
+          />
         </div>
       </div>
 

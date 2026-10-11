@@ -13,6 +13,7 @@ import {
 import { EmptyState, ErrorState, LoadingState } from "@/components/shared";
 import { useEmployeeDashboard } from "@/hooks/use-employee-dashboard";
 import { useOrganizations } from "@/hooks/use-organizations";
+import { ReportExportButton } from "./ReportExportButton";
 
 function localDateInput(value: Date) {
   const local = new Date(value.getTime() - value.getTimezoneOffset() * 60_000);
@@ -275,6 +276,11 @@ export function EmployeeDashboard() {
               onChange={(event) => setTo(event.target.value)}
             />
           </label>
+          <ReportExportButton
+            report="employees"
+            disabled={!validRange || denied}
+            params={params}
+          />
           {canViewOrganization && (
             <FilterSelect
               label="Employee"

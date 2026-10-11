@@ -9,6 +9,7 @@ import { AnalyticsService } from './analytics.service';
 import { EmployeeDashboardService } from './employee-dashboard.service';
 import { TicketLibraryReportsService } from './ticket-library-reports.service';
 import { UsageReportService } from './usage-report.service';
+import { AnalyticsExportService } from './analytics-export.service';
 
 @Module({
   imports: [AuthModule, OrganizationContextModule],
@@ -19,6 +20,7 @@ import { UsageReportService } from './usage-report.service';
     TicketLibraryReportsService,
     EmployeeDashboardService,
     UsageReportService,
+    AnalyticsExportService,
   ],
   exports: [AnalyticsQueryService, AnalyticsService, EmployeeDashboardService],
 })

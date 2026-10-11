@@ -40,6 +40,7 @@ import type {
   SlaReportAssigneePoint,
   SlaReportTrendPoint,
 } from "@/types/sla-report";
+import { ReportExportButton } from "./ReportExportButton";
 
 export type SlaReportFilters = {
   from: string;
@@ -373,7 +374,7 @@ export function SlaReport() {
         updateFilter={updateFilter}
         resetFilters={resetFilters}
       />
-
+      <ReportExportButton report="sla" params={filters} />
       <section
         aria-label="SLA overview"
         className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5"

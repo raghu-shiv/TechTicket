@@ -17,6 +17,7 @@ import {
 } from "@/lib/ticket-library-report-drilldown";
 import { savedFilterToSearchParams } from "@/lib/saved-filters";
 import type { TicketLibraryReportPoint } from "@/types/ticket-library-report";
+import { ReportExportButton } from "./ReportExportButton";
 
 const STATUS_OPTIONS = [
   ["OPEN", "Open"],
@@ -469,6 +470,10 @@ function TicketLibraryReportContent() {
               <option value="createdAt">Created date</option>
               <option value="updatedAt">Updated date</option>
             </FilterSelect>
+            <ReportExportButton
+              report="ticket-library"
+              params={Object.fromEntries(currentParams.entries())}
+            />
           </div>
 
           <div className="flex flex-wrap items-center gap-4">

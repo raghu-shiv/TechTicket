@@ -7,6 +7,7 @@ import { useTatReport } from "@/hooks/use-tat-report";
 import type { TatMetric } from "@/types/tat-report";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
+import { ReportExportButton } from "./ReportExportButton";
 
 function formatMinutes(minutes: number | null): string {
   if (minutes === null || !Number.isFinite(minutes)) return "—";
@@ -186,6 +187,17 @@ export function TatReport() {
             </label>
           </div>
         </CardContent>
+        <ReportExportButton
+          report="tat"
+          params={{
+            dateField: "createdAt",
+            from: from || undefined,
+            to: to || undefined,
+            status: "RESOLVED",
+            page,
+            limit: 25,
+          }}
+        />
       </Card>
 
       {isLoading && (
