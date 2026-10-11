@@ -12,6 +12,8 @@ import { TicketLibraryReportQueryDto } from './dto/ticket-library-report-query.d
 import { AnalyticsService } from './analytics.service';
 import { EmployeeDashboardService } from './employee-dashboard.service';
 import { TicketLibraryReportsService } from './ticket-library-reports.service';
+import { UsageReportQueryDto } from './dto/usage-report-query.dto';
+import { UsageReportService } from './usage-report.service';
 
 @Controller('reports/analytics')
 @UseGuards(AuthGuard, OrganizationGuard)
@@ -20,6 +22,7 @@ export class AnalyticsController {
     private readonly analyticsService: AnalyticsService,
     private readonly ticketLibraryReportsService: TicketLibraryReportsService,
     private readonly employeeDashboardService: EmployeeDashboardService,
+    private readonly usageReportService: UsageReportService,
   ) {}
 
   @Get('dashboard')
@@ -76,5 +79,13 @@ export class AnalyticsController {
     @Query() query: EmployeeDashboardQueryDto,
   ) {
     return this.employeeDashboardService.getDashboard(context, query);
+  }
+
+  @Get('usage')
+  getUsageReport(
+    @OrganizationContextParam() context: OrganizationContext,
+    @Query() query: UsageReportQueryDto,
+  ) {
+    return this.usageReportService.getReport(context, query);
   }
 }

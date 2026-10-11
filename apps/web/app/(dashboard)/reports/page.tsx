@@ -1,4 +1,5 @@
 import {
+  Activity,
   BarChart3,
   ChevronRight,
   Clock3,
@@ -37,6 +38,14 @@ const reports = [
       "Analyze actual first-response and resolution times, percentiles, trends, and performance by priority, team, assignee, and product.",
     icon: Timer,
     href: "/reports/tat",
+    status: "Available",
+  },
+  {
+    title: "Usage Reports",
+    description:
+      "Measure organization usage through ticket creation, activity, comments, attachments, approvals, and active users over time.",
+    icon: Activity,
+    href: "/reports/usage",
     status: "Available",
   },
   {

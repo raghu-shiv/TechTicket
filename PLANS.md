@@ -725,23 +725,47 @@ full Phase 7 verification boundary are completed.
 
 ## 7-G --- Usage Reports
 
-**PLANNED**
+**COMPLETE AND VERIFIED**
 
-Organization usage analytics using existing persisted activity and ticket
-data.
+Implemented the organization-scoped Usage Reports surface at `/reports/usage`, using existing persisted ticket, activity, comment, attachment, approval, and membership data. The report measures organization usage without introducing duplicate reporting persistence.
 
-Potential reporting:
+Implemented reporting:
 
 - Ticket creation volume
 - Ticket activity volume
 - Comment volume
 - Attachment usage
-- Approval usage
-- Notification activity
-- Active-user/agent usage where existing data supports it
-- Usage trends over time
+- Approval request volume
+- Active users and active agents
+- Daily usage trends for supported metrics
+- Summary metrics and date-range reporting
+- Organization-scoped aggregation and isolation
+- Empty-data behavior with zero-filled daily trend buckets
+- Usage Reports card linked from the main `/reports` landing page
 
-Only metrics supported by persisted data should be exposed.
+Metric boundaries:
+
+- Metrics are derived from existing persisted domain data.
+- Notification counts are **unavailable** because notification activity is not persisted in a form suitable for this report. The API explicitly identifies this limitation rather than reporting fabricated counts.
+- Trend values represent the selected reporting period and use daily buckets.
+- Existing authentication, organization scoping, and authorization boundaries remain in effect.
+- No duplicate operational data models or persistence were introduced.
+
+Verification:
+
+Usage Reports API E2E 5/5 tests passed
+API lint PASS
+API production build PASS
+Frontend TypeScript PASS
+Frontend lint PASS
+Frontend tests 16/16 files, 205/205 tests passed
+Frontend production build PASS
+/reports/usage route VERIFIED
+Usage Reports UI MANUALLY VERIFIED
+/reports navigation link VERIFIED
+Failures 0
+
+The user confirmed that all tests passed and the Usage Reports UI was verified, including the report's integration with the main Reports landing page.
 
 ## 7-H --- Ticket Library Reports
 
@@ -1574,12 +1598,23 @@ Phase 7-H — Ticket Library Reports — is **COMPLETE AND VERIFIED**.
 
 The next implementation milestone is:
 
-**7-G --- Usage Reports**
+**7-I --- Exports**
 
-Organization usage analytics using persisted ticket/activity, comment,
-attachment, approval, notification, and supported user-activity data. Only
-metrics supported by existing persisted data should be exposed. Preserve the
-established organization and permission boundaries.
+Provide controlled exports for analytics/reporting datasets.
 
-Phase 7 remains in progress overall. 7-I Exports and 7-J Full Analytics
-Verification remain planned for later milestones.
+Planned formats:
+
+- CSV
+- XLSX where justified
+- JSON where useful for machine-readable reporting
+
+Export requirements:
+
+- Reuse the same organization-scoped query/metric definitions as on-screen
+  reports
+- Preserve active filters and date ranges
+- Enforce authorization server-side
+- Prevent cross-organization exports
+- Stream large exports where appropriate
+- Define stable column/field contracts
+- Add export authorization and data-integrity tests
