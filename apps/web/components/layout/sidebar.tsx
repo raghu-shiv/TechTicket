@@ -35,18 +35,13 @@ const navigation: NavigationItem[] = [
     icon: Ticket,
   },
   {
-    label: "Tasks",
-    href: "/tasks",
-    icon: CheckSquare,
-  },
-  {
     label: "Approvals",
     href: "/approvals",
     icon: FileCheck2,
   },
   {
-    label: "Case Library",
-    href: "/case-library",
+    label: "Ticket Library",
+    href: "/ticket-library",
     icon: FolderOpen,
   },
   {

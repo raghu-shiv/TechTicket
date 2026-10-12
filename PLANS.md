@@ -10,7 +10,7 @@ feature.
 
 ## Phase 7 --- Analytics
 
-**Status: IN PROGRESS**
+**Status: COMPLETE AND VERIFIED**
 
 Phase 7 turns the existing ticket, activity, SLA, assignment, organization,
 and ticket-library data into organization-scoped analytics and reporting.
@@ -719,9 +719,9 @@ failures.
 - The resolved-ticket count and page query share the same organization scope
   and filter conditions.
 
-7-F.1 through 7-F.6 are complete and verified. TAT Reports is ready for use;
-Phase 7 as a whole remains in progress until its remaining milestones and the
-full Phase 7 verification boundary are completed.
+7-F.1 through 7-F.6 are complete and verified. TAT Reports is ready for use.
+Phase 7 subsequently completed 7-G Usage Reports, 7-I Exports, and 7-J Full
+Analytics Verification; Phase 7 is now complete and verified.
 
 ## 7-G --- Usage Reports
 
@@ -753,17 +753,19 @@ Metric boundaries:
 
 Verification:
 
-Usage Reports API E2E 5/5 tests passed
-API lint PASS
-API production build PASS
-Frontend TypeScript PASS
-Frontend lint PASS
-Frontend tests 16/16 files, 205/205 tests passed
-Frontend production build PASS
-/reports/usage route VERIFIED
-Usage Reports UI MANUALLY VERIFIED
-/reports navigation link VERIFIED
-Failures 0
+```text
+Usage Reports API E2E             5/5 tests passed
+API lint                           PASS
+API production build               PASS
+Frontend TypeScript                PASS
+Frontend lint                      PASS
+Frontend tests                     16/16 files, 205/205 tests passed
+Frontend production build          PASS
+/reports/usage route               VERIFIED
+Usage Reports UI                   MANUALLY VERIFIED
+/reports navigation link           VERIFIED
+Failures                           0
+```
 
 The user confirmed that all tests passed and the Usage Reports UI was verified, including the report's integration with the main Reports landing page.
 
@@ -791,50 +793,52 @@ The report reuses the shared Ticket Library filtering model rather than introduc
 
 Verification:
 
-Focused Ticket Library Reports API E2E 2/2 tests passed
-Full API E2E regression 31 files, 506/506 tests passed
-Frontend drill-down tests 6/6 tests passed
-Full frontend test suite 15 files, 194/194 tests passed
-API lint 0 warnings / 0 errors
-API production build PASS
-Frontend TypeScript check PASS
-Frontend lint PASS
-Frontend production build PASS
-Static page generation 16/16 pages passed
-Route /reports/ticket-library present
-Manual UI verification PASS (user-confirmed)
+```text
+Focused Ticket Library Reports API E2E   2/2 tests passed
+Full API E2E regression                  31 files, 506/506 tests passed
+Frontend drill-down tests                6/6 tests passed
+Full frontend test suite                 15 files, 194/194 tests passed
+API lint                                 0 warnings / 0 errors
+API production build                     PASS
+Frontend TypeScript check                PASS
+Frontend lint                            PASS
+Frontend production build                PASS
+Static page generation                   16/16 pages passed
+Route                                    /reports/ticket-library present
+Manual UI verification                   PASS (user-confirmed)
+```
 
 The full API E2E run emitted non-failing Resend HTTP 422 logs for `example.com` test recipients; all 506 test assertions passed. The user confirmed all tests passed and the UI behaved as expected.
 
 ## 7-I --- Exports
 
-**COMPLETED AND VERIFIED**
+**COMPLETE AND VERIFIED**
 
-Provide controlled exports for analytics/reporting datasets.
+Implemented controlled exports for analytics/reporting datasets.
 
 Implemented formats:
 
 - CSV
 - JSON for machine-readable reporting
 
-Export requirements:
+Verified requirements:
 
-- Reuse the same organization-scoped query/metric definitions as on-screen reports
-- Preserve active filters and date ranges
-- Enforce authorization server-side
-- Prevent cross-organization exports
-- Stream export serialization where appropriate
-- Define stable CSV and JSON field contracts
-- Add export authorization and data-integrity tests
+- Reuses organization-scoped query and metric definitions from on-screen reports
+- Preserves supported filters and date ranges
+- Enforces authorization server-side
+- Prevents cross-organization exports
+- Streams export serialization
+- Defines stable CSV and JSON field contracts
+- Includes export authorization and data-integrity tests
+- Neutralizes spreadsheet formula injection in exported CSV text fields
 
 Verification:
 
-- Analytics export E2E tests passed
+- Analytics export E2E tests: 7/7 passed
 - Usage report E2E tests passed
 - TAT report E2E tests passed
-- Backend TypeScript build passed
-- Backend lint passed with no errors or warnings
-- Frontend lint, tests, TypeScript, and production build passed
+- Backend TypeScript, lint, and production build passed
+- Frontend TypeScript, lint, tests, and production build passed
 - UI verification completed successfully
 
 Implementation note: Export serialization is streamed, but the existing report payload is assembled in memory before serialization. Batch/cursor-based database streaming for very large exports remains a potential future enhancement.
@@ -843,7 +847,7 @@ Implementation note: Export serialization is streamed, but the existing report p
 
 **COMPLETE AND VERIFIED**
 
-Final Phase 7 verification boundary has passed:
+Final Phase 7 verification boundary passed:
 
 - Analytics unit tests
 - Focused report E2E tests
@@ -877,21 +881,204 @@ Verification:
 
 Phase 7 verification is complete. All required automated checks and manual UI verification have passed.
 
-# Phase 8 --- Production Hardening
+# Product UI Completion Roadmap
+
+**Status: NEXT — Operational UI completion before broader production hardening**
+
+Phase 7 Analytics is complete and verified. The next priority is to close the blueprint-level user-facing gaps so the product's ticketing, approval, library, search, and notification workflows are reachable and use real domain data. Reuse existing APIs, services, query contracts, and authorization rather than introducing duplicate operational models.
+
+The desktop navigation currently uses **Ticket Library** and the Tasks item has been removed. Preserve these decisions: use the Ticket Library label consistently, do not reintroduce Tasks navigation or routes, and keep desktop and mobile navigation aligned.
+
+## UI-1 — Raise a Ticket / Ticket Creation
 
 **NEXT**
 
-- Unit tests
-- Integration tests
-- E2E tests
-- Security audit
+Current state:
+
+- The API supports `POST /api/v1/tickets`.
+- The `/tickets` page exists but does not expose a visible create action.
+- The blueprint route map proposes `/tickets/create`; use that canonical route unless the blueprint is intentionally revised.
+
+Implement:
+
+- Add a clearly visible **Raise Ticket** / **Create Ticket** action on Dashboard and Tickets.
+- Implement `/tickets/create` with title, description, type, priority, and product selection where applicable.
+- Reuse the existing ticket creation contract and authenticated organization context.
+- Include attachment support where appropriate to the existing attachment contract.
+- Validate required fields and display pending, validation, API error, and success states.
+- On successful creation, navigate to the new ticket detail page and refresh relevant query data.
+- Enforce authorization in the API; UI visibility must not be treated as the security boundary.
+- Preserve requester/agent ticket-creation semantics already defined by the domain.
+
+Verification:
+
+- Frontend form and API-contract tests.
+- E2E coverage for successful creation, invalid input, authorization, and organization isolation.
+- Manual creation workflow from Dashboard and Tickets.
+
+## UI-2 — Complete Core Navigation and Missing Pages
+
+**PLANNED**
+
+The current navigation includes Approvals, Ticket Library, and Users, but the corresponding top-level page routes must be implemented and verified against the current route tree. The user-facing navigation must never lead to an absent route.
+
+Implement:
+
+- **Approvals inbox:** build an organization-scoped inbox around the existing approval workflow. Show relevant pending requests, ticket/requester context, status, and authorized approve/reject actions with comments where supported. Link to ticket details and provide loading, error, and empty states. Add a list API only if the existing controller/service contracts do not support an inbox query.
+- **Ticket Library:** implement the blueprint's knowledge/library experience at `/ticket-library`, distinct from the operational `/tickets` list and the analytics page `/reports/ticket-library`. Audit existing data models and APIs first; do not treat the reports page as the knowledge library.
+- **Users directory:** audit current organization membership and user endpoints, then implement an organization-scoped directory. Distinguish read access from invite, role-change, and removal actions; implement mutations only when backed by verified APIs and permissions.
+- **Products management:** expose the existing product CRUD API through a management UI for authorized roles, including active/inactive lifecycle states.
+- **Departments:** compare the blueprint against the current Prisma schema and APIs. If department management is still required and absent, record the necessary domain/API/UI work before implementing it.
+- Keep desktop and mobile navigation in sync, preferably using a shared navigation definition.
+- Ensure every visible link resolves to a working page or is explicitly presented as unavailable rather than linking to a 404.
+- Do not reintroduce the removed Tasks item or build `/tasks` unless the product scope is explicitly changed later.
+
+Verification:
+
+- Route smoke tests for every navigation item at desktop and mobile breakpoints.
+- Approval permission and organization-isolation E2E tests.
+- User and product management authorization and cross-organization tests.
+- Manual navigation and approval workflow walkthrough.
+
+## UI-3 — Live Operational Dashboard
+
+**PLANNED**
+
+The current `/dashboard` page has hardcoded KPI values and weekly deltas, and its Ticket Trends chart is a placeholder. The `/reports` analytics experience already consumes live, organization-scoped analytics data and should be reused as the source of supported metrics.
+
+Implement:
+
+- Replace hardcoded counts with live API-backed operational metrics.
+- Replace weekly percentage changes only where valid comparison-window calculations exist; do not display invented trends.
+- Connect Ticket Trends to existing ticket-volume trend data and chart presentation.
+- Connect priority distribution to actual API aggregates. Map `URGENT` to the approved UI label consistently; do not invent a separate persisted `Critical` priority.
+- Add quick actions for Raise Ticket, My Tickets, Ticket Library, Approvals, and relevant SLA breach views.
+- Add recent activity or recently updated tickets only using supported persisted data.
+- Distinguish loading, API error, genuine zero-data, and unavailable metrics. Never silently show hardcoded values on failure.
+- Keep `/dashboard` focused on current workload and actions; keep historical analysis, filtering, detailed comparisons, and exports under `/reports`.
+
+Verification:
+
+- Tests for populated data, empty data, and API failures.
+- KPI/priority aggregation checks against API contracts.
+- Organization isolation and role-appropriate data visibility.
+- Responsive layout and manual verification against seeded live tickets.
+
+## UI-4 — Functional Global Search
+
+**PLANNED**
+
+The top-bar command menu currently opens, but the input does not execute a search. The existing Tickets API supports a `search` query parameter, so the first version should implement ticket search before expanding beyond supported API contracts.
+
+Implement:
+
+- Make the search input controlled and keyboard-accessible.
+- Search tickets using the existing API/query contract and organization context.
+- Show loading, results, no-results, and error states.
+- Allow keyboard navigation and Enter/click to open the selected ticket.
+- Provide a “View all results” action that opens `/tickets` with the search query preserved.
+- Search users or Ticket Library records only after confirming the relevant API contracts.
+- Support Escape, focus behavior, and mobile interaction.
+
+Verification:
+
+- Tests for query normalization, results, empty state, API failure, and organization scope.
+- Keyboard and mobile manual verification.
+
+## UI-5 — Notification Center
+
+**PLANNED — PERSISTENCE/API AUDIT REQUIRED**
+
+The notification service emits events and realtime infrastructure exists, but a persistent inbox and read-state API must not be assumed. The blueprint describes recipient-targeted notifications with read state and entity references.
+
+Before implementation:
+
+- Audit the Prisma schema, notification event delivery, recipient scoping, and currently available APIs.
+- If durable notification history/read-state storage does not exist, define and implement a minimal persistence and API contract.
+- Reuse existing event and realtime infrastructure; do not mistake transient events for notification history.
+
+Implement:
+
+- Wire the bell to a notification dropdown or dedicated inbox.
+- Show an accurate unread count, notification title/message, creation time, and supported related-entity link.
+- Support mark-as-read and unread/read presentation where persistence supports it.
+- Ensure notifications are visible only to the intended recipient within the active organization.
+- Provide loading, error, empty, and realtime-update states.
+
+Verification:
+
+- API/integration tests for recipient and organization isolation.
+- Read/unread transition and realtime update tests where applicable.
+- Manual verification of the bell, count, inbox, and navigation targets.
+
+## UI-6 — Settings and Profile Navigation
+
+**PLANNED**
+
+The Settings landing page currently exposes SLA Policies only, and the top-right Settings icon has no action. The blueprint also includes a Profile route.
+
+Implement:
+
+- Wire the top-right Settings action to `/settings`.
+- Keep the existing SLA Policies functionality intact.
+- Audit the blueprint and current support for organization profile, users/memberships, teams, products, notification preferences, and other configuration.
+- Add settings cards only for working pages and supported APIs; label unsupported options as planned rather than exposing empty shells.
+- Implement `/profile` for user-owned account/profile details supported by the authentication and user model.
+- Enforce OWNER/ADMIN or other role restrictions server-side for administrative settings.
+
+Verification:
+
+- Navigation and route tests.
+- Authorization tests for administrative settings.
+- Existing SLA policy regression tests remain green.
+- Manual walkthrough of Settings and Profile.
+
+## UI-7 — UI Consistency, Accessibility, and Dead-action Sweep
+
+**PLANNED**
+
+- Audit every sidebar, mobile-navigation, top-bar, card, row, and detail-page action for dead controls or missing routes.
+- Implement actual sidebar collapse/expand behavior or remove the nonfunctional collapse control.
+- Keep the **Ticket Library** label consistent in desktop navigation, mobile navigation, page headings, and links.
+- Confirm ticket-detail workflows for comments, attachments, activity history, assignment/status transitions, approvals, relations, and SLA information.
+- Standardize loading, error, empty, and success presentation using existing shared UI components.
+- Verify keyboard focus, accessible names, responsive layouts, and permission-aware controls.
+- Avoid duplicate data-fetching paths where the existing TanStack Query hooks and API clients can be reused.
+
+Verification:
+
+- Automated route/action tests where practical.
+- Full frontend TypeScript, lint, tests, and production build.
+- Focused E2E suites for any touched backend workflow.
+- Full API E2E regression and manual desktop/mobile workflow walkthrough.
+
+## Implementation Order
+
+1. UI-1 — Ticket creation / raising tickets.
+2. UI-2 — Approvals inbox, Ticket Library, Users, product management, and department audit.
+3. UI-3 — Live operational Dashboard.
+4. UI-4 — Functional global ticket search.
+5. UI-5 — Notification persistence audit and notification center.
+6. UI-6 — Settings and Profile navigation.
+7. UI-7 — Full interaction, accessibility, responsive, and regression sweep.
+
+Do not begin a milestone by assuming an endpoint or persisted model exists. Inspect the blueprint, current route tree, schema, API contract, and permissions first. Reuse verified services, preserve organization isolation, and document unsupported functionality explicitly.
+
+**Definition of complete:** the user-facing workflow is reachable, uses real domain/API data, respects authorization and organization boundaries, supports loading/error/empty states, has appropriate automated coverage, passes the required quality gates, and has been manually verified in the browser.
+
+# Phase 8 --- Production Hardening
+
+**PLANNED — AFTER OPERATIONAL UI COMPLETION**
+
+- Unit and integration test coverage gaps
+- Full E2E regression and CI enforcement
+- Security audit and authorization review
 - Performance testing
-- Database optimization
-- Logging
-- Monitoring
-- Backups
-- CI/CD
-- Production Docker
+- Database/index optimization
+- Structured logging and monitoring
+- Backups and restore testing
+- CI/CD pipeline
+- Production Docker and deployment validation
 
 # Phase 5 --- Productivity
 
@@ -1164,7 +1351,10 @@ Phase 7-C.4 Product Verification      COMPLETE AND VERIFIED
 Phase 7-D Employee Dashboard          COMPLETE AND VERIFIED
 Phase 7-E SLA Reports UI              COMPLETE AND VERIFIED
 Phase 7-F TAT Reports                 COMPLETE AND VERIFIED
+Phase 7-G Usage Reports                 COMPLETE AND VERIFIED
 Phase 7-H Ticket Library Reports       COMPLETE AND VERIFIED
+Phase 7-I Exports                       COMPLETE AND VERIFIED
+Phase 7-J Full Analytics Verification   COMPLETE AND VERIFIED
 ```
 
 # Verification Commands and Historical Baseline
@@ -1603,31 +1793,20 @@ produce failed test assertions; the complete suite still passed 319/319.
 
 Phase 6 — SLA is now **COMPLETE AND VERIFIED**.
 
-Phase 7 — Analytics is the next implementation phase.
+Phase 7 — Analytics subsequently completed and is now COMPLETE AND VERIFIED.
 
 # Next Development Direction
 
 Phase 4 is complete.
 Phase 5-A through Phase 5-F are **COMPLETE AND VERIFIED**.
 Phase 6-A through Phase 6-F are **COMPLETE AND VERIFIED**.
-Phase 7-A through 7-D — Analytics Foundation, Analytics Dashboard, Product
-Analytics, and Employee Dashboard — are **COMPLETE AND VERIFIED**.
-Phase 7-E.1 through 7-E.10 — SLA Reports — are **COMPLETE AND VERIFIED**.
-Phase 7-F — TAT Reports — is **COMPLETE AND VERIFIED**.
-Phase 7-H — Ticket Library Reports — is **COMPLETE AND VERIFIED**.
+Phase 7-A through 7-J are **COMPLETE AND VERIFIED**, including Usage Reports,
+Ticket Library Reports, Exports, and Full Analytics Verification.
 
-The next implementation phase is:
+The next milestone is **Product UI Completion**, in the implementation order
+and with the verification boundary defined in the roadmap above. The desktop
+sidebar now uses the **Ticket Library** label and Tasks has been removed; keep
+those choices consistent across mobile navigation and documentation.
 
-**Phase 8 --- Production Hardening**
-
-- Unit tests
-- Integration tests
-- E2E tests
-- Security audit
-- Performance testing
-- Database optimization
-- Logging
-- Monitoring
-- Backups
-- CI/CD
-- Production Docker
+Phase 8 — Production Hardening remains planned after the core operational UI
+workflows are complete and manually verified.
