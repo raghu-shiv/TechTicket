@@ -7,88 +7,96 @@ import type {
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api/v1";
 
-export async function getProducts(organizationId: string): Promise<Product[]> {
-  const response = await fetch(`${API_BASE_URL}/products`, {
-    method: "GET",
+async function getErrorMessage(
+  response: Response,
+  fallback: string,
+): Promise<string> {
+  try {
+    const error = (await response.json()) as {
+      message?: string | string[];
+    };
+
+    if (Array.isArray(error.message) && error.message.length > 0) {
+      return error.message.join(", ");
+    }
+
+    if (typeof error.message === "string" && error.message.trim()) {
+      return error.message;
+    }
+  } catch {
+    // Keep the fallback for non-JSON error responses.
+  }
+
+  return fallback;
+}
+
+async function productRequest<T>(
+  organizationId: string,
+  path: string,
+  init: RequestInit,
+  fallback: string,
+): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...init,
     credentials: "include",
     headers: {
       Accept: "application/json",
       "x-organization-id": organizationId,
+      ...(init.body ? { "Content-Type": "application/json" } : {}),
+      ...init.headers,
     },
     cache: "no-store",
   });
 
   if (!response.ok) {
-    throw new Error("Failed to fetch products");
+    throw new Error(await getErrorMessage(response, fallback));
   }
 
-  return response.json() as Promise<Product[]>;
+  return response.json() as Promise<T>;
 }
 
-export async function createProduct(
+export function getProducts(organizationId: string): Promise<Product[]> {
+  return productRequest(
+    organizationId,
+    "/products",
+    { method: "GET" },
+    "Failed to fetch products.",
+  );
+}
+
+export function createProduct(
   organizationId: string,
   input: CreateProductInput,
 ): Promise<Product> {
-  const response = await fetch(`${API_BASE_URL}/products`, {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      "x-organization-id": organizationId,
-    },
-    body: JSON.stringify(input),
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to create product");
-  }
-
-  return response.json() as Promise<Product>;
+  return productRequest(
+    organizationId,
+    "/products",
+    { method: "POST", body: JSON.stringify(input) },
+    "Failed to create product.",
+  );
 }
 
-export async function updateProduct(
+export function updateProduct(
   organizationId: string,
   productId: string,
   input: UpdateProductInput,
 ): Promise<Product> {
-  const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
-    method: "PATCH",
-    credentials: "include",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      "x-organization-id": organizationId,
-    },
-    body: JSON.stringify(input),
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to update product");
-  }
-
-  return response.json() as Promise<Product>;
+  return productRequest(
+    organizationId,
+    `/products/${encodeURIComponent(productId)}`,
+    { method: "PATCH", body: JSON.stringify(input) },
+    "Failed to update product.",
+  );
 }
 
-export async function deleteProduct(
+export function deleteProduct(
   organizationId: string,
   productId: string,
 ): Promise<{ id: string }> {
-  const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
-    method: "DELETE",
-    credentials: "include",
-    headers: {
-      Accept: "application/json",
-      "x-organization-id": organizationId,
-    },
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to delete product");
-  }
-
-  return response.json() as Promise<{ id: string }>;
+  return productRequest(
+    organizationId,
+    `/products/${encodeURIComponent(productId)}`,
+    { method: "DELETE" },
+    "Failed to delete product.",
+  );
 }

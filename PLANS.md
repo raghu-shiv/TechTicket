@@ -921,33 +921,33 @@ Outcome: UI-1 is complete. The ticket-creation workflow and attachment visibilit
 
 ## UI-2 — Complete Core Navigation and Missing Pages
 
-**NEXT**
+**PENDING Departments — deferred follow-on**
 
-The current navigation includes Approvals, Ticket Library, and Users, but the corresponding top-level page routes must be implemented and verified against the current route tree. The user-facing navigation must never lead to an absent route.
+The core navigation and missing-page work has been implemented. Desktop and mobile navigation use a shared definition, and the top-level Approvals, Ticket Library, Users, and Products pages are present. Ticket Library is a persistent knowledge experience, separate from both the operational ticket list and the Ticket Library analytics report. Tasks and the obsolete Case Library navigation entry remain removed.
 
-Implement:
+Implemented:
 
-- **Approvals inbox:** build an organization-scoped inbox around the existing approval workflow. Show relevant pending requests, ticket/requester context, status, and authorized approve/reject actions with comments where supported. Link to ticket details and provide loading, error, and empty states. Add a list API only if the existing controller/service contracts do not support an inbox query.
-- **Ticket Library:** implement the blueprint's knowledge/library experience at `/ticket-library`, distinct from the operational `/tickets` list and the analytics page `/reports/ticket-library`. Audit existing data models and APIs first; do not treat the reports page as the knowledge library.
-- **Users directory:** audit current organization membership and user endpoints, then implement an organization-scoped directory. Distinguish read access from invite, role-change, and removal actions; implement mutations only when backed by verified APIs and permissions.
-- **Products management:** expose the existing product CRUD API through a management UI for authorized roles, including active/inactive lifecycle states.
-- **Departments:** compare the blueprint against the current Prisma schema and APIs. If department management is still required and absent, record the necessary domain/API/UI work before implementing it.
-- Keep desktop and mobile navigation in sync, preferably using a shared navigation definition.
-- Ensure every visible link resolves to a working page or is explicitly presented as unavailable rather than linking to a 404.
-- Do not reintroduce the removed Tasks item or build `/tasks` unless the product scope is explicitly changed later.
+- **Approvals inbox:** added an organization-scoped inbox query at `GET /api/v1/approvals` with status filtering. It shows approvals assigned to the authenticated user with ticket and requester context, provides loading/error/empty states, links to ticket details, and exposes approve/reject actions with comments. Server-side approval identity, permissions, and organization isolation remain enforced by the API.
+- **Ticket Library:** implemented the knowledge/library experience at `/ticket-library`, separate from `/tickets` and `/reports/ticket-library`. It supports persistent article CRUD, search/filtering, tags, product association, and optional linking to an eligible resolved/closed ticket. API access is organization-scoped and protected by server-side authorization.
+- **Users directory:** implemented `/users` using the existing organization-membership API. The UI exposes supported membership and role operations to authorized roles and does not imply that adding an existing user by email creates a new account or sends an invitation when the API does not provide that contract.
+- **Products management:** implemented `/products` over the existing product CRUD API, including active/inactive lifecycle state and role-gated management operations.
+- **Shared navigation and routes:** desktop and mobile navigation share the same definition. The top-bar Settings action points to `/settings`; the new top-level routes are registered and covered by navigation/API-contract smoke tests. Do not reintroduce the removed Tasks item or build `/tasks` unless product scope is explicitly changed.
+- **Departments — deferred follow-on:** the audit at `docs-ui2-department-audit.md` confirms there is no `Department` Prisma model or department API. The blueprint does not define department scoping, relationships to users/tickets, hierarchy, or exact manager/role permissions. Do not create a placeholder page, substitute Teams, or add `/departments` to active navigation. Before implementation, define the domain relationships and authorization, then plan the Prisma migration, organization-scoped CRUD API, UI, and tests.
 
-Verification:
+Verification completed:
 
-- Route smoke tests for every navigation item at desktop and mobile breakpoints.
-- Approval permission and organization-isolation E2E tests.
-- User and product management authorization and cross-organization tests.
-- Manual navigation and approval workflow walkthrough.
-
-Definition of done: Required navigation routes are implemented and accessible; organization-scoped data and server-side authorization are enforced; the relevant automated tests pass; and manual navigation and approval workflows are verified.
+- Frontend Vitest suite: **227 tests passed across 19 files**, including `navigation-routes.test.ts` (4 tests) and `ui2-api-contracts.test.ts` (6 tests).
+- Approval inbox API E2E: **5/5 passed** after fixing route registration and test cleanup.
+- Ticket Library API E2E: **6/6 passed** after correcting the test's ticket-status transition setup.
+- Backend Vitest suite: **545 tests passed across 38 files**
+- Frontend and API TypeScript checks: passed with no reported errors.
+- Frontend and API lint: passed; API and web production builds passed.
+- Prisma schema formatting and validation passed; the `add_ticket_library` migration was applied locally and Prisma Client generation succeeded.
+- Manual navigation and workflow verification: reported complete and working as expected.
 
 ## UI-3 — Live Operational Dashboard
 
-**PLANNED**
+**NEXT**
 
 The current `/dashboard` page has hardcoded KPI values and weekly deltas, and its Ticket Trends chart is a placeholder. The `/reports` analytics experience already consumes live, organization-scoped analytics data and should be reused as the source of supported metrics.
 

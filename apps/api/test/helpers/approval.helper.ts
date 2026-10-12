@@ -51,6 +51,22 @@ export async function cleanupApprovalTestData(
 ): Promise<void> {
   const database = app.get(DatabaseService);
 
+  const fixtureUserIds = [
+    fixture.owner.userId,
+    fixture.admin.userId,
+    fixture.agent.userId,
+    fixture.requester.userId,
+  ];
+
+  await database.ticketApproval.deleteMany({
+    where: {
+      OR: [
+        { approverId: { in: fixtureUserIds } },
+        { ticket: { organizationId: fixture.organization.id } },
+      ],
+    },
+  });
+
   await database.organization.delete({
     where: {
       id: fixture.organization.id,

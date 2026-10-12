@@ -100,6 +100,8 @@ model User {
   approvalRequests    TicketApproval[]
   savedFilters        SavedFilter[]
 
+  createdKnowledgeEntries TicketLibraryEntry[]
+
   @@unique([email])
   @@map("user")
 }
@@ -170,6 +172,8 @@ model Organization {
   ticketActivities TicketActivity[]
   savedFilters     SavedFilter[]
   products         Product[]
+
+  ticketLibraryEntries TicketLibraryEntry[]
 
   @@index([name])
 }
@@ -261,6 +265,8 @@ model Ticket {
   incomingRelations TicketRelation[] @relation("TicketRelationTo")
   slaEscalations    SlaEscalation[]
   activities        TicketActivity[]
+
+  knowledgeEntries TicketLibraryEntry[] @relation("TicketKnowledgeSource")
 
   @@unique([organizationId, ticketNumber])
   @@index([organizationId])
@@ -483,7 +489,31 @@ model Product {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   tickets      Ticket[]
 
+  libraryEntries TicketLibraryEntry[]
+
   @@unique([organizationId, name])
   @@index([organizationId])
   @@index([organizationId, isActive])
+}
+
+model TicketLibraryEntry {
+  id             String   @id @default(cuid())
+  organizationId String
+  sourceTicketId String?
+  title          String
+  problem        String
+  resolution     String
+  productId      String?
+  tags           String[] @default([])
+  createdById    String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  sourceTicket Ticket?      @relation("TicketKnowledgeSource", fields: [sourceTicketId], references: [id], onDelete: SetNull)
+  product      Product?     @relation(fields: [productId], references: [id], onDelete: SetNull)
+  createdBy    User         @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, updatedAt])
+  @@index([organizationId, productId])
 }

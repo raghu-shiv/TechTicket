@@ -8,28 +8,48 @@ import {
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { APPROVAL_EVENTS } from './approval-events';
-
 import { TicketApprovalStatus, type TicketApproval } from '@prisma/client';
-
 import { DatabaseService } from '../../database/database.service';
-
 import type { OrganizationContext } from '../../common/organization/organization.types';
 
 @Injectable()
 export class ApprovalsService {
   constructor(
     private readonly database: DatabaseService,
-
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
+  async findInbox(context: OrganizationContext, status?: TicketApprovalStatus) {
+    return this.database.ticketApproval.findMany({
+      where: {
+        approverId: context.userId,
+        ...(status ? { status } : {}),
+        ticket: { organizationId: context.organizationId },
+      },
+      orderBy: { requestedAt: 'desc' },
+      include: {
+        ticket: {
+          select: {
+            id: true,
+            ticketNumber: true,
+            title: true,
+            description: true,
+            type: true,
+            priority: true,
+            status: true,
+            createdAt: true,
+            requester: { select: { id: true, name: true, email: true } },
+            product: { select: { id: true, name: true } },
+          },
+        },
+      },
+    });
+  }
+
   async requestApproval(
     context: OrganizationContext,
-
     ticketId: string,
-
     approverId: string,
-
     comment?: string,
   ): Promise<TicketApproval> {
     const ticket = await this.database.ticket.findFirst({

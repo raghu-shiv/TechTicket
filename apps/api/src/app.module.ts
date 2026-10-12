@@ -19,6 +19,7 @@ import { RealtimeModule } from './modules/realtime/realtime.module';
 import { SavedFilterModule } from './modules/saved-filters/saved-filter.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { ProductsModule } from './modules/products/products.module';
+import { TicketLibraryModule } from './modules/ticket-library/ticket-library.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { ProductsModule } from './modules/products/products.module';
     MembersModule,
     TeamsModule,
     ProductsModule,
+    TicketLibraryModule,
     TicketsModule,
     SavedFilterModule,
     AnalyticsModule,

@@ -5,6 +5,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 
@@ -20,6 +21,7 @@ import { PERMISSIONS } from '../../common/permissions/permission.types';
 
 import { ApprovalActionDto } from './dto/approval-action.dto';
 import { RequestApprovalDto } from './dto/request-approval.dto';
+import { ListApprovalsDto } from './dto/list-approvals.dto';
 import { ApprovalsService } from './approvals.service';
 
 @Controller()
@@ -106,5 +108,14 @@ export class ApprovalsController {
     @Param('approvalId') approvalId: string,
   ) {
     return this.approvalsService.cancel(context, ticketId, approvalId);
+  }
+
+  @Get('approvals')
+  @Permissions(PERMISSIONS.APPROVAL_VIEW)
+  async getInbox(
+    @OrganizationContextParam() context: OrganizationContext,
+    @Query() query: ListApprovalsDto,
+  ) {
+    return this.approvalsService.findInbox(context, query.status);
   }
 }
