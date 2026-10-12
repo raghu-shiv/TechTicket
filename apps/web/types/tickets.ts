@@ -28,6 +28,17 @@ export interface TicketUser {
   email: string;
 }
 
+export interface TicketAttachment {
+  id: string;
+  ticketId: string;
+  uploadedById: string;
+  fileName: string;
+  mimeType: string;
+  size: number;
+  createdAt: string;
+  uploadedBy: TicketUser;
+}
+
 export interface TicketProduct {
   id: string;
   name: string;

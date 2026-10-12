@@ -1,7 +1,7 @@
+import Link from "next/link";
 import { AlertTriangle, CheckCircle2, Clock3, Ticket } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
-
 import { PageHeader, StatCard } from "@/components/shared";
 
 const stats = [
@@ -53,6 +53,15 @@ export default function DashboardPage() {
       <PageHeader
         title="Dashboard"
         description="Overview of your support operations."
+        actions={
+          <Link
+            href="/tickets/create"
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <Ticket className="size-4" />
+            Raise Ticket
+          </Link>
+        }
       />
 
       <section

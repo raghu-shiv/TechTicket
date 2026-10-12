@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
-  CheckSquare,
   ChevronLeft,
   ClipboardList,
   FileCheck2,

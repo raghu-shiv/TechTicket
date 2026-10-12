@@ -25,6 +25,7 @@ import { useSlaRealtime } from "@/hooks/use-sla-realtime";
 import type { TicketPriority, TicketStatus, TicketType } from "@/types/tickets";
 import { TicketSlaPanel } from "@/components/tickets/TicketSlaPanel";
 import { SlaBreachHistory } from "@/components/tickets/SlaBreachHistory";
+import { TicketAttachmentsPanel } from "@/components/tickets/TicketAttachmentsPanel";
 
 const statusConfig: Record<
   TicketStatus,
@@ -86,10 +87,16 @@ function formatDate(value: string) {
 
 export default function TicketDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { id } = use(params);
+  const notices = use(searchParams);
+
+  const showCreatedNotice = notices.created === "1";
+  const showAttachmentWarning = notices.attachmentUpload === "failed";
 
   const organizationsQuery = useOrganizations();
   const organizationId = organizationsQuery.data?.[0]?.organizationId;
@@ -170,6 +177,26 @@ export default function TicketDetailPage({
       </Link>
 
       <PageHeader title={ticket.title} description={ticket.ticketNumber} />
+
+      {showCreatedNotice && (
+        <div
+          className="rounded-md border border-emerald-600/30 bg-emerald-600/5 px-4 py-3 text-sm"
+          role="status"
+        >
+          Ticket {ticket.ticketNumber} was created successfully.
+        </div>
+      )}
+
+      {showAttachmentWarning && (
+        <div
+          className="rounded-md border border-amber-600/40 bg-amber-600/5 px-4 py-3 text-sm"
+          role="alert"
+        >
+          The ticket was created, but one or more attachments could not be
+          uploaded. Do not create another ticket for this issue. The failed
+          uploads need to be retried separately.
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         {/* ------------------------------------------------------------------ */}
@@ -304,6 +331,10 @@ export default function TicketDetailPage({
         </div>
       </div>
 
+      <TicketAttachmentsPanel
+        organizationId={organizationId}
+        ticketId={ticket.id}
+      />
       <SlaBreachHistory organizationId={organizationId} ticketId={ticket.id} />
     </div>
   );

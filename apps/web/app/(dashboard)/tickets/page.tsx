@@ -888,6 +888,15 @@ function TicketsContent() {
       <PageHeader
         title="My Tickets"
         description="View and manage tickets in your workspace."
+        actions={
+          <Link
+            href="/tickets/create"
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <TicketIcon className="size-4" />
+            Raise Ticket
+          </Link>
+        }
       />
 
       <div className="mt-6 space-y-4">

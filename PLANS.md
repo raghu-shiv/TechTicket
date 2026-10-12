@@ -891,34 +891,37 @@ The desktop navigation currently uses **Ticket Library** and the Tasks item has 
 
 ## UI-1 — Raise a Ticket / Ticket Creation
 
-**NEXT**
+**COMPLETE AND VERIFIED**
 
-Current state:
+Implemented
 
-- The API supports `POST /api/v1/tickets`.
-- The `/tickets` page exists but does not expose a visible create action.
-- The blueprint route map proposes `/tickets/create`; use that canonical route unless the blueprint is intentionally revised.
+- Added clearly visible Raise Ticket actions to the Dashboard and My Tickets page.
+- Implemented the canonical /tickets/create route, with title, description, type, priority, and optional product selection.
+- Reused the existing POST /api/v1/tickets contract and authenticated organization context.
+- Preserved requester/agent creation semantics: the authenticated creator is recorded as the requester.
+- Preserved server-side authentication, authorization, and organization isolation. The UI is not treated as the security boundary.
+- Added client-side validation for required fields, title length, attachment size, and supported attachment types.
+- Implemented pending, validation, API error, and success states.
+- Added support for uploading attachments through the existing ticket attachment API after ticket creation.
+- Added an Attachments panel to the ticket detail page, displaying attachment metadata and providing a working download action.
+- On successful creation, navigate to the new ticket detail page and invalidate relevant React Query data.
+- Added frontend validation and API-contract tests, plus API end-to-end coverage for creation, invalid input, authentication, authorization, and organization isolation.
 
-Implement:
+Verification — Passed
 
-- Add a clearly visible **Raise Ticket** / **Create Ticket** action on Dashboard and Tickets.
-- Implement `/tickets/create` with title, description, type, priority, and product selection where applicable.
-- Reuse the existing ticket creation contract and authenticated organization context.
-- Include attachment support where appropriate to the existing attachment contract.
-- Validate required fields and display pending, validation, API error, and success states.
-- On successful creation, navigate to the new ticket detail page and refresh relevant query data.
-- Enforce authorization in the API; UI visibility must not be treated as the security boundary.
-- Preserve requester/agent ticket-creation semantics already defined by the domain.
+- TypeScript: npx tsc --noEmit completed without errors.
+- Lint: passed without errors.
+- Production build: npm run build completed successfully; /tickets/create was registered in the application route output.
+- Frontend tests: ticket creation, validation, and attachment API-contract tests passed.
+- API E2E tests: all 6 ticket-creation tests passed, covering successful requester creation, agent creation, invalid input, unauthenticated access, unauthorized organization access, and attempted organization-context override.
+- Manual UI verification: completed successfully. Ticket creation works from both Dashboard and My Tickets, successful submission navigates to the ticket detail page, and uploaded attachments are visible and downloadable.
+- Confirmed that attachment failures are handled separately from ticket creation, avoiding the need to create a duplicate ticket when an upload fails.
 
-Verification:
-
-- Frontend form and API-contract tests.
-- E2E coverage for successful creation, invalid input, authorization, and organization isolation.
-- Manual creation workflow from Dashboard and Tickets.
+Outcome: UI-1 is complete. The ticket-creation workflow and attachment visibility/download behavior have been verified.
 
 ## UI-2 — Complete Core Navigation and Missing Pages
 
-**PLANNED**
+**NEXT**
 
 The current navigation includes Approvals, Ticket Library, and Users, but the corresponding top-level page routes must be implemented and verified against the current route tree. The user-facing navigation must never lead to an absent route.
 
@@ -939,6 +942,8 @@ Verification:
 - Approval permission and organization-isolation E2E tests.
 - User and product management authorization and cross-organization tests.
 - Manual navigation and approval workflow walkthrough.
+
+Definition of done: Required navigation routes are implemented and accessible; organization-scoped data and server-side authorization are enforced; the relevant automated tests pass; and manual navigation and approval workflows are verified.
 
 ## UI-3 — Live Operational Dashboard
 
