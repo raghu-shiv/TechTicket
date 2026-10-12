@@ -947,31 +947,46 @@ Verification completed:
 
 ## UI-3 — Live Operational Dashboard
 
-**NEXT**
+**COMPLETE AND VERIFIED**
 
-The current `/dashboard` page has hardcoded KPI values and weekly deltas, and its Ticket Trends chart is a placeholder. The `/reports` analytics experience already consumes live, organization-scoped analytics data and should be reused as the source of supported metrics.
+Replaced the hardcoded `/dashboard` KPIs, invented weekly deltas, placeholder Ticket Trends chart, and hardcoded priority distribution with live, organization-scoped data backed by the existing analytics and ticket APIs.
 
-Implement:
+The operational dashboard now focuses on current workload, actionable priorities, SLA issues, and quick navigation. Historical analysis, detailed filtering, comparisons, and exports remain under `/reports`.
 
-- Replace hardcoded counts with live API-backed operational metrics.
-- Replace weekly percentage changes only where valid comparison-window calculations exist; do not display invented trends.
-- Connect Ticket Trends to existing ticket-volume trend data and chart presentation.
-- Connect priority distribution to actual API aggregates. Map `URGENT` to the approved UI label consistently; do not invent a separate persisted `Critical` priority.
-- Add quick actions for Raise Ticket, My Tickets, Ticket Library, Approvals, and relevant SLA breach views.
-- Add recent activity or recently updated tickets only using supported persisted data.
-- Distinguish loading, API error, genuine zero-data, and unavailable metrics. Never silently show hardcoded values on failure.
-- Keep `/dashboard` focused on current workload and actions; keep historical analysis, filtering, detailed comparisons, and exports under `/reports`.
+**Implemented:**
 
-Verification:
+- **Live operational KPIs:** Replaced static counts with API-backed ticket metrics, including Open Tickets, In Progress, Resolved / Closed, SLA Breaches, Unassigned Active, and New Tickets (7 days).
+- **Valid trend comparisons:** Added a week-over-week comparison for new-ticket volume using equal, complete seven-day windows. Comparison percentages are omitted when a valid prior-period baseline is unavailable. No invented trend values are displayed.
+- **Ticket Trends:** Connected the chart to existing persisted ticket-volume trend data. Sparse daily results are normalized to include zero-count calendar days.
+- **Priority Distribution:** Replaced hardcoded distribution values with actual API aggregates. `URGENT` maps to the UI label **Urgent** consistently; no separate persisted `Critical` priority was introduced.
+- **Quick actions:** Added navigation for Raise Ticket, My Tickets, Ticket Library, Approvals, and relevant SLA breach views.
+- **Recently updated tickets:** Uses persisted ticket data and update timestamps rather than fabricated activity.
+- **Loading and error states:** Distinguished loading, API failures, unavailable metrics, and genuine zero-data results. API failures do not silently fall back to hardcoded or fabricated counts.
+- **Organization and role isolation:** Enforced organization scoping and requester self-scoping on the server for analytics aggregates and ticket-list queries, preventing requesters from widening visibility by supplying another user's `requesterId`.
+- **Refresh and responsive behavior:** Added dashboard refresh behavior and responsive presentation for operational use.
 
-- Tests for populated data, empty data, and API failures.
-- KPI/priority aggregation checks against API contracts.
-- Organization isolation and role-appropriate data visibility.
-- Responsive layout and manual verification against seeded live tickets.
+**Verification — PASSED:**
+
+- Web TypeScript check: `docker compose exec web npx tsc --noEmit`.
+- API TypeScript check: `docker compose exec api npx tsc --noEmit`.
+- Web lint: `docker compose exec web npm run lint`.
+- API lint: `docker compose exec api npm run lint` — zero warnings and zero errors.
+- Web unit/component tests: **236 tests passed across 20 files**, including 9 operational-dashboard tests covering populated data, empty data, priority mapping, comparison baselines, requester scoping, loading/error/unavailable states, and API failures.
+- API unit tests: **44 tests passed across 4 files**.
+- Full API E2E suite: **546 tests passed across 39 files**.
+- Dashboard visibility E2E: passed; requester dashboard aggregates and recent-ticket lists are restricted to the authenticated requester's tickets.
+- Analytics dashboard E2E: **20 tests passed**, covering metric correctness, date filtering, priority distribution, ticket-volume trends, empty results, authentication, and organization isolation.
+- Web production build: passed. Next.js successfully compiled, completed TypeScript checks, generated static pages, and included `/dashboard` and the expected application routes.
+- API production build: `docker compose exec api npm run build` completed successfully.
+- Manual verification: completed; the dashboard was checked against seeded live tickets and confirmed to update and operate as expected.
+
+**Definition of done:** Required operational metrics and charts use supported persisted data; comparison windows are valid; priority labels match the persisted enum; loading, error, zero-data, and unavailable states are explicit; organization and requester visibility are enforced server-side; automated tests and production builds pass; and manual dashboard verification is complete.
+
+**Known non-blocking test-environment noise:** The full API E2E run logged Resend `422` errors for test emails using `example.com`, and Vitest printed configuration deprecation warnings. These did not fail the reported test suites and are separate cleanup items, not blockers for UI-3.
 
 ## UI-4 — Functional Global Search
 
-**PLANNED**
+**NEXT**
 
 The top-bar command menu currently opens, but the input does not execute a search. The existing Tickets API supports a `search` query parameter, so the first version should implement ticket search before expanding beyond supported API contracts.
 

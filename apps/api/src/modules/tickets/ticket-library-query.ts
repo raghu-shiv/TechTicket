@@ -118,6 +118,11 @@ export function buildTicketLibraryWhere(
     throw new BadRequestException('updatedFrom cannot be later than updatedTo');
   }
 
+  // Requesters can only view their own tickets.
+  // Other roles may use the supplied requesterId filter.
+  const requesterId =
+    context.role === 'REQUESTER' ? context.userId : filters.requesterId;
+
   return {
     organizationId: context.organizationId,
 
@@ -154,8 +159,8 @@ export function buildTicketLibraryWhere(
     }),
 
     ...(filters.teamId !== undefined && { teamId: filters.teamId }),
-    ...(filters.requesterId !== undefined && {
-      requesterId: filters.requesterId,
+    ...(requesterId !== undefined && {
+      requesterId,
     }),
 
     ...(filters.unassigned !== undefined && {

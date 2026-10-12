@@ -12,9 +12,15 @@ export const ticketsQueryKeys = {
     [...ticketsQueryKeys.all, "list", organizationId, params] as const,
 };
 
+export interface TicketsQueryOptions {
+  /** Optional polling interval; omitted to preserve existing ticket-list behavior. */
+  refetchInterval?: number | false;
+}
+
 export function useTickets(
   organizationId: string | undefined,
   params: TicketListParams = {},
+  options: TicketsQueryOptions = {},
 ) {
   return useQuery({
     queryKey: organizationId
@@ -30,5 +36,6 @@ export function useTickets(
     },
 
     enabled: Boolean(organizationId),
+    refetchInterval: options.refetchInterval,
   });
 }

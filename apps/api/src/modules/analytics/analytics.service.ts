@@ -220,6 +220,10 @@ export class AnalyticsService {
   ): Promise<AnalyticsDashboardResponse> {
     const query = this.queryService.normalize(context, input);
 
+    if (context.role === 'REQUESTER') {
+      query.dimensions.requesterId = context.userId;
+    }
+
     const where = this.queryService.buildTicketWhere(query);
 
     const dateColumn =

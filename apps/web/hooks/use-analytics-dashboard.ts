@@ -12,9 +12,15 @@ export const analyticsDashboardQueryKeys = {
     [...analyticsDashboardQueryKeys.all, organizationId, params] as const,
 };
 
+export interface AnalyticsDashboardQueryOptions {
+  /** Optional polling interval; omitted to preserve existing reports behavior. */
+  refetchInterval?: number | false;
+}
+
 export function useAnalyticsDashboard(
   organizationId: string | undefined,
   params: GetAnalyticsDashboardParams = {},
+  options: AnalyticsDashboardQueryOptions = {},
 ) {
   return useQuery({
     queryKey: organizationId
@@ -26,5 +32,6 @@ export function useAnalyticsDashboard(
     enabled: Boolean(organizationId),
 
     staleTime: 30_000,
+    refetchInterval: options.refetchInterval,
   });
 }
