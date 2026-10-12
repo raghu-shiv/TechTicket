@@ -15,6 +15,9 @@ export const ticketsQueryKeys = {
 export interface TicketsQueryOptions {
   /** Optional polling interval; omitted to preserve existing ticket-list behavior. */
   refetchInterval?: number | false;
+
+  /** Allow callers such as global search to disable the query temporarily. */
+  enabled?: boolean;
 }
 
 export function useTickets(
@@ -35,7 +38,8 @@ export function useTickets(
       return getTickets(organizationId, params);
     },
 
-    enabled: Boolean(organizationId),
+    enabled: Boolean(organizationId) && options.enabled !== false,
+
     refetchInterval: options.refetchInterval,
   });
 }
