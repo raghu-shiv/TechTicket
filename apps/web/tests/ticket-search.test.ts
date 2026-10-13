@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { getTickets } from "@/lib/api/tickets";
+import { getTicketLibraryEntries } from "@/lib/api/ticket-library";
 import {
+  buildTicketLibrarySearchHref,
+  buildTicketLibrarySearchRequest,
   buildTicketSearchHref,
   buildTicketSearchRequest,
   normalizeTicketSearchQuery,
@@ -235,5 +238,119 @@ describe("existing ticket API search contract", () => {
         limit: 8,
       }),
     ).rejects.toThrow("Search service unavailable");
+  });
+});
+
+describe("buildTicketLibrarySearchRequest", () => {
+  it("uses the existing organization-scoped article search contract", () => {
+    expect(
+      buildTicketLibrarySearchRequest("org-a", "  cache   reset "),
+    ).toEqual({
+      organizationId: "org-a",
+      params: {
+        search: "cache reset",
+        page: 1,
+        limit: 6,
+      },
+    });
+  });
+
+  it("does not create a request without an organization", () => {
+    expect(buildTicketLibrarySearchRequest(undefined, "cache")).toBeNull();
+  });
+
+  it("does not create a request for an empty query", () => {
+    expect(buildTicketLibrarySearchRequest("org-a", "  ")).toBeNull();
+  });
+});
+
+describe("buildTicketLibrarySearchHref", () => {
+  it("opens the existing library page with search and selected article", () => {
+    const href = buildTicketLibrarySearchHref(
+      "  cache   reset ",
+      "article-a",
+      "product-a",
+    );
+
+    const url = new URL(href, "https://example.test");
+
+    expect(url.pathname).toBe("/ticket-library");
+    expect(url.searchParams.get("search")).toBe("cache reset");
+    expect(url.searchParams.get("selectedArticleId")).toBe("article-a");
+    expect(url.searchParams.get("productId")).toBe("product-a");
+    expect(url.searchParams.get("page")).toBe("1");
+    expect(url.pathname).not.toMatch(/\/ticket-library\/[^/]+$/);
+  });
+
+  it("opens the existing library page without a selected article for View all", () => {
+    const href = buildTicketLibrarySearchHref("cache reset");
+    const url = new URL(href, "https://example.test");
+
+    expect(url.pathname).toBe("/ticket-library");
+    expect(url.searchParams.get("search")).toBe("cache reset");
+    expect(url.searchParams.has("selectedArticleId")).toBe(false);
+  });
+});
+
+describe("existing Ticket Library search API contract", () => {
+  it("sends normalized search, pagination, and organization scope", async () => {
+    const responseBody = {
+      data: [],
+      meta: {
+        page: 1,
+        limit: 6,
+        total: 0,
+        totalPages: 0,
+      },
+    };
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => responseBody,
+    } as Response);
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const request = buildTicketLibrarySearchRequest(
+      "org-a",
+      "  cache   reset ",
+    );
+
+    expect(request).not.toBeNull();
+
+    await getTicketLibraryEntries(request!.organizationId, request!.params);
+
+    const [rawUrl, requestInit] = fetchMock.mock.calls[0] as unknown as [
+      string,
+      RequestInit,
+    ];
+
+    const url = new URL(rawUrl);
+    const headers = requestInit.headers as Record<string, string>;
+
+    expect(url.pathname).toBe("/api/v1/ticket-library");
+    expect(url.searchParams.get("search")).toBe("cache reset");
+    expect(url.searchParams.get("page")).toBe("1");
+    expect(url.searchParams.get("limit")).toBe("6");
+    expect(headers["x-organization-id"]).toBe("org-a");
+  });
+
+  it("propagates a Ticket Library API failure instead of treating it as empty", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      json: async () => ({
+        message: "Ticket Library unavailable",
+      }),
+    } as Response);
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      getTicketLibraryEntries("org-a", {
+        search: "cache",
+        page: 1,
+        limit: 6,
+      }),
+    ).rejects.toThrow("Ticket Library unavailable");
   });
 });

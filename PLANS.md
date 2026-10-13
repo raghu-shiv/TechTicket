@@ -1009,16 +1009,14 @@ Scope boundary:
 
 Verification — PASSED (user-confirmed):
 
-```text
-Focused ticket-search tests       21/21 passed
-Full frontend test suite          257/257 passed across 21 files
-Frontend TypeScript               PASS — npx tsc --noEmit
-Frontend lint                     PASS — npm run lint
-Frontend production build         PASS — npm run build
-Next.js static page generation    23/23 pages passed
-Manual keyboard verification      PASS
-Manual mobile verification        PASS
-```
+Focused ticket-search tests 21/21 passed
+Full frontend test suite 257/257 passed across 21 files
+Frontend TypeScript PASS — npx tsc --noEmit
+Frontend lint PASS — npm run lint
+Frontend production build PASS — npm run build
+Next.js static page generation 23/23 pages passed
+Manual keyboard verification PASS
+Manual mobile verification PASS
 
 Manual keyboard and mobile verification were confirmed complete by the user. No API endpoint, Prisma model, or migration was added for UI-4.
 
@@ -1026,49 +1024,76 @@ Manual keyboard and mobile verification were confirmed complete by the user. No 
 
 ## UI-4.1 — Global Search Expansion
 
-**PLANNED — TICKET LIBRARY FIRST; USER SEARCH CONTRACT/AUTHORIZATION DECISION REQUIRED**
+**PARTIALLY COMPLETE — TICKET LIBRARY SEARCH VERIFIED; USER SEARCH CONTRACT/AUTHORIZATION DECISION REQUIRED**
 
-Expand the completed command-menu search beyond tickets only after reusing confirmed API contracts and defining how selected records open. Keep the current ticket-search behavior stable and preserve organization and role boundaries for every result category.
+Expand the completed command-menu search beyond tickets by reusing confirmed API contracts and defining valid selection behavior for each supported result type. Keep existing ticket-search behavior stable and preserve organization and role boundaries for every result category.
 
 ### UI-4.1A — Ticket Library Search Integration
 
-The existing Ticket Library API already supports search; this part does not require inventing a new endpoint.
+**COMPLETE AND VERIFIED**
 
-Confirmed contract:
+The existing Ticket Library API supports search; no new endpoint was required for this integration.
+
+**Confirmed contract:**
 
 - `GET /api/v1/ticket-library` accepts `search`, `page`, `limit`, and optional `productId` query parameters.
-- The current backend searches article title, problem, resolution, and tags, and constrains queries to `context.organizationId`.
-- The frontend `getTicketLibraryEntries(organizationId, params)` client already exists and sends `x-organization-id`.
+- The backend searches article title, problem, resolution, and tags, and constrains queries to `context.organizationId`.
+- The existing frontend `getTicketLibraryEntries(organizationId, params)` client sends `x-organization-id`.
+- The existing `/ticket-library` page is used for article selection. No unregistered `/ticket-library/:entryId` route is assumed or exposed.
 
-Implement:
+**Implemented:**
 
-- Add Ticket Library articles as a distinct result group in the global search menu, reusing the existing API client, response types, query conventions, and organization context.
-- Reuse normalized/debounced input and present clear loading, error, empty, and result states for each supported result group.
-- Define and implement a valid selection/navigation behavior for an article using the current `/ticket-library` UI. The current route set does not include a dedicated `/ticket-library/:entryId` page; do not link to an unregistered route. If direct article routes are required, scope that route as part of this work rather than assuming it exists.
-- Keep keyboard navigation, Enter/click/tap selection, Escape, focus handling, and responsive behavior consistent across result groups.
-- Test matching against supported article fields, no results, API failures, organization isolation, and result selection/navigation.
+- Added Ticket Library articles as a distinct result group in the global search menu, reusing the existing API client, response types, query conventions, and organization context.
+- Reused normalized and debounced search input and implemented result handling for tickets and articles.
+- Added article selection/navigation through the existing `/ticket-library` page, preserving the search query and selected article context. The selection URL also preserves the article's product context when available.
+- Kept keyboard navigation, Enter/click/tap selection, Escape handling, focus behavior, and responsive interaction consistent with the existing command menu.
+- Added frontend tests for article-search request construction, missing organization context, empty queries, query normalization, organization scope, API failures, and article selection URLs.
+- Extended Ticket Library API E2E coverage to verify search across title, problem, resolution, and tags, alongside the existing organization-isolation and authorization coverage.
+
+**UI-4.1A verification results:**
+
+- **Lint:** PASS — no ESLint warnings or errors reported.
+- **TypeScript:** PASS — `npx tsc --noEmit`.
+- **Focused frontend search tests:** PASS — 28/28 tests in `ticket-search.test.ts`.
+- **Ticket Library API E2E tests:** PASS — 7/7 tests in `ticket-library.e2e-spec.ts`, including article-field search and organization-isolation coverage.
+- **Full frontend test suite:** PASS — 264/264 tests across 21 files.
+- **Production build:** PASS — Next.js production build completed and all 23 pages were generated successfully.
+- **Manual UI verification:** COMPLETE — global search and article selection/navigation work as expected.
+
+The API E2E run emitted non-blocking Vite configuration warnings concerning native config loading and `vite-tsconfig-paths`. The test suite passed; these warnings are not treated as test failures.
 
 ### UI-4.1B — User Search Contract and Authorization Decision
+
+**PLANNED — AUTHORIZATION POLICY AND SERVER-SIDE SEARCH CONTRACT REQUIRED**
 
 The current `GET /api/v1/members` endpoint returns organization members but is restricted server-side to `OWNER` and `ADMIN`. It does not currently expose a `search` query parameter. Do not treat it as an unrestricted global user directory or fetch its full response to filter in the browser.
 
 Before implementing user search:
 
-- Decide which organization roles may see user search results. Preserve the current OWNER/ADMIN boundary unless product requirements explicitly approve a different, server-enforced rule.
-- If approved, add a documented server-side search contract (for example, matching supported name/email fields), with query validation and organization scoping. Avoid exposing cross-organization user records.
-- Keep results limited to fields needed for search presentation; do not expose account/security fields unnecessarily.
+- Decide which organization roles may see user search results. Preserve the current `OWNER`/`ADMIN` boundary unless product requirements explicitly approve a different, server-enforced rule.
+- If approved, add a documented server-side search contract, such as matching supported name or email fields, with query validation and organization scoping. Do not expose cross-organization user records.
+- Limit results to the fields required for search presentation; do not expose account or security fields unnecessarily.
 - Add API tests for permitted and denied roles, query validation, and cross-organization isolation, plus frontend tests for state handling and result navigation.
-- If the role policy or API contract is not settled, defer user results without blocking Ticket Library integration.
+- Defer user results until the role policy and API contract are settled. This must not block the completed Ticket Library integration.
 
 ### UI-4.1 Verification
 
-- Ticket Library API-contract and frontend search tests for normalization, matching, pagination/result limits, empty states, API failures, and organization isolation.
-- User-search API authorization and organization-isolation tests if user search is approved and implemented.
-- Combined result-group keyboard navigation, Enter/click/tap selection, Escape/focus restoration, and query preservation.
-- Frontend TypeScript, lint, full tests, and production build.
-- Manual desktop and mobile verification.
+**Ticket Library search — completed:**
 
-**Definition of done:** Each enabled result type uses an existing or explicitly implemented server-side contract; all queries are scoped to the active organization and authorized role; no placeholder or unregistered links are exposed; each group has clear loading/error/empty behavior; keyboard/mobile interaction remains accessible; automated checks and production build pass; and manual verification is complete.
+- Frontend API-contract and search tests for normalization, request construction, pagination/result limits, empty queries, API failures, organization scope, and selection URLs.
+- API E2E coverage for supported article fields, authentication and membership, role restrictions, and organization isolation.
+- Combined ticket/article result-group behavior and article selection/navigation.
+- Frontend TypeScript, lint, full frontend test suite, and production build.
+- Manual UI verification completed successfully.
+
+**User search — pending implementation and verification:**
+
+- Authorization policy and documented server-side search contract.
+- API authorization, query-validation, and organization-isolation tests.
+- Frontend state-handling and result-navigation tests.
+- Keyboard, focus, responsive, and manual UI verification for user results.
+
+**Definition of done:** Each enabled result type uses an existing or explicitly implemented server-side contract; all queries are scoped to the active organization and authorized role; no placeholder or unregistered links are exposed; each result group has clear loading, error, and empty behavior; keyboard and responsive interaction remain accessible; automated checks and the production build pass; and manual UI verification is complete. Ticket Library search satisfies this definition. User search remains deferred until its authorization policy and server-side contract are approved.
 
 ## UI-5 — Notification Center
 

@@ -25,7 +25,7 @@ export function Topbar() {
         <button
           type="button"
           onClick={openCommandMenu}
-          aria-label="Search tickets"
+          aria-label="Search tickets and knowledge articles"
           aria-haspopup="dialog"
           aria-controls="global-ticket-search-dialog"
           aria-keyshortcuts="Control+K Meta+K"
@@ -37,7 +37,7 @@ export function Topbar() {
           />
 
           <span className="w-full truncate rounded-lg border bg-muted/30 py-2.5 pl-10 pr-28 text-sm text-muted-foreground transition hover:bg-muted/50">
-            Search tickets by number, title, or description...
+            Search tickets and knowledge articles...
           </span>
 
           <kbd className="absolute right-3 rounded border bg-background px-1.5 py-0.5 text-[10px] text-muted-foreground">
@@ -50,11 +50,11 @@ export function Topbar() {
             type="button"
             onClick={openCommandMenu}
             className="rounded-lg p-2 hover:bg-accent md:hidden"
-            aria-label="Search tickets"
+            aria-label="Search tickets and knowledge articles"
             aria-haspopup="dialog"
             aria-controls="global-ticket-search-dialog"
             aria-keyshortcuts="Control+K Meta+K"
-            title="Search tickets"
+            title="Search tickets and knowledge articles..."
           >
             <Search className="size-5" aria-hidden="true" />
           </button>

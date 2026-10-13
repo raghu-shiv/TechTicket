@@ -78,6 +78,18 @@ describe('Ticket Library API (e2e)', () => {
       .send(articlePayload({ title: 'Private article from organization B' }))
       .expect(201);
 
+    const scopedSearchResponse = await organizationA.requester.agent
+      .get(
+        `/api/v1/ticket-library?search=${encodeURIComponent(
+          'Private article from organization B',
+        )}`,
+      )
+      .set('x-organization-id', organizationA.organization.id)
+      .expect(200);
+
+    expect(scopedSearchResponse.body.data).toEqual([]);
+    expect(scopedSearchResponse.body.meta.total).toBe(0);
+
     const response = await organizationA.requester.agent
       .get('/api/v1/ticket-library')
       .set('x-organization-id', organizationA.organization.id)
@@ -185,5 +197,47 @@ describe('Ticket Library API (e2e)', () => {
     } finally {
       await deleteTestUser(app, outsider.user.email);
     }
+  });
+
+  it('searches article title, problem, resolution, and tags', async () => {
+    const created = await organizationA.agent.agent
+      .post('/api/v1/ticket-library')
+      .set('x-organization-id', organizationA.organization.id)
+      .send(
+        articlePayload({
+          title: 'ui41-title-needle',
+          problem: 'ui41-problem-needle is present in the problem statement',
+          resolution:
+            'ui41-resolution-needle is present in the resolution statement',
+          tags: ['ui41-tag-needle'],
+        }),
+      )
+      .expect(201);
+
+    for (const term of [
+      'ui41-title-needle',
+      'ui41-problem-needle',
+      'ui41-resolution-needle',
+      'ui41-tag-needle',
+    ]) {
+      const response = await organizationA.requester.agent
+        .get(`/api/v1/ticket-library?search=${encodeURIComponent(term)}`)
+        .set('x-organization-id', organizationA.organization.id)
+        .expect(200);
+
+      expect(response.body.data).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: created.body.id }),
+        ]),
+      );
+    }
+
+    const emptyResponse = await organizationA.requester.agent
+      .get('/api/v1/ticket-library?search=ui41-no-such-needle')
+      .set('x-organization-id', organizationA.organization.id)
+      .expect(200);
+
+    expect(emptyResponse.body.data).toEqual([]);
+    expect(emptyResponse.body.meta.total).toBe(0);
   });
 });

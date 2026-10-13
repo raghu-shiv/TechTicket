@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   BookOpen,
@@ -51,18 +52,29 @@ function uniqueTags(value: string): string[] {
 }
 
 export default function TicketLibraryPage() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const organizationsQuery = useOrganizations();
   const membership = organizationsQuery.data?.[0];
   const organizationId = membership?.organizationId;
+
   const canWrite =
     membership?.role === "OWNER" ||
     membership?.role === "ADMIN" ||
     membership?.role === "AGENT";
+
   const canDelete =
     membership?.role === "OWNER" || membership?.role === "ADMIN";
+
   const queryClient = useQueryClient();
 
-  const [search, setSearch] = useState("");
+  // Search comes from the URL so command-menu navigation works even if the
+  // Ticket Library component is already mounted.
+  const search = searchParams.get("search") ?? "";
+  const selectedArticleId = searchParams.get("selectedArticleId");
+
   const [productFilter, setProductFilter] = useState("");
   const [page, setPage] = useState(1);
   const [showForm, setShowForm] = useState(false);
@@ -76,10 +88,19 @@ export default function TicketLibraryPage() {
   const [sourceTicketId, setSourceTicketId] = useState("");
   const [tagsText, setTagsText] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
+
+  // A global-search selection overrides any stale local product filter and
+  // opens page one, ensuring the selected article can be found in the list.
+  const effectiveProductFilter = selectedArticleId
+    ? (searchParams.get("productId") ?? "")
+    : productFilter;
+
+  const effectivePage = selectedArticleId ? 1 : page;
+
   const qParams = {
     search: search.trim() || undefined,
-    productId: productFilter || undefined,
-    page,
+    productId: effectiveProductFilter || undefined,
+    page: effectivePage,
     limit: PAGE_SIZE,
   };
 
@@ -239,6 +260,82 @@ export default function TicketLibraryPage() {
     setTitle((current) => (current.trim() ? current : ticket.title));
     setProblem((current) => (current.trim() ? current : ticket.description));
     setProductId((current) => current || ticket.productId || "");
+  }
+
+  useEffect(() => {
+    if (
+      !selectedArticleId ||
+      !entriesQuery.isSuccess ||
+      entriesQuery.isFetching
+    ) {
+      return;
+    }
+
+    const selectedElement = document.getElementById(
+      `ticket-library-article-${selectedArticleId}`,
+    );
+
+    if (!selectedElement) {
+      return;
+    }
+
+    selectedElement.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+
+    selectedElement.focus({ preventScroll: true });
+  }, [
+    selectedArticleId,
+    entriesQuery.isSuccess,
+    entriesQuery.isFetching,
+    entriesQuery.data,
+  ]);
+
+  function updateLibrarySearch(nextSearch: string) {
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (nextSearch.trim()) {
+      params.set("search", nextSearch);
+    } else {
+      params.delete("search");
+    }
+
+    // Manual changes clear the one-off global-search selection.
+    params.delete("selectedArticleId");
+    params.delete("page");
+
+    if (selectedArticleId) {
+      // Carry the selected route's effective filter into local page state
+      // before leaving selection mode.
+      setProductFilter(effectiveProductFilter);
+    }
+
+    setPage(1);
+
+    const queryString = params.toString();
+
+    router.replace(queryString ? `${pathname}?${queryString}` : pathname, {
+      scroll: false,
+    });
+  }
+
+  function clearSelectedArticleFocus() {
+    if (!selectedArticleId) {
+      return;
+    }
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("selectedArticleId");
+    params.delete("page");
+
+    setProductFilter(effectiveProductFilter);
+
+    const queryString = params.toString();
+
+    router.replace(queryString ? `${pathname}?${queryString}` : pathname, {
+      scroll: false,
+    });
   }
 
   if (organizationsQuery.isLoading)
@@ -473,10 +570,7 @@ export default function TicketLibraryPage() {
             <input
               id="library-search"
               value={search}
-              onChange={(event) => {
-                setSearch(event.target.value);
-                setPage(1);
-              }}
+              onChange={(event) => updateLibrarySearch(event.target.value)}
               placeholder="Search title, problem, resolution, or tags..."
               className="h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm"
             />
@@ -487,10 +581,32 @@ export default function TicketLibraryPage() {
             </label>
             <select
               id="library-product-filter"
-              value={productFilter}
+              value={effectiveProductFilter}
               onChange={(event) => {
-                setProductFilter(event.target.value);
+                const nextProductFilter = event.target.value;
+
+                setProductFilter(nextProductFilter);
                 setPage(1);
+
+                if (selectedArticleId) {
+                  const params = new URLSearchParams(searchParams.toString());
+
+                  params.delete("selectedArticleId");
+                  params.delete("page");
+
+                  if (nextProductFilter) {
+                    params.set("productId", nextProductFilter);
+                  } else {
+                    params.delete("productId");
+                  }
+
+                  const queryString = params.toString();
+
+                  router.replace(
+                    queryString ? `${pathname}?${queryString}` : pathname,
+                    { scroll: false },
+                  );
+                }
               }}
               className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
             >
@@ -547,87 +663,99 @@ export default function TicketLibraryPage() {
             {entriesQuery.data.meta.total === 1 ? "" : "s"}.
           </p>
           {articles.map((article) => (
-            <Card key={article.id}>
-              <CardContent className="space-y-4 p-5 sm:p-6">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="min-w-0">
-                    <h2 className="text-base font-semibold">{article.title}</h2>
-                    <div className="mt-2 flex flex-wrap items-center gap-2">
-                      {article.product && (
-                        <Badge variant="outline">{article.product.name}</Badge>
-                      )}
-                      {article.sourceTicket && (
-                        <Link
-                          href={`/tickets/${encodeURIComponent(article.sourceTicket.id)}`}
-                          className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-                        >
-                          Source: {article.sourceTicket.ticketNumber}
-                          <ExternalLink className="size-3" />
-                        </Link>
-                      )}
-                      {article.tags.map((tag) => (
-                        <Badge key={tag} variant="secondary">
-                          {tag}
-                        </Badge>
-                      ))}
+            <div
+              key={article.id}
+              id={`ticket-library-article-${article.id}`}
+              tabIndex={-1}
+              aria-label={`Knowledge article: ${article.title}`}
+              className="scroll-mt-24 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Card>
+                <CardContent className="space-y-4 p-5 sm:p-6">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <h2 className="text-base font-semibold">
+                        {article.title}
+                      </h2>
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        {article.product && (
+                          <Badge variant="outline">
+                            {article.product.name}
+                          </Badge>
+                        )}
+                        {article.sourceTicket && (
+                          <Link
+                            href={`/tickets/${encodeURIComponent(article.sourceTicket.id)}`}
+                            className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                          >
+                            Source: {article.sourceTicket.ticketNumber}
+                            <ExternalLink className="size-3" />
+                          </Link>
+                        )}
+                        {article.tags.map((tag) => (
+                          <Badge key={tag} variant="secondary">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Created{" "}
+                        {new Intl.DateTimeFormat("en", {
+                          dateStyle: "medium",
+                        }).format(new Date(article.createdAt))}{" "}
+                        by {article.createdBy.name}
+                      </p>
                     </div>
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      Created{" "}
-                      {new Intl.DateTimeFormat("en", {
-                        dateStyle: "medium",
-                      }).format(new Date(article.createdAt))}{" "}
-                      by {article.createdBy.name}
-                    </p>
-                  </div>
-                  {canWrite && (
-                    <div className="flex gap-2 self-start">
-                      <button
-                        type="button"
-                        onClick={() => beginEdit(article)}
-                        className="inline-flex h-9 items-center gap-2 rounded-md border border-input px-3 text-sm hover:bg-muted"
-                      >
-                        <Pencil className="size-3.5" /> Edit
-                      </button>
-                      {canDelete && (
+                    {canWrite && (
+                      <div className="flex gap-2 self-start">
                         <button
                           type="button"
-                          onClick={() => {
-                            if (
-                              window.confirm(
-                                `Delete knowledge article “${article.title}”?`,
-                              )
-                            )
-                              deleteMutation.mutate(article.id);
-                          }}
-                          disabled={deleteMutation.isPending}
-                          className="inline-flex h-9 items-center gap-2 rounded-md border border-destructive/40 px-3 text-sm text-destructive hover:bg-destructive/5 disabled:opacity-50"
+                          onClick={() => beginEdit(article)}
+                          className="inline-flex h-9 items-center gap-2 rounded-md border border-input px-3 text-sm hover:bg-muted"
                         >
-                          <Trash2 className="size-3.5" /> Delete
+                          <Pencil className="size-3.5" /> Edit
                         </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <div className="grid gap-4 border-t pt-4 md:grid-cols-2">
-                  <section>
-                    <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Problem
-                    </h3>
-                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6">
-                      {article.problem}
-                    </p>
-                  </section>
-                  <section>
-                    <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Resolution
-                    </h3>
-                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6">
-                      {article.resolution}
-                    </p>
-                  </section>
-                </div>
-              </CardContent>
-            </Card>
+                        {canDelete && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (
+                                window.confirm(
+                                  `Delete knowledge article “${article.title}”?`,
+                                )
+                              )
+                                deleteMutation.mutate(article.id);
+                            }}
+                            disabled={deleteMutation.isPending}
+                            className="inline-flex h-9 items-center gap-2 rounded-md border border-destructive/40 px-3 text-sm text-destructive hover:bg-destructive/5 disabled:opacity-50"
+                          >
+                            <Trash2 className="size-3.5" /> Delete
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <div className="grid gap-4 border-t pt-4 md:grid-cols-2">
+                    <section>
+                      <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Problem
+                      </h3>
+                      <p className="mt-2 whitespace-pre-wrap text-sm leading-6">
+                        {article.problem}
+                      </p>
+                    </section>
+                    <section>
+                      <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Resolution
+                      </h3>
+                      <p className="mt-2 whitespace-pre-wrap text-sm leading-6">
+                        {article.resolution}
+                      </p>
+                    </section>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           ))}
           {entriesQuery.data.meta.totalPages > 1 && (
             <div className="flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
@@ -637,7 +765,10 @@ export default function TicketLibraryPage() {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setPage((current) => Math.max(1, current - 1))}
+                  onClick={() => {
+                    clearSelectedArticleFocus();
+                    setPage(Math.max(1, effectivePage - 1));
+                  }}
                   disabled={page <= 1 || entriesQuery.isFetching}
                   className="h-9 rounded-md border border-input px-3 text-sm hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
                 >
@@ -645,11 +776,15 @@ export default function TicketLibraryPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() =>
-                    setPage((current) =>
-                      Math.min(entriesQuery.data.meta.totalPages, current + 1),
-                    )
-                  }
+                  onClick={() => {
+                    clearSelectedArticleFocus();
+                    setPage(
+                      Math.min(
+                        entriesQuery.data.meta.totalPages,
+                        effectivePage + 1,
+                      ),
+                    );
+                  }}
                   disabled={
                     page >= entriesQuery.data.meta.totalPages ||
                     entriesQuery.isFetching
