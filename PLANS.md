@@ -1024,9 +1024,9 @@ Manual keyboard and mobile verification were confirmed complete by the user. No 
 
 ## UI-4.1 — Global Search Expansion
 
-**PARTIALLY COMPLETE — TICKET LIBRARY SEARCH COMPLETE AND VERIFIED; USER SEARCH CONTRACT DEFINED AND READY FOR IMPLEMENTATION**
+**COMPLETE AND VERIFIED**
 
-Expand the completed command-menu search beyond tickets by reusing confirmed API contracts and defining valid selection behavior for each supported result type. Keep existing ticket-search behavior stable and preserve organization and role boundaries for every result category.
+Expanded the existing global command-menu search to support Tickets, Ticket Library articles, and organization users. The implementation reuses existing API clients and routes, preserves ticket and article search behavior, and enforces server-side authorization and organization isolation for user search.
 
 ### UI-4.1A — Ticket Library Search Integration
 
@@ -1048,72 +1048,102 @@ The existing Ticket Library API supports search; no new endpoint was required fo
 - Added article selection/navigation through the existing `/ticket-library` page, preserving the search query and selected article context. The selection URL also preserves the article's product context when available.
 - Kept keyboard navigation, Enter/click/tap selection, Escape handling, focus behavior, and responsive interaction consistent with the existing command menu.
 - Added frontend tests for article-search request construction, missing organization context, empty queries, query normalization, organization scope, API failures, and article selection URLs.
-- Extended Ticket Library API E2E coverage to verify search across title, problem, resolution, and tags, alongside the existing organization-isolation and authorization coverage.
+- Extended Ticket Library API E2E coverage to verify search across title, problem, resolution, and tags, alongside organization-isolation and authorization coverage.
 
 **UI-4.1A verification results:**
 
 - **Lint:** PASS — no ESLint warnings or errors reported.
 - **TypeScript:** PASS — `npx tsc --noEmit`.
 - **Focused frontend search tests:** PASS — 28/28 tests in `ticket-search.test.ts`.
-- **Ticket Library API E2E tests:** PASS — 7/7 tests in `ticket-library.e2e-spec.ts`, including article-field search and organization-isolation coverage.
-- **Full frontend test suite:** PASS — 264/264 tests across 21 files.
+- **Ticket Library API E2E tests:** PASS — 7/7 tests in `ticket-library.e2e-spec.ts`.
+- **Frontend test suite at the UI-4.1A checkpoint:** PASS — 264/264 tests across 21 files.
 - **Production build:** PASS — Next.js production build completed and all 23 pages were generated successfully.
 - **Manual UI verification:** COMPLETE — global search and article selection/navigation work as expected.
 
-The API E2E run emitted non-blocking Vite configuration warnings concerning native config loading and `vite-tsconfig-paths`. The test suite passed; these warnings are not treated as test failures.
+The API E2E run emitted non-blocking Vite configuration warnings concerning native config loading and `vite-tsconfig-paths`. These warnings did not fail the reported tests.
 
 ### UI-4.1B — User Search Contract and Authorization Policy
 
-**READY FOR IMPLEMENTATION — AUTHORIZATION POLICY AND SERVER-SIDE SEARCH CONTRACT DEFINED; CODE NOT YET IMPLEMENTED**
+**COMPLETE AND VERIFIED**
 
-The policy and first-version API contract are now decided. The implementation must extend the existing organization-member endpoint and preserve its server-enforced `OWNER`/`ADMIN` boundary. User search must not become an unrestricted global directory, and the frontend must not fetch the full membership list and filter it in the browser.
+Implemented the approved user-search authorization policy and server-side search contract by extending the existing `GET /api/v1/members` endpoint. User search does not use an unrestricted global directory, introduce a duplicate search endpoint, or fetch the entire member list for global-search filtering.
 
-**Authorization policy:**
+**Authorization policy implemented:**
 
-- Only organization `OWNER` and `ADMIN` roles may search user/member records, matching the existing `GET /api/v1/members` authorization boundary.
-- All other roles must be denied by the API and must not be offered user results in the global search UI. Frontend visibility is a usability measure, not the security boundary.
-- The backend must derive the active organization from the authenticated organization context and must never search across organizations or trust a caller-supplied organization ID as authorization.
+- Only organization `OWNER` and `ADMIN` roles may search organization members, preserving the existing members-directory authorization boundary.
+- Other roles are denied by the API and are not offered user results in the global search UI. Frontend visibility is treated as a usability measure, not the security boundary.
+- The backend derives organization scope from the authenticated organization context. Search results cannot span organizations, and a caller-supplied organization ID is not used to override authorization.
 
-**Server-side search contract:**
+**Server-side search contract implemented:**
 
-- Extend `GET /api/v1/members` with a `search` query parameter and a bounded `limit` parameter; do not create a duplicate user-search endpoint unless implementation inspection reveals a concrete technical reason.
-- Apply search in the database/server, using case-insensitive partial matching against supported member display/name and email fields. Do not retrieve the complete member list and filter it client-side.
-- For global-search requests, trim the query and require 2–100 characters after trimming. Reject invalid supplied search queries through the API's standard validation behavior. The global search UI should avoid issuing requests for queries shorter than 2 characters.
-- Return no more than 8 results for global search. The server must enforce the maximum even if a caller requests a larger limit.
-- Limit each search result to the member ID, display name, and email address needed for presentation and selection. Do not expose password hashes, authentication tokens, or unrelated account/security fields.
-- Preserve the active-organization boundary and existing authorization checks. Keep the existing members-list behavior compatible for current consumers when the `search` parameter is not supplied; use the minimal projection for search results.
-- Preserve the API's existing response-envelope conventions where practical and document the precise query/response contract in the implementation.
+- Extended `GET /api/v1/members` with a `search` query parameter and bounded `limit` parameter.
+- Uses database-side, case-insensitive partial matching against member name and email fields.
+- Normalizes queries by trimming whitespace and collapsing repeated whitespace.
+- Validates search queries to require 2–100 characters after normalization. Invalid supplied queries are rejected through the API's standard validation behavior.
+- Enforces a maximum of 8 search results. The API validates the requested limit and cannot return more than 8 results for a valid search request.
+- Returns only the user ID, display name, and email address needed for presentation and selection. Search results do not expose authentication tokens, password hashes, or unrelated account/security fields.
+- Preserves the existing `GET /api/v1/members` list behavior when `search` is omitted, maintaining compatibility with the current Users management page.
+- Uses the existing organization-scoped membership and user data. No new database model or Prisma migration was required.
 
-**Selection/navigation contract:**
+**Global search integration implemented:**
 
-- Reuse the existing `/users` page; do not add or link to an unregistered user-detail route as part of this milestone.
-- Navigate with the search query and selected member ID, for example `/users?search=rahul&selectedUserId=<member-id>`. Inspect the current `/users` page during implementation and add the required URL-backed search and selected-result focus/highlight behavior if it does not already exist.
+- Added an Organization Users result group alongside Tickets and Ticket Library articles.
+- User results are requested only when the active membership role is `OWNER` or `ADMIN`, and the menu is open with a valid, settled search query.
+- Added loading, empty, API-error, and retry states for the user result group. User search failures do not convert ticket or article search failures into empty results.
+- Added keyboard navigation and selection through the existing combined result index, including Up/Down, Enter, click/tap, and Escape handling.
+- Preserved existing ticket-detail navigation and Ticket Library article navigation.
+- Added the Users API client method, minimal `MemberSearchResult` type, query/request helpers, and URL construction helpers.
 
-**Implementation and verification requirements:**
+**Selection/navigation contract implemented:**
 
-- Add API tests covering OWNER/ADMIN access, denied roles, query validation, the eight-result cap, approved response fields, and cross-organization isolation.
-- Add frontend tests covering role-aware result visibility, loading/empty/error states, normalization/debounce and minimum query length, selecting a result, and preserving the query/selected member in navigation.
-- Keep tickets and Ticket Library results working independently if user search is unauthorized, empty, or fails; one group must not silently convert another group's failure into an empty result.
-- Run frontend and API TypeScript checks, lint, focused tests, full frontend tests, relevant API E2E regression, production builds, and manual desktop/mobile verification before marking UI-4.1B complete.
+- Reuses the existing `/users` page. No user-detail route was added.
+- Navigates to URLs such as `/users?search=rahul&selectedUserId=<member-id>`.
+- The Users page reads search and selected-member state from the URL.
+- Added name/email filtering, URL-backed query updates, selected-member highlighting, scrolling, and focus behavior.
+- Changing the directory query clears the previous selection, and existing membership-management controls remain intact.
+- A selected user is only highlighted when the user belongs to the active organization's authorized member directory.
+
+**UI-4.1B verification results:**
+
+- **Focused API E2E tests:** PASS — 9/9 tests in `members-directory.e2e-spec.ts`.
+- **Authorization coverage:** PASS — OWNER/ADMIN access and AGENT/REQUESTER denial verified.
+- **Search behavior:** PASS — name/email matching, case-insensitive search, query validation, and result limits verified.
+- **Data minimization:** PASS — search results contain only the approved fields.
+- **Organization isolation:** PASS — members outside the active organization are not returned.
+- **Focused frontend member-search tests:** PASS — 9/9 tests in `member-search.test.ts`.
+- **API TypeScript check:** PASS — `npx tsc --noEmit`.
+- **API lint:** PASS — zero warnings and zero errors.
+- **Frontend TypeScript check:** PASS — `npx tsc --noEmit`.
+- **Frontend lint:** PASS.
+- **Full frontend test suite:** PASS — 273/273 tests across 22 files.
+- **Full API E2E regression:** PASS — 552/552 tests across 39 files.
+- **Frontend production build:** PASS — Next.js production build completed and all 23 pages were generated successfully, including `/users`, `/tickets`, and `/ticket-library`.
+- **API production build:** PASS — `npm run build` / NestJS production build.
+- **Manual UI verification:** COMPLETE — the user confirmed that the UI works as expected.
+
+The API E2E runs emitted non-blocking Vite configuration warnings and Resend HTTP 422 logs for test messages sent to `example.com` addresses. The full API E2E suite passed all 552 tests. These test-environment warnings and email-provider logs did not constitute failed test assertions.
 
 ### UI-4.1 Verification
 
-**Ticket Library search — completed:**
+**Ticket Library search — completed and verified:**
 
-- Frontend API-contract and search tests for normalization, request construction, pagination/result limits, empty queries, API failures, organization scope, and selection URLs.
+- Frontend API-contract and search tests for normalization, request construction, pagination/result limits, empty states, API failures, organization scope, and selection URLs.
 - API E2E coverage for supported article fields, authentication and membership, role restrictions, and organization isolation.
 - Combined ticket/article result-group behavior and article selection/navigation.
-- Frontend TypeScript, lint, full frontend test suite, and production build.
+- Frontend TypeScript, lint, focused tests, full frontend test suite, and production build.
 - Manual UI verification completed successfully.
 
-**User search — contract defined; implementation and verification pending:**
+**User search — completed and verified:**
 
-- Implement the OWNER/ADMIN-only server-side contract documented in UI-4.1B, including name/email partial search, active-organization scoping, query validation, an eight-result cap, and minimal response fields.
-- Verify API authorization, query validation, response data minimization, and cross-organization isolation.
-- Implement frontend role-aware result visibility, loading/empty/error states, and selection/navigation through the existing `/users` page.
-- Verify keyboard navigation, focus behavior, responsive layout, manual desktop/mobile behavior, and regression compatibility with ticket and Ticket Library search.
+- Implemented the OWNER/ADMIN-only server-side search contract with name/email partial matching, active-organization scoping, query validation, an eight-result cap, and minimal response fields.
+- Verified API authorization, query validation, result limits, response data minimization, and cross-organization isolation.
+- Implemented role-aware user-result visibility, loading/empty/error states, and selection/navigation through the existing `/users` page.
+- Verified keyboard navigation, selected-member focus/highlight behavior, query preservation, and integration with ticket and Ticket Library search.
+- Focused API and frontend tests, full frontend tests, full API E2E regression, TypeScript, lint, production builds, and manual UI verification passed.
 
-**Definition of done:** Each enabled result type uses an existing or explicitly implemented server-side contract; all queries are scoped to the active organization and authorized role; no placeholder or unregistered links are exposed; each group has clear loading, error, and empty behavior; keyboard and responsive interaction remain accessible; automated checks and production builds pass; and manual UI verification is complete. Ticket Library search satisfies this definition. User search is ready for implementation under the policy and API contract defined above, but must not be marked complete until code and verification pass.
+**Definition of done:** Each enabled result type uses an existing or explicitly implemented server-side contract; all queries are scoped to the active organization and authorized role; no placeholder or unregistered links are exposed; each group has clear loading, error, and empty behavior; keyboard and responsive interaction remain accessible; automated checks and production builds pass; and manual verification is complete.
+
+**Outcome:** UI-4.1 is complete and verified. Global search supports Tickets, Ticket Library articles, and authorized organization-member search while preserving the established route, authorization, and organization-isolation boundaries.
 
 ## UI-5 — Notification Center
 

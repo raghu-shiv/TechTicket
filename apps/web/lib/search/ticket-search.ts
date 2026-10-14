@@ -2,6 +2,17 @@ import type { TicketListParams } from "@/types/tickets";
 
 export const TICKET_SEARCH_LIMIT = 8;
 export const TICKET_LIBRARY_SEARCH_LIMIT = 6;
+export const MEMBER_SEARCH_LIMIT = 8;
+export const MEMBER_SEARCH_MIN_LENGTH = 2;
+export const MEMBER_SEARCH_MAX_LENGTH = 100;
+
+export interface MemberSearchRequest {
+  organizationId: string;
+  params: {
+    search: string;
+    limit: number;
+  };
+}
 
 export function normalizeTicketSearchQuery(query: string): string {
   return query.replace(/\s+/g, " ").trim();
@@ -168,4 +179,55 @@ export function resolveTicketSearchViewState(
   }
 
   return input.resultCount > 0 ? "results" : "empty";
+}
+
+/**
+ * Build a server-side member-search request only for valid queries.
+ * Role authorization is enforced separately in both the UI and API.
+ */
+export function buildMemberSearchRequest(
+  organizationId: string | undefined,
+  rawQuery: string,
+): MemberSearchRequest | null {
+  const search = normalizeTicketSearchQuery(rawQuery);
+
+  if (
+    !organizationId ||
+    search.length < MEMBER_SEARCH_MIN_LENGTH ||
+    search.length > MEMBER_SEARCH_MAX_LENGTH
+  ) {
+    return null;
+  }
+
+  return {
+    organizationId,
+    params: {
+      search,
+      limit: MEMBER_SEARCH_LIMIT,
+    },
+  };
+}
+
+/**
+ * Navigate to the existing Users page. The selected user is highlighted
+ * and focused there; no new user-detail route is assumed.
+ */
+export function buildMemberSearchHref(
+  rawQuery: string,
+  selectedUserId?: string,
+): string {
+  const params = new URLSearchParams();
+  const search = normalizeTicketSearchQuery(rawQuery);
+
+  if (search) {
+    params.set("search", search);
+  }
+
+  if (selectedUserId) {
+    params.set("selectedUserId", selectedUserId);
+  }
+
+  const queryString = params.toString();
+
+  return queryString ? `/users?${queryString}` : "/users";
 }

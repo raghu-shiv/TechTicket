@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 
@@ -19,6 +20,7 @@ import type { OrganizationContext } from '../../common/organization/organization
 
 import { AddMemberDto } from './dto/add-member.dto';
 import { UpdateMemberRoleDto } from './dto/update-member-role.dto';
+import { ListMembersQueryDto } from './dto/list-members-query.dto';
 import { MembersService } from './members.service';
 
 @Controller('members')
@@ -32,7 +34,15 @@ export class MembersController {
   async getMembers(
     @OrganizationContextParam()
     context: OrganizationContext,
+    @Query() query: ListMembersQueryDto,
   ) {
+    if (query.search !== undefined) {
+      return this.membersService.searchMembers(
+        context,
+        query.search,
+        query.limit ?? 8,
+      );
+    }
     return this.membersService.findAll(context);
   }
 

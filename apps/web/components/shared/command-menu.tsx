@@ -7,6 +7,7 @@ import {
   LoaderCircle,
   Search,
   Ticket as TicketIcon,
+  UserRound,
   X,
 } from "lucide-react";
 import {
@@ -25,7 +26,12 @@ import {
   getTicketLibraryEntries,
   ticketLibraryQueryKeys,
 } from "@/lib/api/ticket-library";
+import { searchMembers } from "@/lib/api/members";
 import {
+  buildMemberSearchHref,
+  buildMemberSearchRequest,
+  MEMBER_SEARCH_MAX_LENGTH,
+  MEMBER_SEARCH_MIN_LENGTH,
   buildTicketLibrarySearchHref,
   buildTicketLibrarySearchRequest,
   buildTicketSearchHref,
@@ -36,6 +42,7 @@ import {
 import { useUIStore } from "@/stores/ui-store";
 import type { TicketLibraryEntry } from "@/types/ticket-library";
 import type { Ticket } from "@/types/tickets";
+import type { MemberSearchResult } from "@/types/members";
 
 const SEARCH_DEBOUNCE_MS = 250;
 
@@ -43,7 +50,8 @@ const EMPTY_SEARCH_PARAMS = {};
 
 type GlobalSearchResult =
   | { type: "ticket"; item: Ticket }
-  | { type: "article"; item: TicketLibraryEntry };
+  | { type: "article"; item: TicketLibraryEntry }
+  | { type: "member"; item: MemberSearchResult };
 
 type WorkspaceViewState =
   | "prompt"
@@ -146,7 +154,11 @@ export function CommandMenu() {
   const closeCommandMenu = useUIStore((state) => state.closeCommandMenu);
 
   const organizationsQuery = useOrganizations();
-  const organizationId = organizationsQuery.data?.[0]?.organizationId;
+  const activeMembership = organizationsQuery.data?.[0];
+  const organizationId = activeMembership?.organizationId;
+
+  const canSearchUsers =
+    activeMembership?.role === "OWNER" || activeMembership?.role === "ADMIN";
 
   const inputRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -230,6 +242,15 @@ export function CommandMenu() {
     [organizationId, debouncedQuery],
   );
 
+  const memberRequest = useMemo(
+    () =>
+      buildMemberSearchRequest(
+        canSearchUsers ? organizationId : undefined,
+        debouncedQuery,
+      ),
+    [canSearchUsers, organizationId, debouncedQuery],
+  );
+
   const articleRequest = useMemo(
     () => buildTicketLibrarySearchRequest(organizationId, debouncedQuery),
     [organizationId, debouncedQuery],
@@ -272,8 +293,30 @@ export function CommandMenu() {
     enabled: searchEnabled,
   });
 
+  const membersSearchQuery = useQuery({
+    queryKey: memberRequest
+      ? [
+          "members",
+          "global-search",
+          memberRequest.organizationId,
+          memberRequest.params,
+        ]
+      : ["members", "global-search-disabled", organizationId ?? "none"],
+
+    queryFn: () => {
+      if (!memberRequest) {
+        throw new Error("Organization context is required for user search.");
+      }
+
+      return searchMembers(memberRequest.organizationId, memberRequest.params);
+    },
+
+    enabled: searchEnabled && canSearchUsers && Boolean(memberRequest),
+  });
+
   const tickets = ticketsQuery.data?.data ?? [];
   const articles = articlesQuery.data?.data ?? [];
+  const memberResults = membersSearchQuery.data ?? [];
 
   const workspaceState: WorkspaceViewState = !normalizedQuery
     ? "prompt"
@@ -307,12 +350,35 @@ export function CommandMenu() {
     resultCount: articles.length,
   });
 
+  const memberQueryTooShort =
+    normalizedQuery.length > 0 &&
+    normalizedQuery.length < MEMBER_SEARCH_MIN_LENGTH;
+
+  const memberQueryTooLong = normalizedQuery.length > MEMBER_SEARCH_MAX_LENGTH;
+
+  const memberState = resolveTicketSearchViewState({
+    // Keep the member result group in its prompt state for invalid lengths.
+    query: memberQueryTooShort || memberQueryTooLong ? "" : normalizedQuery,
+    organizationLoading: organizationsQuery.isLoading,
+    organizationError: organizationsQuery.isError,
+    organizationId,
+    debouncing: isDebouncing,
+    searchLoading: membersSearchQuery.isLoading,
+    searchError: membersSearchQuery.isError,
+    resultCount: memberResults.length,
+  });
+
   const activeResults: GlobalSearchResult[] = [
     ...(ticketState === "results"
       ? tickets.map((item): GlobalSearchResult => ({ type: "ticket", item }))
       : []),
     ...(articleState === "results"
       ? articles.map((item): GlobalSearchResult => ({ type: "article", item }))
+      : []),
+    ...(canSearchUsers && memberState === "results"
+      ? memberResults.map(
+          (item): GlobalSearchResult => ({ type: "member", item }),
+        )
       : []),
   ];
 
@@ -330,14 +396,19 @@ export function CommandMenu() {
 
   const openResult = useCallback(
     (result: GlobalSearchResult) => {
-      const href =
-        result.type === "ticket"
-          ? `/tickets/${encodeURIComponent(result.item.id)}`
-          : buildTicketLibrarySearchHref(
-              debouncedQuery,
-              result.item.id,
-              result.item.productId,
-            );
+      let href: string;
+
+      if (result.type === "ticket") {
+        href = `/tickets/${encodeURIComponent(result.item.id)}`;
+      } else if (result.type === "article") {
+        href = buildTicketLibrarySearchHref(
+          debouncedQuery,
+          result.item.id,
+          result.item.productId,
+        );
+      } else {
+        href = buildMemberSearchHref(debouncedQuery, result.item.id);
+      }
 
       closeMenu();
       router.push(href);
@@ -414,6 +485,12 @@ export function CommandMenu() {
     router.push(href);
   }
 
+  function openAllUsers() {
+    const href = buildMemberSearchHref(debouncedQuery);
+    closeMenu();
+    router.push(href);
+  }
+
   function resultIndexForTicket(ticketId: string): number {
     return activeResults.findIndex(
       (result) => result.type === "ticket" && result.item.id === ticketId,
@@ -423,6 +500,12 @@ export function CommandMenu() {
   function resultIndexForArticle(articleId: string): number {
     return activeResults.findIndex(
       (result) => result.type === "article" && result.item.id === articleId,
+    );
+  }
+
+  function resultIndexForMember(userId: string): number {
+    return activeResults.findIndex(
+      (result) => result.type === "member" && result.item.id === userId,
     );
   }
 
@@ -449,7 +532,8 @@ export function CommandMenu() {
         className="relative flex max-h-[calc(100dvh-1rem)] w-full max-w-2xl flex-col overflow-hidden rounded-xl border bg-card shadow-2xl sm:max-h-[calc(100dvh-3rem)]"
       >
         <h2 id="global-search-title" className="sr-only">
-          Search tickets and knowledge articles
+          Search tickets, knowledge articles
+          {canSearchUsers ? ", and users" : ""}
         </h2>
 
         <div className="flex min-h-14 shrink-0 items-center gap-2 border-b px-3 sm:px-4">
@@ -463,7 +547,11 @@ export function CommandMenu() {
             id="global-search-input"
             type="search"
             role="combobox"
-            aria-label="Search tickets and knowledge articles"
+            aria-label={
+              canSearchUsers
+                ? "Search tickets, knowledge articles, and users"
+                : "Search tickets and knowledge articles"
+            }
             aria-autocomplete="list"
             aria-controls="global-search-results"
             aria-expanded={activeResults.length > 0}
@@ -487,7 +575,11 @@ export function CommandMenu() {
               }
             }}
             onKeyDown={handleInputKeyDown}
-            placeholder="Search tickets and knowledge articles..."
+            placeholder={
+              canSearchUsers
+                ? "Search tickets, articles, names, or emails..."
+                : "Search tickets and knowledge articles..."
+            }
             className="h-14 min-w-0 flex-1 bg-transparent px-2 text-sm outline-none placeholder:text-muted-foreground"
           />
 
@@ -574,7 +666,9 @@ export function CommandMenu() {
                 role="listbox"
                 aria-label="Global search results"
                 aria-busy={
-                  ticketState === "loading" || articleState === "loading"
+                  ticketState === "loading" ||
+                  articleState === "loading" ||
+                  (canSearchUsers && memberState === "loading")
                 }
                 className="space-y-4"
               >
@@ -743,6 +837,103 @@ export function CommandMenu() {
                       );
                     })}
                 </section>
+
+                {canSearchUsers && (
+                  <section
+                    role="group"
+                    aria-labelledby="global-search-users-heading"
+                    className="min-w-0 border-t pt-3"
+                  >
+                    <div
+                      id="global-search-users-heading"
+                      className="flex items-center justify-between border-b pb-2"
+                    >
+                      <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Organization users
+                      </h3>
+                      {memberResults.length > 0 && (
+                        <span className="text-xs text-muted-foreground">
+                          {memberResults.length} shown
+                        </span>
+                      )}
+                    </div>
+
+                    {memberQueryTooShort && (
+                      <p
+                        role="status"
+                        className="px-3 py-4 text-sm text-muted-foreground"
+                      >
+                        Enter at least {MEMBER_SEARCH_MIN_LENGTH} characters to
+                        search users.
+                      </p>
+                    )}
+
+                    {memberQueryTooLong && (
+                      <p
+                        role="status"
+                        className="px-3 py-4 text-sm text-muted-foreground"
+                      >
+                        User search is limited to {MEMBER_SEARCH_MAX_LENGTH}{" "}
+                        characters.
+                      </p>
+                    )}
+
+                    {!memberQueryTooShort && !memberQueryTooLong && (
+                      <GroupState
+                        state={memberState}
+                        label="users"
+                        error={membersSearchQuery.error}
+                        onRetry={() => void membersSearchQuery.refetch()}
+                      />
+                    )}
+
+                    {memberState === "results" &&
+                      memberResults.map((member) => {
+                        const index = resultIndexForMember(member.id);
+
+                        return (
+                          <button
+                            key={member.id}
+                            id={`global-search-option-${index}`}
+                            type="button"
+                            role="option"
+                            aria-selected={activeResultIndex === index}
+                            onMouseDown={(event) => event.preventDefault()}
+                            onMouseEnter={() => setActiveIndex(index)}
+                            onClick={() =>
+                              openResult({ type: "member", item: member })
+                            }
+                            className={[
+                              "flex min-h-16 w-full items-start gap-3 rounded-lg px-3 py-3 text-left transition-colors",
+                              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                              activeResultIndex === index
+                                ? "bg-accent"
+                                : "hover:bg-accent/60",
+                            ].join(" ")}
+                          >
+                            <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
+                              <UserRound
+                                className="size-4 text-muted-foreground"
+                                aria-hidden="true"
+                              />
+                            </span>
+
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-sm font-medium text-foreground">
+                                {member.displayName}
+                              </span>
+                              <span className="mt-1 block truncate text-xs text-muted-foreground">
+                                {member.email}
+                              </span>
+                              <span className="mt-1 block text-xs text-muted-foreground">
+                                Organization member
+                              </span>
+                            </span>
+                          </button>
+                        );
+                      })}
+                  </section>
+                )}
               </div>
 
               <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t pt-3">
@@ -781,6 +972,19 @@ export function CommandMenu() {
                         : ""}
                     </button>
                   )}
+
+                  {canSearchUsers &&
+                    (memberState === "results" || memberState === "empty") &&
+                    !memberQueryTooShort &&
+                    !memberQueryTooLong && (
+                      <button
+                        type="button"
+                        onClick={openAllUsers}
+                        className="min-h-9 rounded-md px-3 text-xs font-medium text-primary hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        View users
+                      </button>
+                    )}
                 </div>
               </div>
             </>

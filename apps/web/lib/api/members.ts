@@ -1,5 +1,6 @@
 import type {
   AddOrganizationMemberInput,
+  MemberSearchResult,
   OrganizationMember,
   OrganizationRole,
 } from "@/types/members";
@@ -52,6 +53,26 @@ export function getMembers(
     "/members",
     { method: "GET" },
     "Failed to load organization members.",
+  );
+}
+
+export function searchMembers(
+  organizationId: string,
+  params: {
+    search: string;
+    limit: number;
+  },
+): Promise<MemberSearchResult[]> {
+  const searchParams = new URLSearchParams({
+    search: params.search,
+    limit: String(params.limit),
+  });
+
+  return memberRequest(
+    organizationId,
+    `/members?${searchParams.toString()}`,
+    { method: "GET" },
+    "Failed to search organization members.",
   );
 }
 

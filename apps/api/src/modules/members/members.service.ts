@@ -43,6 +43,73 @@ export class MembersService {
     });
   }
 
+  async searchMembers(
+    context: OrganizationContext,
+    rawSearch: string,
+    limit = 8,
+  ) {
+    const search = rawSearch.trim().replace(/\s+/g, ' ');
+
+    // Defense in depth: keep the service contract safe even when reused
+    // outside the controller.
+    if (search.length < 2 || search.length > 100) {
+      throw new BadRequestException(
+        'Search must contain between 2 and 100 characters.',
+      );
+    }
+
+    if (!Number.isInteger(limit) || limit < 1 || limit > 8) {
+      throw new BadRequestException(
+        'Search result limit must be between 1 and 8.',
+      );
+    }
+
+    const memberships = await this.database.membership.findMany({
+      where: {
+        // Always scope the query to the authenticated organization context.
+        // Do not accept an organization ID from the search query.
+        organizationId: context.organizationId,
+        user: {
+          OR: [
+            {
+              name: {
+                contains: search,
+                mode: 'insensitive',
+              },
+            },
+            {
+              email: {
+                contains: search,
+                mode: 'insensitive',
+              },
+            },
+          ],
+        },
+      },
+      select: {
+        userId: true,
+        user: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+      take: limit,
+    });
+
+    // Deliberately return only the fields required by global search.
+    // `id` is the User ID, which is also used by /users selection navigation.
+    return memberships.map(({ userId, user }) => ({
+      id: userId,
+      displayName: user.name.trim() || user.email,
+      email: user.email,
+    }));
+  }
+
   async addMember(
     context: OrganizationContext,
     email: string,

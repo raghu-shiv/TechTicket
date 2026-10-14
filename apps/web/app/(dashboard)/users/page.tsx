@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ShieldCheck, UserPlus, Users, UserX } from "lucide-react";
 
@@ -22,8 +23,15 @@ import {
 import type { OrganizationMember, OrganizationRole } from "@/types/members";
 
 const editableRoles: OrganizationRole[] = ["ADMIN", "AGENT", "REQUESTER"];
+const EMPTY_MEMBERS: OrganizationMember[] = [];
 
 export default function UsersPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const urlSearch = searchParams.get("search") ?? "";
+  const selectedUserId = searchParams.get("selectedUserId");
+
   const organizationsQuery = useOrganizations();
   const membership = organizationsQuery.data?.[0];
   const organizationId = membership?.organizationId;
@@ -37,6 +45,8 @@ export default function UsersPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const queryKey = ["members", organizationId] as const;
 
+  const memberFilter = urlSearch;
+
   const membersQuery = useQuery({
     queryKey: organizationId ? queryKey : ["members", "disabled"],
     queryFn: () => {
@@ -45,6 +55,41 @@ export default function UsersPage() {
     },
     enabled: Boolean(organizationId && canManage),
   });
+
+  const members = membersQuery.data ?? EMPTY_MEMBERS;
+
+  const filteredMembers = useMemo(() => {
+    const search = memberFilter.trim().toLowerCase();
+
+    if (!search) {
+      return members;
+    }
+
+    return members.filter((member) => {
+      const name = member.user.name.toLowerCase();
+      const email = member.user.email.toLowerCase();
+
+      return name.includes(search) || email.includes(search);
+    });
+  }, [members, memberFilter]);
+
+  useEffect(() => {
+    if (!membersQuery.isSuccess || !selectedUserId) {
+      return;
+    }
+
+    const element = document.getElementById(`member-${selectedUserId}`);
+
+    if (!element) {
+      return;
+    }
+
+    element.focus({ preventScroll: true });
+    element.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, [membersQuery.isSuccess, members, selectedUserId]);
 
   const refreshMembers = () =>
     queryClient.invalidateQueries({ queryKey: ["members", organizationId] });
@@ -117,6 +162,26 @@ export default function UsersPage() {
     if (confirmed) removeMutation.mutate(member.userId);
   }
 
+  function handleMemberFilterChange(value: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    const normalized = value.trim();
+
+    if (normalized) {
+      params.set("search", normalized);
+    } else {
+      params.delete("search");
+    }
+
+    // A changed query should no longer point to the previously selected user.
+    params.delete("selectedUserId");
+
+    const queryString = params.toString();
+
+    router.replace(queryString ? `/users?${queryString}` : "/users", {
+      scroll: false,
+    });
+  }
+
   if (organizationsQuery.isLoading)
     return <LoadingState label="Loading workspace..." />;
   if (organizationsQuery.isError)
@@ -151,14 +216,37 @@ export default function UsersPage() {
     );
   }
 
-  const members = membersQuery.data ?? [];
-
   return (
     <div className="space-y-5">
       <PageHeader
         title="Users"
         description="Manage membership and organization roles. Changes affect only this organization."
       />
+
+      <Card>
+        <CardContent className="p-5 sm:p-6">
+          <label
+            htmlFor="user-directory-search"
+            className="text-sm font-medium"
+          >
+            Search organization members
+          </label>
+
+          <input
+            id="user-directory-search"
+            type="search"
+            value={memberFilter}
+            onChange={(event) => handleMemberFilterChange(event.target.value)}
+            placeholder="Filter by name or email..."
+            autoComplete="off"
+            className="mt-1.5 h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+          />
+
+          <p className="mt-2 text-xs text-muted-foreground">
+            Filters the member directory in this organization.
+          </p>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardContent className="p-5 sm:p-6">
@@ -246,24 +334,37 @@ export default function UsersPage() {
           onRetry={() => void membersQuery.refetch()}
         />
       )}
-      {membersQuery.isSuccess && members.length === 0 && (
+      {membersQuery.isSuccess && filteredMembers.length === 0 && (
         <EmptyState
           icon={Users}
-          title="No members found"
-          description="Organization members will appear here."
+          title={
+            members.length === 0
+              ? "No members found"
+              : "No members match this search"
+          }
+          description={
+            members.length === 0
+              ? "Organization members will appear here."
+              : "Try another name or email address."
+          }
         />
       )}
-      {membersQuery.isSuccess && members.length > 0 && (
+      {membersQuery.isSuccess && filteredMembers.length > 0 && (
         <Card className="overflow-hidden">
           <div className="flex items-center justify-between border-b px-5 py-4">
             <h2 className="text-sm font-semibold">Organization members</h2>
-            <Badge variant="secondary">{members.length}</Badge>
+            <Badge variant="secondary">
+              {filteredMembers.length}
+              {memberFilter.trim() ? ` / ${members.length}` : ""}
+            </Badge>
           </div>
+
           <div className="divide-y">
-            {members.map((member) => {
+            {filteredMembers.map((member) => {
               const isSelf = member.userId === membership.userId;
               const isProtectedOwner =
                 membership.role === "ADMIN" && member.role === "OWNER";
+              const isSelected = member.userId === selectedUserId;
               const canEditThisMember = !isSelf && !isProtectedOwner;
               const rolesForCurrentAdmin =
                 membership.role === "OWNER"
@@ -272,7 +373,15 @@ export default function UsersPage() {
               return (
                 <div
                   key={member.id}
-                  className="flex flex-col gap-3 px-5 py-4 md:flex-row md:items-center md:justify-between"
+                  id={`member-${member.userId}`}
+                  tabIndex={isSelected ? -1 : undefined}
+                  aria-current={isSelected ? "true" : undefined}
+                  className={[
+                    "flex flex-col gap-3 px-5 py-4 md:flex-row md:items-center md:justify-between",
+                    isSelected
+                      ? "bg-primary/5 ring-2 ring-inset ring-primary/30"
+                      : "",
+                  ].join(" ")}
                 >
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
