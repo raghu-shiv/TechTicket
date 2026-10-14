@@ -883,7 +883,7 @@ Phase 7 verification is complete. All required automated checks and manual UI ve
 
 # Product UI Completion Roadmap
 
-**Status: UI-4 COMPLETE AND VERIFIED — NEXT: UI-4.1 Global Search Expansion, before broader production hardening**
+**Status: UI-4 COMPLETE AND VERIFIED — UI-4.1A COMPLETE AND VERIFIED — NEXT: UI-4.1B READY FOR IMPLEMENTATION**
 
 Phase 7 Analytics is complete and verified. The next priority is to close the blueprint-level user-facing gaps so the product's ticketing, approval, library, search, and notification workflows are reachable and use real domain data. Reuse existing APIs, services, query contracts, and authorization rather than introducing duplicate operational models.
 
@@ -1005,7 +1005,7 @@ Scope boundary:
 
 - User and Ticket Library search were not added to the command menu in UI-4.
 - Ticket Library search already has a supported API contract and is planned as the first UI-4.1 expansion.
-- The existing organization-member listing API is restricted to OWNER/ADMIN and does not currently accept a search parameter. User search requires an explicit authorization/contract decision before implementation.
+- The existing organization-member listing API is restricted to OWNER/ADMIN and does not currently accept a search parameter. UI-4.1B records the approved first-version policy and contract: keep the OWNER/ADMIN boundary, search name/email server-side within the active organization, limit results, and return only fields needed by the command menu.
 
 Verification — PASSED (user-confirmed):
 
@@ -1024,7 +1024,7 @@ Manual keyboard and mobile verification were confirmed complete by the user. No 
 
 ## UI-4.1 — Global Search Expansion
 
-**PARTIALLY COMPLETE — TICKET LIBRARY SEARCH VERIFIED; USER SEARCH CONTRACT/AUTHORIZATION DECISION REQUIRED**
+**PARTIALLY COMPLETE — TICKET LIBRARY SEARCH COMPLETE AND VERIFIED; USER SEARCH CONTRACT DEFINED AND READY FOR IMPLEMENTATION**
 
 Expand the completed command-menu search beyond tickets by reusing confirmed API contracts and defining valid selection behavior for each supported result type. Keep existing ticket-search behavior stable and preserve organization and role boundaries for every result category.
 
@@ -1062,19 +1062,39 @@ The existing Ticket Library API supports search; no new endpoint was required fo
 
 The API E2E run emitted non-blocking Vite configuration warnings concerning native config loading and `vite-tsconfig-paths`. The test suite passed; these warnings are not treated as test failures.
 
-### UI-4.1B — User Search Contract and Authorization Decision
+### UI-4.1B — User Search Contract and Authorization Policy
 
-**PLANNED — AUTHORIZATION POLICY AND SERVER-SIDE SEARCH CONTRACT REQUIRED**
+**READY FOR IMPLEMENTATION — AUTHORIZATION POLICY AND SERVER-SIDE SEARCH CONTRACT DEFINED; CODE NOT YET IMPLEMENTED**
 
-The current `GET /api/v1/members` endpoint returns organization members but is restricted server-side to `OWNER` and `ADMIN`. It does not currently expose a `search` query parameter. Do not treat it as an unrestricted global user directory or fetch its full response to filter in the browser.
+The policy and first-version API contract are now decided. The implementation must extend the existing organization-member endpoint and preserve its server-enforced `OWNER`/`ADMIN` boundary. User search must not become an unrestricted global directory, and the frontend must not fetch the full membership list and filter it in the browser.
 
-Before implementing user search:
+**Authorization policy:**
 
-- Decide which organization roles may see user search results. Preserve the current `OWNER`/`ADMIN` boundary unless product requirements explicitly approve a different, server-enforced rule.
-- If approved, add a documented server-side search contract, such as matching supported name or email fields, with query validation and organization scoping. Do not expose cross-organization user records.
-- Limit results to the fields required for search presentation; do not expose account or security fields unnecessarily.
-- Add API tests for permitted and denied roles, query validation, and cross-organization isolation, plus frontend tests for state handling and result navigation.
-- Defer user results until the role policy and API contract are settled. This must not block the completed Ticket Library integration.
+- Only organization `OWNER` and `ADMIN` roles may search user/member records, matching the existing `GET /api/v1/members` authorization boundary.
+- All other roles must be denied by the API and must not be offered user results in the global search UI. Frontend visibility is a usability measure, not the security boundary.
+- The backend must derive the active organization from the authenticated organization context and must never search across organizations or trust a caller-supplied organization ID as authorization.
+
+**Server-side search contract:**
+
+- Extend `GET /api/v1/members` with a `search` query parameter and a bounded `limit` parameter; do not create a duplicate user-search endpoint unless implementation inspection reveals a concrete technical reason.
+- Apply search in the database/server, using case-insensitive partial matching against supported member display/name and email fields. Do not retrieve the complete member list and filter it client-side.
+- For global-search requests, trim the query and require 2–100 characters after trimming. Reject invalid supplied search queries through the API's standard validation behavior. The global search UI should avoid issuing requests for queries shorter than 2 characters.
+- Return no more than 8 results for global search. The server must enforce the maximum even if a caller requests a larger limit.
+- Limit each search result to the member ID, display name, and email address needed for presentation and selection. Do not expose password hashes, authentication tokens, or unrelated account/security fields.
+- Preserve the active-organization boundary and existing authorization checks. Keep the existing members-list behavior compatible for current consumers when the `search` parameter is not supplied; use the minimal projection for search results.
+- Preserve the API's existing response-envelope conventions where practical and document the precise query/response contract in the implementation.
+
+**Selection/navigation contract:**
+
+- Reuse the existing `/users` page; do not add or link to an unregistered user-detail route as part of this milestone.
+- Navigate with the search query and selected member ID, for example `/users?search=rahul&selectedUserId=<member-id>`. Inspect the current `/users` page during implementation and add the required URL-backed search and selected-result focus/highlight behavior if it does not already exist.
+
+**Implementation and verification requirements:**
+
+- Add API tests covering OWNER/ADMIN access, denied roles, query validation, the eight-result cap, approved response fields, and cross-organization isolation.
+- Add frontend tests covering role-aware result visibility, loading/empty/error states, normalization/debounce and minimum query length, selecting a result, and preserving the query/selected member in navigation.
+- Keep tickets and Ticket Library results working independently if user search is unauthorized, empty, or fails; one group must not silently convert another group's failure into an empty result.
+- Run frontend and API TypeScript checks, lint, focused tests, full frontend tests, relevant API E2E regression, production builds, and manual desktop/mobile verification before marking UI-4.1B complete.
 
 ### UI-4.1 Verification
 
@@ -1086,14 +1106,14 @@ Before implementing user search:
 - Frontend TypeScript, lint, full frontend test suite, and production build.
 - Manual UI verification completed successfully.
 
-**User search — pending implementation and verification:**
+**User search — contract defined; implementation and verification pending:**
 
-- Authorization policy and documented server-side search contract.
-- API authorization, query-validation, and organization-isolation tests.
-- Frontend state-handling and result-navigation tests.
-- Keyboard, focus, responsive, and manual UI verification for user results.
+- Implement the OWNER/ADMIN-only server-side contract documented in UI-4.1B, including name/email partial search, active-organization scoping, query validation, an eight-result cap, and minimal response fields.
+- Verify API authorization, query validation, response data minimization, and cross-organization isolation.
+- Implement frontend role-aware result visibility, loading/empty/error states, and selection/navigation through the existing `/users` page.
+- Verify keyboard navigation, focus behavior, responsive layout, manual desktop/mobile behavior, and regression compatibility with ticket and Ticket Library search.
 
-**Definition of done:** Each enabled result type uses an existing or explicitly implemented server-side contract; all queries are scoped to the active organization and authorized role; no placeholder or unregistered links are exposed; each result group has clear loading, error, and empty behavior; keyboard and responsive interaction remain accessible; automated checks and the production build pass; and manual UI verification is complete. Ticket Library search satisfies this definition. User search remains deferred until its authorization policy and server-side contract are approved.
+**Definition of done:** Each enabled result type uses an existing or explicitly implemented server-side contract; all queries are scoped to the active organization and authorized role; no placeholder or unregistered links are exposed; each group has clear loading, error, and empty behavior; keyboard and responsive interaction remain accessible; automated checks and production builds pass; and manual UI verification is complete. Ticket Library search satisfies this definition. User search is ready for implementation under the policy and API contract defined above, but must not be marked complete until code and verification pass.
 
 ## UI-5 — Notification Center
 
@@ -1168,7 +1188,7 @@ Verification:
 2. UI-2 — Approvals inbox, Ticket Library, Users, product management, and department audit.
 3. UI-3 — Live operational Dashboard.
 4. UI-4 — Functional global ticket search (COMPLETE AND VERIFIED).
-5. UI-4.1 — Global Search Expansion: Ticket Library integration first; implement user results only after the role/access policy and server-side search contract are defined.
+5. UI-4.1 — Global Search Expansion: Ticket Library integration is complete; implement UI-4.1B user search under the defined OWNER/ADMIN-only policy and server-side contract before moving to UI-5.
 6. UI-5 — Notification persistence audit and notification center.
 7. UI-6 — Settings and Profile navigation.
 8. UI-7 — Full interaction, accessibility, responsive, and regression sweep.
