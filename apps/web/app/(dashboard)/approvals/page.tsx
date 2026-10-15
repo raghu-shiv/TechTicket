@@ -317,7 +317,7 @@ export default function ApprovalsPage() {
           }
           description={
             filter === "PENDING"
-              ? "Requests assigned to you that need a decision will appear here."
+              ? "This inbox only shows requests assigned to your signed-in account. Open a ticket and use Request approval to assign a request to another staff member."
               : "There are no approval requests matching this status filter."
           }
         />

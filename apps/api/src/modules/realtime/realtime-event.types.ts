@@ -14,6 +14,11 @@ export type RealtimeBroadcastTarget =
       type: 'user';
       organizationId: string;
       userId: string;
+    }
+  | {
+      type: 'organization-user';
+      organizationId: string;
+      userId: string;
     };
 
 export interface RealtimeDomainEvent<TPayload = unknown> {

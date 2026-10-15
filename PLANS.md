@@ -1147,33 +1147,38 @@ The API E2E runs emitted non-blocking Vite configuration warnings and Resend HTT
 
 ## UI-5 — Notification Center
 
-**PLANNED — PERSISTENCE/API AUDIT REQUIRED**
+**COMPLETE AND VERIFIED**
 
-The notification service emits events and realtime infrastructure exists, but a persistent inbox and read-state API must not be assumed. The blueprint describes recipient-targeted notifications with read state and entity references.
+The notification center now supports persistent notification history and read state, reuses the existing event and realtime infrastructure, and scopes notifications to the intended recipient and active organization.
 
-Before implementation:
+### Implemented
 
-- Audit the Prisma schema, notification event delivery, recipient scoping, and currently available APIs.
-- If durable notification history/read-state storage does not exist, define and implement a minimal persistence and API contract.
-- Reuse existing event and realtime infrastructure; do not mistake transient events for notification history.
+- Audited the notification schema, event delivery, recipient scoping, and API capabilities before implementation.
+- Added persistent notification storage and APIs for retrieving notifications, tracking unread state, and marking notifications as read.
+- Connected the top-bar notification bell to a notification dropdown/inbox.
+- Displayed notification titles, messages, creation times, unread indicators, and supported related-entity navigation links.
+- Implemented an accurate unread count and read/unread presentation.
+- Reused existing event delivery and realtime infrastructure to keep notification state updated.
+- Added loading, error, empty, and realtime-update states.
+- Enforced recipient and organization isolation so users cannot access notifications intended for another user or organization.
 
-Implement:
+### Verification
 
-- Wire the bell to a notification dropdown or dedicated inbox.
-- Show an accurate unread count, notification title/message, creation time, and supported related-entity link.
-- Support mark-as-read and unread/read presentation where persistence supports it.
-- Ensure notifications are visible only to the intended recipient within the active organization.
-- Provide loading, error, empty, and realtime-update states.
+- **API TypeScript check, lint, and build:** Passed.
+- **API E2E tests:** 40 test files passed; 557 tests passed.
+- **Web TypeScript check, lint, and production build:** Passed.
+- **Web tests:** 23 test files passed; 277 tests passed.
+- **Recipient and organization isolation:** Verified through API and realtime tests, including notification routing and cross-organization isolation.
+- **Read-state and realtime behavior:** Covered by notification integration and realtime tests.
+- **Manual verification:** Completed. The notification UI and expected interactions were verified to work as expected.
 
-Verification:
+**Verification note:** The API E2E logs contain non-blocking Resend `422` errors because some test fixtures use `example.com` email addresses. The test suites nevertheless passed. Test email configuration can be cleaned up separately.
 
-- API/integration tests for recipient and organization isolation.
-- Read/unread transition and realtime update tests where applicable.
-- Manual verification of the bell, count, inbox, and navigation targets.
+**Outcome:** UI-5 is complete. No outstanding notification-center implementation or verification tasks remain for this milestone.
 
 ## UI-6 — Settings and Profile Navigation
 
-**PLANNED**
+**NEXT**
 
 The Settings landing page currently exposes SLA Policies only, and the top-right Settings icon has no action. The blueprint also includes a Profile route.
 

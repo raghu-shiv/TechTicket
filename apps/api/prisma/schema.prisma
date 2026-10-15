@@ -102,6 +102,9 @@ model User {
 
   createdKnowledgeEntries TicketLibraryEntry[]
 
+  receivedNotifications Notification[] @relation("NotificationRecipient")
+  authoredNotifications Notification[] @relation("NotificationActor")
+
   @@unique([email])
   @@map("user")
 }
@@ -174,6 +177,8 @@ model Organization {
   products         Product[]
 
   ticketLibraryEntries TicketLibraryEntry[]
+
+  notifications Notification[]
 
   @@index([name])
 }
@@ -267,6 +272,8 @@ model Ticket {
   activities        TicketActivity[]
 
   knowledgeEntries TicketLibraryEntry[] @relation("TicketKnowledgeSource")
+
+  notifications Notification[]
 
   @@unique([organizationId, ticketNumber])
   @@index([organizationId])
@@ -516,4 +523,27 @@ model TicketLibraryEntry {
 
   @@index([organizationId, updatedAt])
   @@index([organizationId, productId])
+}
+
+model Notification {
+  id             String  @id @default(cuid())
+  organizationId String
+  recipientId    String
+  actorId        String?
+  ticketId       String?
+
+  type    String
+  title   String
+  message String
+
+  createdAt DateTime  @default(now())
+  readAt    DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  recipient    User         @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  actor        User?        @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+  ticket       Ticket?      @relation(fields: [ticketId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, recipientId, createdAt], map: "Notification_org_recipient_created_idx")
+  @@index([organizationId, recipientId, readAt, createdAt], map: "Notification_org_recipient_read_created_idx")
 }

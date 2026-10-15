@@ -211,3 +211,16 @@ export interface TicketListResponse {
   data: Ticket[];
   meta: TicketListMeta;
 }
+
+export type TicketCommentType = "PUBLIC" | "INTERNAL";
+
+export interface TicketComment {
+  id: string;
+  ticketId: string;
+  authorId: string;
+  body: string;
+  type: TicketCommentType;
+  createdAt: string;
+  updatedAt: string;
+  author: TicketUser;
+}

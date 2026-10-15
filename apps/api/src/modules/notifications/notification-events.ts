@@ -1,5 +1,6 @@
 export const NOTIFICATION_EVENTS = {
   CREATED: 'notification.created',
+  UPDATED: 'notification.updated',
 } as const;
 
 export type NotificationType =
@@ -20,9 +21,18 @@ export interface NotificationCreatedEvent {
   notificationId: string;
   organizationId: string;
   recipientId: string;
-  actorId: string;
+  actorId: string | null;
+  ticketId: string | null;
   type: NotificationType;
   title: string;
   message: string;
   createdAt: Date;
+  readAt: null;
+}
+
+export interface NotificationUpdatedEvent {
+  notificationId: string;
+  organizationId: string;
+  recipientId: string;
+  readAt: Date;
 }

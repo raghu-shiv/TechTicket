@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { NOTIFICATION_EVENTS } from '../src/modules/notifications/notification-events';
 import { RealtimeEventBroadcaster } from '../src/modules/realtime/realtime-event.broadcaster';
 import { RealtimeNotificationEventsService } from '../src/modules/realtime/realtime-notification-events.service';
-import { NOTIFICATION_EVENTS } from '../src/modules/notifications/notification-events';
 import { REALTIME_EVENTS } from '../src/modules/realtime/realtime.types';
 
 describe('RealtimeNotificationEventsService', () => {
@@ -36,7 +36,11 @@ describe('RealtimeNotificationEventsService', () => {
     eventEmitter = module.get(EventEmitter2);
   });
 
-  it('should broadcast a notification-created event to the organization and recipient user', async () => {
+  afterEach(async () => {
+    await module?.close();
+  });
+
+  it('should broadcast a notification-created event to the organization-scoped recipient', async () => {
     const event = {
       notificationId: 'notification-1',
       organizationId: 'org-1',
@@ -50,15 +54,16 @@ describe('RealtimeNotificationEventsService', () => {
 
     eventEmitter.emit(NOTIFICATION_EVENTS.CREATED, event);
 
-    await new Promise((resolve) => setImmediate(resolve));
+    await new Promise<void>((resolve) => setImmediate(resolve));
 
+    expect(broadcaster.broadcast).toHaveBeenCalledTimes(1);
     expect(broadcaster.broadcast).toHaveBeenCalledWith({
       event: REALTIME_EVENTS.NOTIFICATION_CREATED,
       organizationId: 'org-1',
       payload: event,
       targets: [
         {
-          type: 'user',
+          type: 'organization-user',
           organizationId: 'org-1',
           userId: 'user-2',
         },
@@ -80,14 +85,16 @@ describe('RealtimeNotificationEventsService', () => {
 
     eventEmitter.emit(NOTIFICATION_EVENTS.CREATED, event);
 
-    await new Promise((resolve) => setImmediate(resolve));
+    await new Promise<void>((resolve) => setImmediate(resolve));
 
     expect(broadcaster.broadcast).toHaveBeenCalledWith(
       expect.objectContaining({
+        event: REALTIME_EVENTS.NOTIFICATION_CREATED,
         organizationId: 'org-99',
+        payload: event,
         targets: [
           {
-            type: 'user',
+            type: 'organization-user',
             organizationId: 'org-99',
             userId: 'user-77',
           },
@@ -98,7 +105,7 @@ describe('RealtimeNotificationEventsService', () => {
 
   it('should never create a notification realtime target outside the event organization', async () => {
     const event = {
-      notificationId: 'notification-1',
+      notificationId: 'notification-3',
       organizationId: 'org-42',
       recipientId: 'user-99',
       actorId: 'user-10',
@@ -110,17 +117,27 @@ describe('RealtimeNotificationEventsService', () => {
 
     eventEmitter.emit(NOTIFICATION_EVENTS.CREATED, event);
 
-    await new Promise((resolve) => setImmediate(resolve));
+    await new Promise<void>((resolve) => setImmediate(resolve));
+
+    expect(broadcaster.broadcast).toHaveBeenCalledTimes(1);
 
     const broadcast = broadcaster.broadcast.mock.calls[0][0];
 
     expect(broadcast.organizationId).toBe('org-42');
+    expect(broadcast.event).toBe(REALTIME_EVENTS.NOTIFICATION_CREATED);
 
+    expect(broadcast.targets).toHaveLength(1);
     expect(
       broadcast.targets.every(
         (target: { organizationId: string }) =>
-          target.organizationId === 'org-42',
+          target.organizationId === event.organizationId,
       ),
     ).toBe(true);
+
+    expect(broadcast.targets).toContainEqual({
+      type: 'organization-user',
+      organizationId: 'org-42',
+      userId: 'user-99',
+    });
   });
 });

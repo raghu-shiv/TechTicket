@@ -2,6 +2,8 @@ import type { INestApplication } from '@nestjs/common';
 import { io, type Socket } from 'socket.io-client';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { DatabaseService } from '../src/database/database.service.js';
+
 import { createTestApp } from './helpers/app.helper.js';
 import { createOrganizationTestFixture } from './helpers/organization.helper.js';
 
@@ -242,13 +244,13 @@ describe('Realtime room routing (e2e)', () => {
 
       const notificationService = app.get(NotificationService);
 
-      notificationService.createNotification({
+      await notificationService.createNotification({
         organizationId: fixture.organization.id,
         recipientId: fixture.requester.userId,
         actorId: fixture.owner.userId,
         type: 'TICKET_STATUS_CHANGED',
         title: 'Ticket status changed',
-        message: 'Ticket TKT-000001 is now resolved.',
+        message: 'Ticket status changed from OPEN to IN_PROGRESS.',
       });
 
       await recipientEvent;
@@ -443,4 +445,63 @@ describe('Realtime room routing (e2e)', () => {
       socketB.disconnect();
     }
   });
+
+  it('isolates notifications between organization sessions for the same user', async () => {
+    const fixtureA = await createOrganizationTestFixture(app);
+    const fixtureB = await createOrganizationTestFixture(app);
+
+    const database = app.get(DatabaseService);
+
+    await database.membership.create({
+      data: {
+        userId: fixtureA.owner.userId,
+        organizationId: fixtureB.organization.id,
+        role: 'AGENT',
+      },
+    });
+
+    const socketA = createSocket(
+      fixtureA.owner.cookies,
+      fixtureA.organization.id,
+    );
+
+    const socketB = createSocket(
+      fixtureA.owner.cookies,
+      fixtureB.organization.id,
+    );
+
+    try {
+      await Promise.all([connectSocket(socketA), connectSocket(socketB)]);
+
+      const recipientEvent = new Promise<void>((resolve) => {
+        socketA.once(REALTIME_EVENTS.NOTIFICATION_CREATED, () => resolve());
+      });
+
+      let crossOrganizationEventReceived = false;
+
+      socketB.once(REALTIME_EVENTS.NOTIFICATION_CREATED, () => {
+        crossOrganizationEventReceived = true;
+      });
+
+      const notificationService = app.get(NotificationService);
+
+      await notificationService.createNotification({
+        organizationId: fixtureA.organization.id,
+        recipientId: fixtureA.owner.userId,
+        actorId: fixtureA.admin.userId,
+        type: 'TICKET_STATUS_CHANGED',
+        title: 'Ticket status changed',
+        message: 'Ticket status changed from OPEN to IN_PROGRESS.',
+      });
+
+      await recipientEvent;
+
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(crossOrganizationEventReceived).toBe(false);
+    } finally {
+      socketA.disconnect();
+      socketB.disconnect();
+    }
+  }, 15_000);
 });

@@ -46,6 +46,15 @@ export class MembersController {
     return this.membersService.findAll(context);
   }
 
+  @Get('eligible')
+  @UseGuards(OrganizationRoleGuard)
+  @OrganizationRoles('OWNER', 'ADMIN', 'AGENT')
+  async getEligibleStaff(
+    @OrganizationContextParam() context: OrganizationContext,
+  ) {
+    return this.membersService.findEligibleStaff(context);
+  }
+
   @Post()
   @UseGuards(OrganizationRoleGuard)
   @OrganizationRoles('OWNER', 'ADMIN')

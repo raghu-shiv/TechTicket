@@ -112,3 +112,21 @@ export function removeMember(
     "Failed to remove the member.",
   );
 }
+
+export interface EligibleStaffMember {
+  id: string;
+  name: string;
+  email: string;
+  role: Exclude<OrganizationRole, "REQUESTER">;
+}
+
+export function getEligibleStaffMembers(
+  organizationId: string,
+): Promise<EligibleStaffMember[]> {
+  return memberRequest(
+    organizationId,
+    "/members/eligible",
+    { method: "GET" },
+    "Failed to load eligible staff members.",
+  );
+}

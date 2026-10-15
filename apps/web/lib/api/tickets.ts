@@ -4,9 +4,12 @@ import type {
   TicketActivityResponse,
   TicketActivityType,
   TicketAttachment,
+  TicketComment,
+  TicketCommentType,
   TicketListParams,
   TicketListResponse,
   TicketPriority,
+  TicketStatus,
   TicketType,
 } from "@/types/tickets";
 
@@ -345,4 +348,119 @@ export async function downloadTicketAttachment(
   }
 
   return response.blob();
+}
+
+export async function updateTicketStatus(
+  organizationId: string,
+  ticketId: string,
+  status: TicketStatus,
+): Promise<void> {
+  const response = await fetch(
+    `${API_BASE_URL}/tickets/${encodeURIComponent(ticketId)}/status`,
+    {
+      method: "PATCH",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "x-organization-id": organizationId,
+      },
+      body: JSON.stringify({ status }),
+      cache: "no-store",
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getTicketRequestError(response, "Failed to update ticket status."),
+    );
+  }
+}
+
+export async function updateTicketAssignment(
+  organizationId: string,
+  ticketId: string,
+  assigneeId: string | null,
+): Promise<void> {
+  const response = await fetch(
+    `${API_BASE_URL}/tickets/${encodeURIComponent(ticketId)}/assignment`,
+    {
+      method: "PATCH",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "x-organization-id": organizationId,
+      },
+      body: JSON.stringify({ assigneeId }),
+      cache: "no-store",
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getTicketRequestError(response, "Failed to update assignment."),
+    );
+  }
+}
+
+export async function getTicketComments(
+  organizationId: string,
+  ticketId: string,
+): Promise<TicketComment[]> {
+  const response = await fetch(
+    `${API_BASE_URL}/tickets/${encodeURIComponent(ticketId)}/comments`,
+    {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+        "x-organization-id": organizationId,
+      },
+      cache: "no-store",
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getTicketRequestError(response, "Failed to load comments."),
+    );
+  }
+
+  return response.json() as Promise<TicketComment[]>;
+}
+
+export async function createTicketComment(
+  organizationId: string,
+  ticketId: string,
+  input: {
+    body: string;
+    type?: TicketCommentType;
+  },
+): Promise<TicketComment> {
+  const response = await fetch(
+    `${API_BASE_URL}/tickets/${encodeURIComponent(ticketId)}/comments`,
+    {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "x-organization-id": organizationId,
+      },
+      body: JSON.stringify({
+        body: input.body,
+        type: input.type ?? "PUBLIC",
+      }),
+      cache: "no-store",
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getTicketRequestError(response, "Failed to add comment."),
+    );
+  }
+
+  return response.json() as Promise<TicketComment>;
 }

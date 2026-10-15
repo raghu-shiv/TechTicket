@@ -26,6 +26,7 @@ import type { TicketPriority, TicketStatus, TicketType } from "@/types/tickets";
 import { TicketSlaPanel } from "@/components/tickets/TicketSlaPanel";
 import { SlaBreachHistory } from "@/components/tickets/SlaBreachHistory";
 import { TicketAttachmentsPanel } from "@/components/tickets/TicketAttachmentsPanel";
+import { TicketWorkflowPanel } from "@/components/tickets/TicketWorkflowPanel";
 
 const statusConfig: Record<
   TicketStatus,
@@ -99,7 +100,8 @@ export default function TicketDetailPage({
   const showAttachmentWarning = notices.attachmentUpload === "failed";
 
   const organizationsQuery = useOrganizations();
-  const organizationId = organizationsQuery.data?.[0]?.organizationId;
+  const membership = organizationsQuery.data?.[0];
+  const organizationId = membership?.organizationId;
 
   const ticketQuery = useTicket(organizationId, id);
   useSlaRealtime({
@@ -330,6 +332,13 @@ export default function TicketDetailPage({
           </Card>
         </div>
       </div>
+
+      <TicketWorkflowPanel
+        organizationId={organizationId}
+        ticket={ticket}
+        currentUserId={membership?.userId ?? ""}
+        role={membership?.role ?? "REQUESTER"}
+      />
 
       <TicketAttachmentsPanel
         organizationId={organizationId}

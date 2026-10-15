@@ -92,7 +92,16 @@ export class RealtimeGateway
 
     const userRoom = REALTIME_ROOMS.user(auth.user.id);
 
-    await Promise.all([socket.join(organizationRoom), socket.join(userRoom)]);
+    const organizationUserRoom = REALTIME_ROOMS.organizationUser(
+      auth.organization.organizationId,
+      auth.user.id,
+    );
+
+    await Promise.all([
+      socket.join(organizationRoom),
+      socket.join(userRoom),
+      socket.join(organizationUserRoom),
+    ]);
 
     socket.emit(REALTIME_EVENTS.CONNECTED, {
       userId: auth.user.id,

@@ -324,4 +324,35 @@ export class MembersService {
       );
     }
   }
+
+  async findEligibleStaff(context: OrganizationContext) {
+    const memberships = await this.database.membership.findMany({
+      where: {
+        organizationId: context.organizationId,
+        role: {
+          in: [SystemRole.OWNER, SystemRole.ADMIN, SystemRole.AGENT],
+        },
+      },
+      select: {
+        userId: true,
+        role: true,
+        user: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    });
+
+    return memberships.map(({ userId, role, user }) => ({
+      id: userId,
+      name: user.name.trim() || user.email,
+      email: user.email,
+      role,
+    }));
+  }
 }

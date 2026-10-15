@@ -1,7 +1,9 @@
 export const REALTIME_EVENTS = {
   SLA_FIRST_RESPONSE_BREACHED: "ticket.sla.first_response.breached",
-
   SLA_RESOLUTION_BREACHED: "ticket.sla.resolution.breached",
+
+  NOTIFICATION_CREATED: "notification.created",
+  NOTIFICATION_UPDATED: "notification.updated",
 } as const;
 
 export type SlaRealtimeEvent =

@@ -83,3 +83,53 @@ export const approvalQueryKeys = {
 };
 
 export type ApprovalStatusFilter = ApprovalStatus | "ALL";
+
+export interface CreatedApproval {
+  id: string;
+  ticketId: string;
+  approverId: string;
+  status: ApprovalStatus;
+  comment: string | null;
+  requestedAt: string;
+  approvedAt: string | null;
+  rejectedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export async function requestTicketApproval(
+  organizationId: string,
+  ticketId: string,
+  input: {
+    approverId: string;
+    comment?: string;
+  },
+): Promise<CreatedApproval> {
+  const comment = input.comment?.trim();
+
+  const response = await fetch(
+    `${API_BASE_URL}/tickets/${encodeURIComponent(ticketId)}/approvals`,
+    {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "x-organization-id": organizationId,
+      },
+      body: JSON.stringify({
+        approverId: input.approverId,
+        ...(comment ? { comment } : {}),
+      }),
+      cache: "no-store",
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await errorMessage(response, "Failed to request ticket approval."),
+    );
+  }
+
+  return response.json() as Promise<CreatedApproval>;
+}

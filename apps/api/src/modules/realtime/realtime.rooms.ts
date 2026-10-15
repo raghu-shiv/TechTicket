@@ -4,4 +4,7 @@ export const REALTIME_ROOMS = {
   ticket: (ticketId: string) => `ticket:${ticketId}`,
 
   user: (userId: string) => `user:${userId}`,
+
+  organizationUser: (organizationId: string, userId: string) =>
+    `organization-user:${organizationId}:${userId}`,
 } as const;

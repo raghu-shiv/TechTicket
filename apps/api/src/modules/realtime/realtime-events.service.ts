@@ -48,6 +48,12 @@ export class RealtimeEventsService {
 
       case 'user':
         return REALTIME_ROOMS.user(target.userId);
+
+      case 'organization-user':
+        return REALTIME_ROOMS.organizationUser(
+          target.organizationId,
+          target.userId,
+        );
     }
   }
 }

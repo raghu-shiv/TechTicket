@@ -8,6 +8,9 @@ export const REALTIME_ROOMS = {
   ticket: (ticketId: string) => `ticket:${ticketId}`,
 
   user: (userId: string) => `user:${userId}`,
+
+  organizationUser: (organizationId: string, userId: string) =>
+    `organization-user:${organizationId}:${userId}`,
 } as const;
 
 export const REALTIME_EVENTS = {
@@ -38,6 +41,7 @@ export const REALTIME_EVENTS = {
   SLA_RESOLUTION_BREACHED: 'ticket.sla.resolution.breached',
 
   NOTIFICATION_CREATED: 'notification.created',
+  NOTIFICATION_UPDATED: 'notification.updated',
 } as const;
 
 export type RealtimeEventName =

@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, Menu, Search, Settings } from "lucide-react";
+import { Menu, Search, Settings } from "lucide-react";
 
+import { NotificationBell } from "@/components/shared/notification-bell";
 import { UserMenu } from "@/components/shared/user-menu";
 import { useUIStore } from "@/stores/ui-store";
 
@@ -59,14 +60,7 @@ export function Topbar() {
             <Search className="size-5" aria-hidden="true" />
           </button>
 
-          <button
-            type="button"
-            className="relative rounded-lg p-2 hover:bg-accent"
-            aria-label="Notifications"
-            title="Notifications are planned for a later milestone"
-          >
-            <Bell className="size-5" aria-hidden="true" />
-          </button>
+          <NotificationBell />
 
           <Link
             href="/settings"
