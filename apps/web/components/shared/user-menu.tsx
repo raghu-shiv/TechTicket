@@ -1,16 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { LogOut, Moon, Sun } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
+import { LogOut, Moon, Sun, UserRound } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
-
 import { signOut, useSession } from "@/lib/auth-client";
 
 export function UserMenu() {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
-
   const { data: session } = useSession();
 
   const [open, setOpen] = useState(false);
@@ -36,10 +36,22 @@ export function UserMenu() {
         type="button"
         onClick={() => setOpen((value) => !value)}
         className="flex items-center gap-2 rounded-lg p-1.5 hover:bg-accent"
+        aria-label="Open account menu"
         aria-expanded={open}
       >
-        <div className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-sm font-medium text-primary">
-          {initials}
+        <div className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-sm font-medium text-primary">
+          {session?.user?.image ? (
+            <Image
+              src={session.user.image}
+              alt={`${name} profile picture`}
+              fill
+              sizes="36px"
+              unoptimized
+              className="object-cover"
+            />
+          ) : (
+            initials
+          )}
         </div>
       </button>
 
@@ -55,15 +67,24 @@ export function UserMenu() {
             )}
           </div>
 
+          <Link
+            href="/profile"
+            onClick={() => setOpen(false)}
+            className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm hover:bg-accent"
+          >
+            <UserRound className="size-4" aria-hidden="true" />
+            Profile
+          </Link>
+
           <button
             type="button"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm hover:bg-accent"
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm hover:bg-accent"
           >
             {theme === "dark" ? (
-              <Sun className="size-4" />
+              <Sun className="size-4" aria-hidden="true" />
             ) : (
-              <Moon className="size-4" />
+              <Moon className="size-4" aria-hidden="true" />
             )}
 
             {theme === "dark" ? "Light mode" : "Dark mode"}
@@ -74,7 +95,7 @@ export function UserMenu() {
             onClick={handleSignOut}
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10"
           >
-            <LogOut className="size-4" />
+            <LogOut className="size-4" aria-hidden="true" />
             Sign out
           </button>
         </div>

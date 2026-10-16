@@ -1178,25 +1178,44 @@ The notification center now supports persistent notification history and read st
 
 ## UI-6 — Settings and Profile Navigation
 
-**NEXT**
+**COMPLETE AND VERIFIED**
 
-The Settings landing page currently exposes SLA Policies only, and the top-right Settings icon has no action. The blueprint also includes a Profile route.
+The Settings landing page now provides navigation to supported configuration pages, and the top-right Settings action navigates to `/settings`. The existing SLA Policies functionality remains intact. The blueprint and current implementation were audited to distinguish working configuration from features that still require implementation.
 
-Implement:
+### Implemented
 
-- Wire the top-right Settings action to `/settings`.
-- Keep the existing SLA Policies functionality intact.
-- Audit the blueprint and current support for organization profile, users/memberships, teams, products, notification preferences, and other configuration.
-- Add settings cards only for working pages and supported APIs; label unsupported options as planned rather than exposing empty shells.
-- Implement `/profile` for user-owned account/profile details supported by the authentication and user model.
-- Enforce OWNER/ADMIN or other role restrictions server-side for administrative settings.
+- Verified and retained the top-right Settings link to `/settings`.
+- Preserved the existing SLA Policies page and its functionality, including first-response and resolution targets, policy lifecycle controls, and role-based management permissions.
+- Expanded the Settings landing page with cards for supported pages:
+  - **SLA Policies** — existing organization-scoped SLA configuration.
+  - **Users & Memberships** — existing organization membership and role management.
+  - **Products** — existing organization-scoped product catalog management.
+  - **Your Profile** — personal account profile management.
+- Added a **Planned** configuration section for unsupported settings instead of linking to empty pages:
+  - **Organization Profile** — organization details exist in the data model, but a dedicated update API and editing page remain unimplemented.
+  - **Team Management** — team models exist, but dedicated team-management UI and management APIs remain unimplemented.
+  - **Notification Preferences** — the notification center exists, but persistent per-user notification preferences and their settings API remain unimplemented.
+- Implemented the `/profile` route using the authenticated user's Better Auth session and supported user fields.
+- Added profile editing for the user's display name and optional profile-image URL.
+- Displayed the user's email address, email verification status, and account creation date as read-only account details.
+- Added Profile navigation to the account menu while retaining the existing theme toggle and sign-out behavior.
+- Updated the profile and account-menu avatars to display a valid saved profile image, falling back to user initials when the image URL is empty.
+- Retained server-side `OWNER`/`ADMIN` authorization for administrative membership, product, and SLA policy mutations. Profile updates use the authenticated user's own Better Auth account rather than an arbitrary user ID.
 
-Verification:
+### Verification
 
-- Navigation and route tests.
-- Authorization tests for administrative settings.
-- Existing SLA policy regression tests remain green.
-- Manual walkthrough of Settings and Profile.
+- **Focused UI-6 tests:** 5 tests passed.
+- **Frontend tests:** 24 test files passed; 282 tests passed.
+- **API authorization/regression tests:** 3 E2E test files passed; 98 tests passed across SLA policy, member directory, and product APIs.
+- **Frontend TypeScript check:** Passed.
+- **Frontend lint:** Passed with no reported errors.
+- **Production build:** Passed; the `/profile` route was generated successfully.
+- **Navigation and route coverage:** Verified the Settings action, Settings and SLA Policies routes, Profile route, and account-menu Profile link.
+- **SLA policy regression:** Existing SLA policy tests passed, including role restrictions and organization isolation.
+- **Profile-image behavior:** Manually verified that a valid saved URL displays an image and an empty URL falls back to initials.
+- **Manual walkthrough:** Completed for Settings and Profile.
+
+**Outcome:** UI-6 is complete. Unsupported organization profile editing, team management, and notification preferences remain explicitly planned rather than being exposed as nonfunctional settings pages.
 
 ## UI-7 — UI Consistency, Accessibility, and Dead-action Sweep
 
