@@ -2,9 +2,13 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Activity, MessageSquare } from "lucide-react";
+
 import { Card, CardContent } from "@/components/ui";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState, ErrorState, LoadingState } from "@/components/shared";
 import { getEligibleStaffMembers } from "@/lib/api/members";
+import { getTeams } from "@/lib/api/teams";
 import {
   createTicketComment,
   getTicketComments,
@@ -67,6 +71,7 @@ export function TicketWorkflowPanel({
   const [approverTarget, setApproverTarget] = useState("");
   const [approvalComment, setApprovalComment] = useState("");
   const [notice, setNotice] = useState("");
+  const [activityPage, setActivityPage] = useState(1);
 
   const [statusSelection, setStatusSelection] = useState<{
     baseStatus: TicketStatus;
@@ -84,6 +89,26 @@ export function TicketWorkflowPanel({
   const setStatusTarget = (target: TicketStatus) => {
     setStatusSelection({
       baseStatus: ticket.status,
+      target,
+    });
+  };
+
+  const [teamSelection, setTeamSelection] = useState<{
+    baseTeamId: string | null;
+    target: string;
+  }>(() => ({
+    baseTeamId: ticket.teamId,
+    target: ticket.teamId ?? "",
+  }));
+
+  const teamTarget =
+    teamSelection.baseTeamId === ticket.teamId
+      ? teamSelection.target
+      : (ticket.teamId ?? "");
+
+  const setTeamTarget = (target: string) => {
+    setTeamSelection({
+      baseTeamId: ticket.teamId,
       target,
     });
   };
@@ -108,6 +133,16 @@ export function TicketWorkflowPanel({
     });
   };
 
+  const teamsQuery = useQuery({
+    queryKey: ["teams", organizationId],
+    queryFn: () => getTeams(organizationId),
+    enabled: canManage,
+  });
+
+  const availableTeams = (teamsQuery.data ?? []).filter(
+    (team) => team.isActive || team.id === ticket.teamId,
+  );
+
   const staffQuery = useQuery({
     queryKey: ["eligible-staff", organizationId],
     queryFn: () => getEligibleStaffMembers(organizationId),
@@ -122,7 +157,7 @@ export function TicketWorkflowPanel({
   });
 
   const activityQuery = useTicketActivity(organizationId, ticket.id, {
-    page: 1,
+    page: activityPage,
     limit: 20,
   });
 
@@ -149,9 +184,13 @@ export function TicketWorkflowPanel({
 
   const assignmentMutation = useMutation({
     mutationFn: () =>
-      updateTicketAssignment(organizationId, ticket.id, assigneeTarget || null),
+      updateTicketAssignment(organizationId, ticket.id, {
+        assigneeId: assigneeTarget || null,
+        teamId: teamTarget || null,
+      }),
+
     onSuccess: async () => {
-      setNotice("Ticket assignment updated.");
+      setNotice("Ticket assignment and team updated.");
       await refreshTicketAndActivity();
     },
   });
@@ -209,9 +248,13 @@ export function TicketWorkflowPanel({
           </div>
 
           {notice && (
-            <div className="rounded-md border px-3 py-2 text-sm" role="status">
+            <p
+              className="rounded-md border border-emerald-600/30 bg-emerald-600/5 px-3 py-2 text-sm"
+              role="status"
+              aria-live="polite"
+            >
               {notice}
-            </div>
+            </p>
           )}
 
           {canManage && (
@@ -267,48 +310,108 @@ export function TicketWorkflowPanel({
 
               <section className="space-y-3 border-t pt-5">
                 <h3 className="text-sm font-semibold">Assign ticket</h3>
-                {staffQuery.isLoading ? (
-                  <p className="text-sm text-muted-foreground">
-                    Loading staff members...
-                  </p>
+                {staffQuery.isLoading || teamsQuery.isLoading ? (
+                  <LoadingState
+                    variant="compact"
+                    label="Loading staff and teams..."
+                  />
                 ) : staffQuery.isError ? (
-                  <p role="alert" className="text-sm text-destructive">
-                    {errorText(
+                  <ErrorState
+                    variant="compact"
+                    title="Unable to load staff members"
+                    description={errorText(
                       staffQuery.error,
                       "Unable to load staff members.",
                     )}
-                  </p>
+                    onRetry={() => void staffQuery.refetch()}
+                  />
+                ) : teamsQuery.isError ? (
+                  <ErrorState
+                    variant="compact"
+                    title="Unable to load teams"
+                    description={errorText(
+                      teamsQuery.error,
+                      "Unable to load teams.",
+                    )}
+                    onRetry={() => void teamsQuery.refetch()}
+                  />
                 ) : (
                   <form
-                    className="flex flex-col gap-3 sm:flex-row"
+                    className="space-y-3"
                     onSubmit={(event) => {
                       event.preventDefault();
                       setNotice("");
                       assignmentMutation.mutate();
                     }}
                   >
-                    <select
-                      aria-label="Ticket assignee"
-                      value={assigneeTarget}
-                      onChange={(event) =>
-                        setAssigneeTarget(event.target.value)
-                      }
-                      className="h-10 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm"
-                    >
-                      <option value="">Unassigned</option>
-                      {staff.map((member) => (
-                        <option key={member.id} value={member.id}>
-                          {member.name} ({member.role})
-                        </option>
-                      ))}
-                    </select>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="min-w-0 space-y-1.5">
+                        <label
+                          htmlFor={`ticket-assignee-${ticket.id}`}
+                          className="text-sm font-medium"
+                        >
+                          Assignee
+                        </label>
+
+                        <select
+                          id={`ticket-assignee-${ticket.id}`}
+                          aria-label="Ticket assignee"
+                          value={assigneeTarget}
+                          onChange={(event) =>
+                            setAssigneeTarget(event.target.value)
+                          }
+                          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          <option value="">Unassigned</option>
+                          {staffQuery.data?.map((member) => (
+                            <option key={member.id} value={member.id}>
+                              {member.name} ({member.role})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="min-w-0 space-y-1.5">
+                        <label
+                          htmlFor={`ticket-team-${ticket.id}`}
+                          className="text-sm font-medium"
+                        >
+                          Team
+                        </label>
+
+                        <select
+                          id={`ticket-team-${ticket.id}`}
+                          aria-label="Ticket team"
+                          value={teamTarget}
+                          onChange={(event) =>
+                            setTeamTarget(event.target.value)
+                          }
+                          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          <option value="">No team assigned</option>
+                          {availableTeams.map((team) => (
+                            <option key={team.id} value={team.id}>
+                              {team.name}
+                              {!team.isActive ? " (Inactive)" : ""}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-muted-foreground">
+                      An assignee must belong to the selected team. The API
+                      validates this constraint when the assignment is saved.
+                    </p>
+
                     <button
                       type="submit"
                       disabled={
                         assignmentMutation.isPending ||
-                        assigneeTarget === (ticket.assigneeId ?? "")
+                        (assigneeTarget === (ticket.assigneeId ?? "") &&
+                          teamTarget === (ticket.teamId ?? ""))
                       }
-                      className="h-10 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-50"
+                      className="h-10 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {assignmentMutation.isPending
                         ? "Saving..."
@@ -372,14 +475,22 @@ export function TicketWorkflowPanel({
                     ))}
                   </select>
 
+                  <label
+                    htmlFor={`approval-comment-${ticket.id}`}
+                    className="block text-sm font-medium"
+                  >
+                    Approval context (optional)
+                  </label>
+
                   <textarea
+                    id={`approval-comment-${ticket.id}`}
                     value={approvalComment}
                     onChange={(event) => setApprovalComment(event.target.value)}
                     maxLength={2000}
                     rows={2}
                     disabled={approvalMutation.isPending}
-                    placeholder="Approval context (optional)"
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    placeholder="Add context for the approver..."
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   />
 
                   <button
@@ -413,21 +524,28 @@ export function TicketWorkflowPanel({
             <h3 className="text-sm font-semibold">Comments</h3>
 
             {commentsQuery.isLoading && (
-              <p className="text-sm text-muted-foreground">
-                Loading comments...
-              </p>
+              <LoadingState variant="compact" label="Loading comments..." />
             )}
 
             {commentsQuery.isError && (
-              <p role="alert" className="text-sm text-destructive">
-                {errorText(commentsQuery.error, "Unable to load comments.")}
-              </p>
+              <ErrorState
+                variant="compact"
+                title="Unable to load comments"
+                description={errorText(
+                  commentsQuery.error,
+                  "Unable to load comments.",
+                )}
+                onRetry={() => void commentsQuery.refetch()}
+              />
             )}
 
             {commentsQuery.isSuccess && commentsQuery.data.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                No comments have been added to this ticket.
-              </p>
+              <EmptyState
+                variant="compact"
+                icon={MessageSquare}
+                title="No comments"
+                description="Comments added to this ticket will appear here."
+              />
             )}
 
             {commentsQuery.data?.map((comment) => (
@@ -519,16 +637,22 @@ export function TicketWorkflowPanel({
           </div>
 
           {activityQuery.isLoading && (
-            <p className="text-sm text-muted-foreground">Loading activity...</p>
+            <LoadingState
+              variant="compact"
+              label="Loading ticket activity..."
+            />
           )}
 
           {activityQuery.isError && (
-            <p role="alert" className="text-sm text-destructive">
-              {errorText(
+            <ErrorState
+              variant="compact"
+              title="Unable to load ticket activity"
+              description={errorText(
                 activityQuery.error,
                 "Unable to load ticket activity.",
               )}
-            </p>
+              onRetry={() => void activityQuery.refetch()}
+            />
           )}
 
           {activityQuery.data?.data.map((activity) => (
@@ -546,10 +670,59 @@ export function TicketWorkflowPanel({
           ))}
 
           {activityQuery.isSuccess && activityQuery.data.data.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              No activity has been recorded yet.
-            </p>
+            <EmptyState
+              variant="compact"
+              icon={Activity}
+              title="No activity yet"
+              description="Ticket changes and workflow events will appear here."
+            />
           )}
+
+          {activityQuery.isSuccess &&
+            activityQuery.data.meta.totalPages > 1 && (
+              <nav
+                aria-label="Ticket activity pages"
+                className="flex flex-wrap items-center justify-between gap-3 border-t pt-4"
+              >
+                <button
+                  type="button"
+                  disabled={activityPage <= 1 || activityQuery.isFetching}
+                  onClick={() =>
+                    setActivityPage((page) => Math.max(1, page - 1))
+                  }
+                  className="h-9 rounded-md border border-input px-3 text-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+                >
+                  Previous page
+                </button>
+
+                <span
+                  className="text-xs text-muted-foreground"
+                  role="status"
+                  aria-live="polite"
+                >
+                  Page {activityQuery.data.meta.page} of{" "}
+                  {activityQuery.data.meta.totalPages}
+                  {" · "}
+                  {activityQuery.data.meta.total} events
+                </span>
+
+                <button
+                  type="button"
+                  disabled={
+                    activityPage >= activityQuery.data.meta.totalPages ||
+                    activityQuery.isFetching
+                  }
+                  onClick={() =>
+                    setActivityPage((page) =>
+                      Math.min(activityQuery.data.meta.totalPages, page + 1),
+                    )
+                  }
+                  className="h-9 rounded-md border border-input px-3 text-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+                >
+                  Next page
+                </button>
+              </nav>
+            )}
         </CardContent>
       </Card>
     </div>

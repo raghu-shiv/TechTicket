@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ClipboardList, X } from "lucide-react";
@@ -13,17 +14,90 @@ export function MobileNav() {
   const isOpen = useUIStore((state) => state.isMobileSidebarOpen);
   const close = useUIStore((state) => state.closeMobileSidebar);
 
-  if (!isOpen) return null;
+  const dialogRef = useRef<HTMLElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const previouslyFocused =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+
+    closeButtonRef.current?.focus();
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        close();
+        return;
+      }
+
+      if (event.key !== "Tab") return;
+
+      const dialog = dialogRef.current;
+      if (!dialog) return;
+
+      const focusable = Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((element) => element.offsetParent !== null);
+
+      if (focusable.length === 0) {
+        event.preventDefault();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+
+      if (event.shiftKey && (active === first || !dialog.contains(active))) {
+        event.preventDefault();
+        last.focus();
+      } else if (
+        !event.shiftKey &&
+        (active === last || !dialog.contains(active))
+      ) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+
+      if (previouslyFocused?.isConnected) {
+        previouslyFocused.focus();
+      }
+    };
+  }, [isOpen, close]);
 
   return (
-    <div className="fixed inset-0 z-50 lg:hidden">
+    <div
+      className={cn("fixed inset-0 z-50 lg:hidden", !isOpen && "hidden")}
+      aria-hidden={!isOpen}
+    >
       <button
         type="button"
-        aria-label="Close navigation"
+        tabIndex={-1}
+        aria-label="Close navigation overlay"
         className="absolute inset-0 bg-black/40"
         onClick={close}
       />
-      <aside className="relative flex h-full w-72 max-w-[85vw] flex-col border-r bg-card shadow-xl">
+
+      <aside
+        ref={dialogRef}
+        id="mobile-navigation"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Mobile navigation"
+        className="relative flex h-full w-72 max-w-[85vw] flex-col border-r bg-card shadow-xl"
+      >
         <div className="flex h-16 items-center justify-between border-b px-5">
           <Link
             href="/dashboard"
@@ -31,17 +105,19 @@ export function MobileNav() {
             className="flex items-center gap-3 font-semibold"
           >
             <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <ClipboardList className="size-4" />
+              <ClipboardList className="size-4" aria-hidden="true" />
             </div>
             <span>SupportDesk</span>
           </Link>
+
           <button
+            ref={closeButtonRef}
             type="button"
             onClick={close}
-            className="rounded-lg p-2 hover:bg-accent"
+            className="rounded-lg p-2 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label="Close navigation"
           >
-            <X className="size-5" />
+            <X className="size-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -63,12 +139,12 @@ export function MobileNav() {
                 onClick={close}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   "hover:bg-accent",
                   isActive && "bg-primary/10 text-primary",
                 )}
               >
-                <Icon className="size-4" aria-hidden="true" />
+                <Icon className="size-4 shrink-0" aria-hidden="true" />
                 <span>{item.label}</span>
               </Link>
             );

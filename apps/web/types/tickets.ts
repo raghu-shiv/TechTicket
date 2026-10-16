@@ -224,3 +224,28 @@ export interface TicketComment {
   updatedAt: string;
   author: TicketUser;
 }
+
+export type TicketRelationType = "RELATED" | "DUPLICATE" | "PARENT" | "BLOCKS";
+
+export type TicketRelationDirection = "INCOMING" | "OUTGOING";
+
+export interface TicketRelationSummary {
+  id: string;
+  ticketNumber: string;
+  title: string;
+  status: TicketStatus;
+  priority: TicketPriority;
+}
+
+export interface TicketRelation {
+  id: string;
+  type: TicketRelationType;
+  direction: TicketRelationDirection;
+  ticket: TicketRelationSummary;
+  createdAt: string;
+}
+
+export interface CreateTicketRelationInput {
+  relatedTicketId: string;
+  type: TicketRelationType;
+}

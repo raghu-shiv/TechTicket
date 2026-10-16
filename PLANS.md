@@ -883,7 +883,7 @@ Phase 7 verification is complete. All required automated checks and manual UI ve
 
 # Product UI Completion Roadmap
 
-**Status: UI-4 COMPLETE AND VERIFIED — UI-4.1A COMPLETE AND VERIFIED — NEXT: UI-4.1B READY FOR IMPLEMENTATION**
+**Status: UI-1 THROUGH UI-7 COMPLETE AND VERIFIED — DEFERRED DEPARTMENT AND SETTINGS FOLLOW-ONS REMAIN PLANNED**
 
 Phase 7 Analytics is complete and verified. The next priority is to close the blueprint-level user-facing gaps so the product's ticketing, approval, library, search, and notification workflows are reachable and use real domain data. Reuse existing APIs, services, query contracts, and authorization rather than introducing duplicate operational models.
 
@@ -1219,33 +1219,58 @@ The Settings landing page now provides navigation to supported configuration pag
 
 ## UI-7 — UI Consistency, Accessibility, and Dead-action Sweep
 
-**PLANNED**
+**COMPLETE AND VERIFIED**
 
-- Audit every sidebar, mobile-navigation, top-bar, card, row, and detail-page action for dead controls or missing routes.
-- Implement actual sidebar collapse/expand behavior or remove the nonfunctional collapse control.
-- Keep the **Ticket Library** label consistent in desktop navigation, mobile navigation, page headings, and links.
-- Confirm ticket-detail workflows for comments, attachments, activity history, assignment/status transitions, approvals, relations, and SLA information.
-- Standardize loading, error, empty, and success presentation using existing shared UI components.
-- Verify keyboard focus, accessible names, responsive layouts, and permission-aware controls.
-- Avoid duplicate data-fetching paths where the existing TanStack Query hooks and API clients can be reused.
+Audited and refined navigation, shared interaction patterns, accessibility behavior, and ticket-detail workflows. Reused the existing API contracts and TanStack Query/API-client paths wherever possible; no duplicate operational data model was introduced.
 
-Verification:
+### Implemented
 
-- Automated route/action tests where practical.
-- Full frontend TypeScript, lint, tests, and production build.
-- Focused E2E suites for any touched backend workflow.
-- Full API E2E regression and manual desktop/mobile workflow walkthrough.
+- Audited desktop sidebar, mobile navigation, top-bar actions, account menu, global search entry points, and ticket-detail panels for dead controls and missing routes.
+- Kept desktop and mobile navigation aligned through the shared navigation definition and standardized **Ticket Library** as the navigation label.
+- Removed the nonfunctional desktop sidebar collapse control rather than exposing an action that did not work.
+- Refined the mobile navigation drawer with accessible labeling and state attributes, Escape-key dismissal, focus trapping, and focus restoration to the trigger.
+- Refined account-menu interaction behavior, including Escape/outside-click dismissal and visible keyboard focus, while retaining working profile, theme, and sign-out actions.
+- Added/standardized reusable page and compact variants for shared loading, error, and empty states so embedded workflow panels use appropriate feedback presentation.
+- Completed the ticket-detail layout with workflow, relationships, attachments, SLA context, and breach-history panels.
+- Reused the relationship API client and query hook for ticket relationship loading; retained supported relationship creation/deletion operations and organization-scoped backend authorization.
+- Refined attachments to support upload, download, and permission-aware deletion with loading, error, empty, and success feedback.
+- Retained ticket status, assignment/team assignment, comments, activity history/pagination, approvals, and SLA information in the ticket-detail workflows.
+- Added UI consistency/source-contract tests and relationship API-client contract tests; added ticket-relations E2E coverage.
+- Resolved a React duplicate-key console warning by giving the ticket-detail sibling panels distinct keys (`workflow-${ticket.id}`, `relations-${ticket.id}`, and `attachments-${ticket.id}`). Each panel still remounts when the ticket ID changes, but sibling keys are now unique.
+
+### Verification — PASSED (user-confirmed)
+
+```text
+Frontend Vitest suite             26 files, 292/292 tests passed
+UI-7 consistency tests            7/7 passed
+Ticket relationship API tests     3/3 passed
+Frontend TypeScript check         PASS — npx tsc --noEmit
+Frontend lint                     PASS — npm run lint
+API E2E regression                41 files, 564/564 tests passed
+Ticket relationship E2E           7/7 tests passed
+Manual UI verification            PASS — user-confirmed
+```
+
+The frontend production build passed at the prior UI-7 verification checkpoint. The final duplicate-key correction was frontend-only; after that correction, the user reran and confirmed the complete frontend test suite, TypeScript check, lint, and manual UI verification. The final key correction did not require an API behavior change.
+
+The full API E2E run emitted non-blocking Resend HTTP 422 logs because existing test fixtures use `example.com` recipients, plus Vite configuration warnings. All 564 API test assertions passed; these messages did not produce test failures.
+
+**Outcome:** UI-7 is complete and verified. The known deferred follow-ons—department domain/API design, organization profile editing, dedicated team-management UI/APIs, and persisted notification preferences—remain separately planned and were not represented as working UI-7 functionality.
 
 ## Implementation Order
 
-1. UI-1 — Ticket creation / raising tickets.
-2. UI-2 — Approvals inbox, Ticket Library, Users, product management, and department audit.
-3. UI-3 — Live operational Dashboard.
-4. UI-4 — Functional global ticket search (COMPLETE AND VERIFIED).
-5. UI-4.1 — Global Search Expansion: Ticket Library integration is complete; implement UI-4.1B user search under the defined OWNER/ADMIN-only policy and server-side contract before moving to UI-5.
-6. UI-5 — Notification persistence audit and notification center.
-7. UI-6 — Settings and Profile navigation.
-8. UI-7 — Full interaction, accessibility, responsive, and regression sweep.
+The original milestone sequence has been completed through UI-7:
+
+1. UI-1 — Ticket creation / raising tickets — **COMPLETE AND VERIFIED**.
+2. UI-2 — Core navigation, Approvals inbox, Ticket Library, Users, Products, and department audit — **CORE UI COMPLETE AND VERIFIED**; Departments remain a deferred follow-on pending domain and authorization design.
+3. UI-3 — Live operational Dashboard — **COMPLETE AND VERIFIED**.
+4. UI-4 — Functional global ticket search — **COMPLETE AND VERIFIED**.
+5. UI-4.1 — Ticket Library and authorized organization-user search expansion — **COMPLETE AND VERIFIED**.
+6. UI-5 — Notification center — **COMPLETE AND VERIFIED**.
+7. UI-6 — Settings and Profile navigation — **COMPLETE AND VERIFIED**; organization profile editing, dedicated team management, and notification preferences remain planned.
+8. UI-7 — UI consistency, accessibility, and dead-action sweep — **COMPLETE AND VERIFIED**.
+
+**Next planned milestone:** Phase 8 — Production Hardening, as outlined below. Deferred domain/settings items should be prioritized explicitly and designed before implementation; they are not implicitly included in the completed UI milestones.
 
 Do not begin a milestone by assuming an endpoint or persisted model exists. Inspect the blueprint, current route tree, schema, API contract, and permissions first. Reuse verified services, preserve organization isolation, and document unsupported functionality explicitly.
 
@@ -1988,10 +2013,13 @@ Phase 6-A through Phase 6-F are **COMPLETE AND VERIFIED**.
 Phase 7-A through 7-J are **COMPLETE AND VERIFIED**, including Usage Reports,
 Ticket Library Reports, Exports, and Full Analytics Verification.
 
-The next milestone is **Product UI Completion**, in the implementation order
-and with the verification boundary defined in the roadmap above. The desktop
-sidebar now uses the **Ticket Library** label and Tasks has been removed; keep
-those choices consistent across mobile navigation and documentation.
+Product UI Completion milestones UI-1 through UI-7 are **COMPLETE AND VERIFIED**.
+The desktop and mobile navigation use the **Ticket Library** label, and Tasks
+remains removed. Preserve these decisions across future changes.
 
-Phase 8 — Production Hardening remains planned after the core operational UI
-workflows are complete and manually verified.
+The next planned milestone is **Phase 8 — Production Hardening**, covering
+regression/CI enforcement, security and authorization review, performance,
+database/index optimization, observability, backup/restore validation, CI/CD,
+and production deployment validation. Departments, organization profile editing,
+dedicated team management, and notification preferences remain deferred follow-ons
+that require explicit domain/contract design and prioritization.

@@ -27,6 +27,7 @@ import { TicketSlaPanel } from "@/components/tickets/TicketSlaPanel";
 import { SlaBreachHistory } from "@/components/tickets/SlaBreachHistory";
 import { TicketAttachmentsPanel } from "@/components/tickets/TicketAttachmentsPanel";
 import { TicketWorkflowPanel } from "@/components/tickets/TicketWorkflowPanel";
+import { TicketRelationsPanel } from "@/components/tickets/TicketRelationsPanel";
 
 const statusConfig: Record<
   TicketStatus,
@@ -334,16 +335,31 @@ export default function TicketDetailPage({
       </div>
 
       <TicketWorkflowPanel
+        key={`workflow-${ticket.id}`}
         organizationId={organizationId}
         ticket={ticket}
         currentUserId={membership?.userId ?? ""}
         role={membership?.role ?? "REQUESTER"}
       />
 
+      <TicketRelationsPanel
+        key={`relations-${ticket.id}`}
+        organizationId={organizationId}
+        ticket={ticket}
+        role={membership?.role ?? "REQUESTER"}
+      />
+
       <TicketAttachmentsPanel
+        key={`attachments-${ticket.id}`}
         organizationId={organizationId}
         ticketId={ticket.id}
+        canDelete={
+          membership?.role === "OWNER" ||
+          membership?.role === "ADMIN" ||
+          membership?.role === "AGENT"
+        }
       />
+
       <SlaBreachHistory organizationId={organizationId} ticketId={ticket.id} />
     </div>
   );

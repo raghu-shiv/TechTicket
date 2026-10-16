@@ -1,20 +1,60 @@
 "use client";
 
-import { useState } from "react";
-import { Download, FileText, Paperclip, RefreshCw } from "lucide-react";
+import { useRef, useState, type FormEvent } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Download, FileText, Paperclip, Trash2 } from "lucide-react";
 
+import { EmptyState, ErrorState, LoadingState } from "@/components/shared";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui";
-import { useTicketAttachments } from "@/hooks/use-ticket-attachments";
-import { downloadTicketAttachment } from "@/lib/api/tickets";
+import {
+  ticketAttachmentQueryKeys,
+  useTicketAttachments,
+} from "@/hooks/use-ticket-attachments";
+import {
+  deleteTicketAttachment,
+  downloadTicketAttachment,
+  uploadTicketAttachment,
+} from "@/lib/api/tickets";
+
+const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024;
+
+const ALLOWED_ATTACHMENT_TYPES = new Set([
+  "application/pdf",
+  "image/png",
+  "image/jpeg",
+  "image/gif",
+  "image/webp",
+  "text/plain",
+  "text/csv",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+]);
+
+const ACCEPTED_ATTACHMENT_FORMATS = [
+  ".pdf",
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".gif",
+  ".webp",
+  ".txt",
+  ".csv",
+  ".doc",
+  ".docx",
+  ".xls",
+  ".xlsx",
+  ".ppt",
+  ".pptx",
+].join(",");
 
 function formatFileSize(size: number): string {
-  if (size < 1024) {
-    return `${size} B`;
-  }
-
-  if (size < 1024 * 1024) {
-    return `${(size / 1024).toFixed(1)} KB`;
-  }
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
 
   return `${(size / (1024 * 1024)).toFixed(2)} MB`;
 }
@@ -26,27 +66,73 @@ function formatUploadDate(value: string): string {
     return "Date unavailable";
   }
 
-  return new Intl.DateTimeFormat("en", {
+  return new Intl.DateTimeFormat(undefined, {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(date);
 }
 
+function errorText(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback;
+}
+
 export function TicketAttachmentsPanel({
   organizationId,
   ticketId,
+  canDelete = false,
 }: {
   organizationId: string;
   ticketId: string;
+  canDelete?: boolean;
 }) {
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const attachmentsQuery = useTicketAttachments(organizationId, ticketId);
 
-  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  const listQueryKey = ticketAttachmentQueryKeys.list(organizationId, ticketId);
+
+  const uploadMutation = useMutation({
+    mutationFn: (file: File) =>
+      uploadTicketAttachment(organizationId, ticketId, file),
+
+    onSuccess: async (_result, file) => {
+      setSelectedFile(null);
+      setUploadError(null);
+      setSuccessMessage(`Uploaded ${file.name}.`);
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+
+      await queryClient.invalidateQueries({ queryKey: listQueryKey });
+    },
+
+    onError: (error) => {
+      setUploadError(errorText(error, "Unable to upload the attachment."));
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (attachmentId: string) =>
+      deleteTicketAttachment(organizationId, ticketId, attachmentId),
+
+    onSuccess: async () => {
+      setSuccessMessage("Attachment deleted.");
+      await queryClient.invalidateQueries({ queryKey: listQueryKey });
+    },
+  });
 
   async function handleDownload(attachmentId: string, fileName: string) {
     setDownloadingId(attachmentId);
     setDownloadError(null);
+    setSuccessMessage(null);
 
     let objectUrl: string | null = null;
 
@@ -68,22 +154,62 @@ export function TicketAttachmentsPanel({
       link.click();
       link.remove();
     } catch (error) {
-      setDownloadError(
-        error instanceof Error
-          ? error.message
-          : "Unable to download the attachment.",
-      );
+      setDownloadError(errorText(error, "Unable to download the attachment."));
     } finally {
       if (objectUrl) {
-        // Allow the browser to begin the download before releasing the URL.
-        window.setTimeout(() => URL.revokeObjectURL(objectUrl!), 1000);
+        const urlToRelease = objectUrl;
+
+        // Let the browser start the download before releasing the URL.
+        window.setTimeout(() => URL.revokeObjectURL(urlToRelease), 1000);
       }
 
       setDownloadingId(null);
     }
   }
 
+  function handleUpload(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setUploadError(null);
+    setSuccessMessage(null);
+
+    if (!selectedFile) {
+      setUploadError("Choose a file to upload.");
+      return;
+    }
+
+    if (selectedFile.size > MAX_ATTACHMENT_SIZE) {
+      setUploadError("Attachments must be 10 MB or smaller.");
+      return;
+    }
+
+    if (!ALLOWED_ATTACHMENT_TYPES.has(selectedFile.type)) {
+      setUploadError(
+        "This file type is not supported. Choose a PDF, image, text, CSV, Word, Excel, or PowerPoint file.",
+      );
+      return;
+    }
+
+    uploadMutation.mutate(selectedFile);
+  }
+
+  function handleDelete(attachmentId: string, fileName: string) {
+    if (!canDelete || deleteMutation.isPending) return;
+
+    const confirmed = window.confirm(
+      `Permanently delete "${fileName}" from this ticket?`,
+    );
+
+    if (confirmed) {
+      setSuccessMessage(null);
+      deleteMutation.mutate(attachmentId);
+    }
+  }
+
   const attachments = attachmentsQuery.data ?? [];
+  const busy =
+    uploadMutation.isPending ||
+    deleteMutation.isPending ||
+    downloadingId !== null;
 
   return (
     <Card>
@@ -94,63 +220,135 @@ export function TicketAttachmentsPanel({
               className="size-4 text-muted-foreground"
               aria-hidden="true"
             />
-
             <h2 className="text-base font-semibold">Attachments</h2>
 
-            {!attachmentsQuery.isLoading && !attachmentsQuery.isError && (
-              <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                {attachments.length}
-              </span>
+            {attachmentsQuery.isSuccess && (
+              <Badge variant="secondary">{attachments.length}</Badge>
             )}
           </div>
-
-          {attachmentsQuery.isError && (
-            <button
-              type="button"
-              onClick={() => void attachmentsQuery.refetch()}
-              className="inline-flex h-9 items-center gap-2 rounded-md border border-input px-3 text-sm transition-colors hover:bg-muted"
-            >
-              <RefreshCw className="size-3.5" />
-              Retry
-            </button>
-          )}
         </div>
 
-        {attachmentsQuery.isLoading && (
-          <p className="text-sm text-muted-foreground" role="status">
-            Loading attachments...
+        {successMessage && (
+          <p
+            className="rounded-md border border-emerald-600/30 bg-emerald-600/5 px-3 py-2 text-sm"
+            role="status"
+            aria-live="polite"
+          >
+            {successMessage}
           </p>
         )}
 
-        {attachmentsQuery.isError && (
-          <div className="space-y-2" role="alert">
-            <p className="text-sm text-destructive">
-              {attachmentsQuery.error instanceof Error
-                ? attachmentsQuery.error.message
-                : "Unable to load ticket attachments."}
+        <form
+          onSubmit={handleUpload}
+          className="space-y-3 rounded-lg border border-dashed p-4"
+        >
+          <div>
+            <label
+              htmlFor={`ticket-attachment-file-${ticketId}`}
+              className="text-sm font-medium"
+            >
+              Add attachment
+            </label>
+
+            <input
+              ref={fileInputRef}
+              id={`ticket-attachment-file-${ticketId}`}
+              type="file"
+              accept={ACCEPTED_ATTACHMENT_FORMATS}
+              disabled={busy}
+              onChange={(event) => {
+                setSelectedFile(event.target.files?.[0] ?? null);
+                setUploadError(null);
+                setSuccessMessage(null);
+              }}
+              aria-describedby={`ticket-attachment-help-${ticketId}`}
+              className="mt-2 block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-2 file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+            />
+
+            <p
+              id={`ticket-attachment-help-${ticketId}`}
+              className="mt-2 text-xs text-muted-foreground"
+            >
+              Maximum size: 10 MB. Supported formats include PDF, PNG, JPEG,
+              GIF, WebP, TXT, CSV, Word, Excel, and PowerPoint.
             </p>
 
-            <p className="text-xs text-muted-foreground">
-              The ticket may still have attachments. Retry to fetch the list
-              again.
-            </p>
+            {selectedFile && (
+              <p className="mt-2 break-words text-xs text-muted-foreground">
+                Selected: {selectedFile.name} (
+                {formatFileSize(selectedFile.size)})
+              </p>
+            )}
           </div>
+
+          <button
+            type="submit"
+            disabled={!selectedFile || busy}
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {uploadMutation.isPending ? "Uploading..." : "Upload attachment"}
+          </button>
+        </form>
+
+        {uploadError && (
+          <ErrorState
+            variant="compact"
+            title="Unable to upload attachment"
+            description={uploadError}
+          />
+        )}
+
+        {downloadError && (
+          <ErrorState
+            variant="compact"
+            title="Unable to download attachment"
+            description={downloadError}
+          />
+        )}
+
+        {deleteMutation.isError && (
+          <ErrorState
+            variant="compact"
+            title="Unable to delete attachment"
+            description={errorText(
+              deleteMutation.error,
+              "The attachment could not be deleted.",
+            )}
+            onRetry={() => {
+              const attachmentId = deleteMutation.variables;
+              if (attachmentId && canDelete) {
+                deleteMutation.mutate(attachmentId);
+              }
+            }}
+          />
+        )}
+
+        {attachmentsQuery.isLoading && (
+          <LoadingState variant="compact" label="Loading attachments..." />
+        )}
+
+        {attachmentsQuery.isError && (
+          <ErrorState
+            variant="compact"
+            title="Unable to load attachments"
+            description={errorText(
+              attachmentsQuery.error,
+              "The attachment list could not be loaded.",
+            )}
+            onRetry={() => void attachmentsQuery.refetch()}
+          />
         )}
 
         {attachmentsQuery.isSuccess && attachments.length === 0 && (
-          <div className="rounded-md border border-dashed px-4 py-6 text-center">
-            <FileText
-              className="mx-auto size-5 text-muted-foreground"
-              aria-hidden="true"
-            />
-            <p className="mt-2 text-sm font-medium">No attachments</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Files added to this ticket will appear here.
-            </p>
-          </div>
+          <EmptyState
+            variant="compact"
+            icon={FileText}
+            title="No attachments"
+            description="Files uploaded to this ticket will appear here."
+          />
         )}
 
-        {attachments.length > 0 && (
+        {attachmentsQuery.isSuccess && attachments.length > 0 && (
           <ul className="divide-y">
             {attachments.map((attachment) => (
               <li
@@ -187,29 +385,43 @@ export function TicketAttachmentsPanel({
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    void handleDownload(attachment.id, attachment.fileName)
-                  }
-                  disabled={downloadingId !== null}
-                  aria-label={`Download ${attachment.fileName}`}
-                  className="inline-flex h-9 shrink-0 items-center justify-center gap-2 self-start rounded-md border border-input px-3 text-sm font-medium transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50 sm:self-center"
-                >
-                  <Download className="size-4" />
-                  {downloadingId === attachment.id
-                    ? "Downloading..."
-                    : "Download"}
-                </button>
+                <div className="flex shrink-0 flex-wrap gap-2 self-start sm:self-center">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void handleDownload(attachment.id, attachment.fileName)
+                    }
+                    disabled={busy}
+                    aria-label={`Download ${attachment.fileName}`}
+                    className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-input px-3 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+                  >
+                    <Download className="size-4" aria-hidden="true" />
+                    {downloadingId === attachment.id
+                      ? "Downloading..."
+                      : "Download"}
+                  </button>
+
+                  {canDelete && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleDelete(attachment.id, attachment.fileName)
+                      }
+                      disabled={busy}
+                      aria-label={`Delete ${attachment.fileName}`}
+                      className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-destructive/30 px-3 text-sm text-destructive hover:bg-destructive/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+                    >
+                      <Trash2 className="size-4" aria-hidden="true" />
+                      {deleteMutation.isPending &&
+                      deleteMutation.variables === attachment.id
+                        ? "Deleting..."
+                        : "Delete"}
+                    </button>
+                  )}
+                </div>
               </li>
             ))}
           </ul>
-        )}
-
-        {downloadError && (
-          <p className="text-sm text-destructive" role="alert">
-            {downloadError}
-          </p>
         )}
       </CardContent>
     </Card>

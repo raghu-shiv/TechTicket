@@ -1,17 +1,33 @@
 interface LoadingStateProps {
   label?: string;
+  variant?: "page" | "compact";
 }
 
-export function LoadingState({ label = "Loading..." }: LoadingStateProps) {
+export function LoadingState({
+  label = "Loading...",
+  variant = "page",
+}: LoadingStateProps) {
+  const compact = variant === "compact";
+
   return (
     <div
-      className="flex min-h-72 flex-col items-center justify-center gap-3"
+      className={
+        compact
+          ? "flex items-center gap-2 py-2 text-sm text-muted-foreground"
+          : "flex min-h-72 flex-col items-center justify-center gap-3"
+      }
       role="status"
       aria-live="polite"
     >
-      <div className="size-6 animate-spin rounded-full border-2 border-muted border-t-primary" />
+      <span
+        aria-hidden="true"
+        className={[
+          "animate-spin rounded-full border-2 border-muted border-t-primary",
+          compact ? "size-4" : "size-6",
+        ].join(" ")}
+      />
 
-      <span className="text-sm text-muted-foreground">{label}</span>
+      <span>{label}</span>
     </div>
   );
 }

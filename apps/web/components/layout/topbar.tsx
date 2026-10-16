@@ -10,14 +10,18 @@ import { useUIStore } from "@/stores/ui-store";
 export function Topbar() {
   const openMobileSidebar = useUIStore((state) => state.openMobileSidebar);
   const openCommandMenu = useUIStore((state) => state.openCommandMenu);
+  const isMobileSidebarOpen = useUIStore((state) => state.isMobileSidebarOpen);
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:px-6">
       <div className="flex w-full items-center gap-4">
         <button
           type="button"
-          className="rounded-lg p-2 hover:bg-accent lg:hidden"
+          className="rounded-lg p-2 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:hidden"
           aria-label="Open navigation"
+          aria-expanded={isMobileSidebarOpen}
+          aria-controls="mobile-navigation"
+          aria-haspopup="dialog"
           onClick={openMobileSidebar}
         >
           <Menu className="size-5" aria-hidden="true" />

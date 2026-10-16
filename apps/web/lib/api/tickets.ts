@@ -11,6 +11,8 @@ import type {
   TicketPriority,
   TicketStatus,
   TicketType,
+  CreateTicketRelationInput,
+  TicketRelation,
 } from "@/types/tickets";
 
 const API_BASE_URL =
@@ -350,6 +352,31 @@ export async function downloadTicketAttachment(
   return response.blob();
 }
 
+export async function deleteTicketAttachment(
+  organizationId: string,
+  ticketId: string,
+  attachmentId: string,
+): Promise<void> {
+  const response = await fetch(
+    `${API_BASE_URL}/tickets/${encodeURIComponent(ticketId)}/attachments/${encodeURIComponent(attachmentId)}`,
+    {
+      method: "DELETE",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+        "x-organization-id": organizationId,
+      },
+      cache: "no-store",
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getTicketRequestError(response, "Failed to delete the attachment."),
+    );
+  }
+}
+
 export async function updateTicketStatus(
   organizationId: string,
   ticketId: string,
@@ -377,10 +404,15 @@ export async function updateTicketStatus(
   }
 }
 
+export interface UpdateTicketAssignmentInput {
+  assigneeId: string | null;
+  teamId: string | null;
+}
+
 export async function updateTicketAssignment(
   organizationId: string,
   ticketId: string,
-  assigneeId: string | null,
+  input: UpdateTicketAssignmentInput,
 ): Promise<void> {
   const response = await fetch(
     `${API_BASE_URL}/tickets/${encodeURIComponent(ticketId)}/assignment`,
@@ -392,7 +424,7 @@ export async function updateTicketAssignment(
         "Content-Type": "application/json",
         "x-organization-id": organizationId,
       },
-      body: JSON.stringify({ assigneeId }),
+      body: JSON.stringify(input),
       cache: "no-store",
     },
   );
@@ -463,4 +495,93 @@ export async function createTicketComment(
   }
 
   return response.json() as Promise<TicketComment>;
+}
+
+export async function getTicketRelations(
+  organizationId: string,
+  ticketId: string,
+): Promise<TicketRelation[]> {
+  const response = await fetch(
+    `${API_BASE_URL}/tickets/${encodeURIComponent(ticketId)}/relations`,
+    {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+        "x-organization-id": organizationId,
+      },
+      cache: "no-store",
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getTicketRequestError(
+        response,
+        "Failed to load ticket relationships.",
+      ),
+    );
+  }
+
+  return response.json() as Promise<TicketRelation[]>;
+}
+
+export async function createTicketRelation(
+  organizationId: string,
+  ticketId: string,
+  input: CreateTicketRelationInput,
+): Promise<TicketRelation> {
+  const response = await fetch(
+    `${API_BASE_URL}/tickets/${encodeURIComponent(ticketId)}/relations`,
+    {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "x-organization-id": organizationId,
+      },
+      body: JSON.stringify(input),
+      cache: "no-store",
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getTicketRequestError(
+        response,
+        "Failed to create the ticket relationship.",
+      ),
+    );
+  }
+
+  return response.json() as Promise<TicketRelation>;
+}
+
+export async function deleteTicketRelation(
+  organizationId: string,
+  ticketId: string,
+  relationId: string,
+): Promise<void> {
+  const response = await fetch(
+    `${API_BASE_URL}/tickets/${encodeURIComponent(ticketId)}/relations/${encodeURIComponent(relationId)}`,
+    {
+      method: "DELETE",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+        "x-organization-id": organizationId,
+      },
+      cache: "no-store",
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getTicketRequestError(
+        response,
+        "Failed to remove the ticket relationship.",
+      ),
+    );
+  }
 }
