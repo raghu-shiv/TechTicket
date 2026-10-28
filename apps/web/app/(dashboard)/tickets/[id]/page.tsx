@@ -170,170 +170,197 @@ export default function TicketDetailPage({
   const priority = priorityConfig[ticket.priority];
 
   return (
-    <div className="space-y-6">
-      <Link
-        href="/tickets"
-        className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ArrowLeft className="size-4" />
-        Back to tickets
-      </Link>
+    <div className="space-y-8">
+      <div>
+        <Link
+          href="/tickets"
+          className="inline-flex h-9 items-center gap-2 rounded-lg px-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
+          <ArrowLeft className="size-4" aria-hidden="true" />
+          Back to tickets
+        </Link>
 
-      <PageHeader title={ticket.title} description={ticket.ticketNumber} />
+        <div className="mt-4">
+          <PageHeader title={ticket.title} description={ticket.ticketNumber} />
+        </div>
+      </div>
 
       {showCreatedNotice && (
         <div
-          className="rounded-md border border-emerald-600/30 bg-emerald-600/5 px-4 py-3 text-sm"
+          className="flex items-start gap-3 rounded-xl border border-success-border bg-success-bg/70 px-4 py-3 text-sm text-success"
           role="status"
         >
-          Ticket {ticket.ticketNumber} was created successfully.
+          <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-success/10">
+            <span
+              className="size-2 rounded-full bg-success"
+              aria-hidden="true"
+            />
+          </span>
+          <p>Ticket {ticket.ticketNumber} was created successfully.</p>
         </div>
       )}
 
       {showAttachmentWarning && (
         <div
-          className="rounded-md border border-amber-600/40 bg-amber-600/5 px-4 py-3 text-sm"
+          className="flex items-start gap-3 rounded-xl border border-warning-border bg-warning-bg/60 px-4 py-3 text-sm text-warning"
           role="alert"
         >
-          The ticket was created, but one or more attachments could not be
-          uploaded. Do not create another ticket for this issue. The failed
-          uploads need to be retried separately.
+          <XCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+          <p>
+            The ticket was created, but one or more attachments could not be
+            uploaded. Do not create another ticket for this issue. The failed
+            uploads need to be retried separately.
+          </p>
         </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-        {/* ------------------------------------------------------------------ */}
-        {/* MAIN TICKET CONTENT                                                */}
-        {/* ------------------------------------------------------------------ */}
+      <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_360px]">
+        {/* Main ticket summary */}
+        <Card className="h-full overflow-hidden border-border/80 shadow-card">
+          <CardContent className="space-y-7 p-5 sm:p-7">
+            <div>
+              <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                Ticket overview
+              </p>
 
-        <Card>
-          <CardContent className="space-y-6 p-6">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant={status.variant}>{status.label}</Badge>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant={status.variant}>{status.label}</Badge>
+                <Badge variant={priority.variant}>{priority.label}</Badge>
+                <Badge variant="outline">{typeLabels[ticket.type]}</Badge>
 
-              <Badge variant={priority.variant}>{priority.label}</Badge>
-
-              <Badge variant="outline">{typeLabels[ticket.type]}</Badge>
-
-              {ticket.sla &&
-                (ticket.sla.firstResponseBreachedAt !== null ||
-                  ticket.sla.resolutionBreachedAt !== null) && (
-                  <Badge variant="danger">
-                    <XCircle className="size-3.5" />
-                    SLA breached
-                  </Badge>
-                )}
+                {ticket.sla &&
+                  (ticket.sla.firstResponseBreachedAt !== null ||
+                    ticket.sla.resolutionBreachedAt !== null) && (
+                    <Badge variant="danger">
+                      <XCircle className="size-3.5" aria-hidden="true" />
+                      SLA breached
+                    </Badge>
+                  )}
+              </div>
             </div>
 
-            <div>
-              <h2 className="text-sm font-medium">Description</h2>
+            <section className="rounded-xl border border-border/70 bg-surface-muted/40 p-4 sm:p-5">
+              <h2 className="text-sm font-semibold text-foreground">
+                Description
+              </h2>
 
-              <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
+              <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-7 text-muted-foreground">
                 {ticket.description}
               </p>
-            </div>
+            </section>
 
-            <div className="grid gap-4 border-t pt-6 sm:grid-cols-2">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <div className="grid gap-4 border-t border-border/70 pt-6 sm:grid-cols-2">
+              <div className="rounded-xl border border-border/70 p-4">
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
                   Created
                 </p>
-
-                <p className="mt-1 text-sm">{formatDate(ticket.createdAt)}</p>
+                <p className="mt-2 text-sm font-medium text-foreground">
+                  {formatDate(ticket.createdAt)}
+                </p>
               </div>
 
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Updated
+              <div className="rounded-xl border border-border/70 p-4">
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                  Last updated
                 </p>
-
-                <p className="mt-1 text-sm">{formatDate(ticket.updatedAt)}</p>
+                <p className="mt-2 text-sm font-medium text-foreground">
+                  {formatDate(ticket.updatedAt)}
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* ------------------------------------------------------------------ */}
-        {/* SLA + TICKET CONTEXT                                               */}
-        {/* ------------------------------------------------------------------ */}
-
-        <div className="space-y-6">
+        {/* SLA and ownership context */}
+        <aside className="min-w-0 space-y-5">
           <TicketSlaPanel ticket={ticket} />
 
-          <Card>
-            <CardContent className="space-y-5 p-6">
-              {/* Requester */}
+          <Card className="overflow-hidden border-border/80 shadow-card">
+            <CardContent className="space-y-5 p-5 sm:p-6">
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
                   Requester
                 </p>
 
-                <div className="mt-2 flex items-start gap-3">
-                  <UserRound className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                <div className="mt-3 flex min-w-0 items-start gap-3">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-surface-muted">
+                    <UserRound
+                      className="size-4 text-muted-foreground"
+                      aria-hidden="true"
+                    />
+                  </span>
 
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">
+                    <p className="truncate text-sm font-semibold text-foreground">
                       {ticket.requester.name}
                     </p>
-
-                    <p className="truncate text-xs text-muted-foreground">
+                    <p className="mt-1 break-words text-xs leading-5 text-muted-foreground">
                       {ticket.requester.email}
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* Assignee */}
-              <div className="border-t pt-5">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <div className="border-t border-border/70 pt-5">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
                   Assignee
                 </p>
 
                 {ticket.assignee ? (
-                  <div className="mt-2 flex items-start gap-3">
-                    <UserRound className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                  <div className="mt-3 flex min-w-0 items-start gap-3">
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-surface-muted">
+                      <UserRound
+                        className="size-4 text-muted-foreground"
+                        aria-hidden="true"
+                      />
+                    </span>
 
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">
+                      <p className="truncate text-sm font-semibold text-foreground">
                         {ticket.assignee.name}
                       </p>
-
-                      <p className="truncate text-xs text-muted-foreground">
+                      <p className="mt-1 break-words text-xs leading-5 text-muted-foreground">
                         {ticket.assignee.email}
                       </p>
                     </div>
                   </div>
                 ) : (
-                  <div className="mt-2 flex items-center gap-3 text-sm text-muted-foreground">
-                    <UserRound className="size-4" />
+                  <div className="mt-3 flex items-center gap-3 rounded-xl border border-dashed border-border/80 bg-surface-muted/30 p-3 text-sm text-muted-foreground">
+                    <UserRound className="size-4 shrink-0" aria-hidden="true" />
                     <span>Unassigned</span>
                   </div>
                 )}
               </div>
 
-              {/* Team */}
-              <div className="border-t pt-5">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <div className="border-t border-border/70 pt-5">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
                   Team
                 </p>
 
                 {ticket.team ? (
-                  <div className="mt-2 flex items-center gap-3">
-                    <UsersRound className="size-4 shrink-0 text-muted-foreground" />
-
-                    <span className="text-sm">{ticket.team.name}</span>
+                  <div className="mt-3 flex items-center gap-3">
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-surface-muted">
+                      <UsersRound
+                        className="size-4 text-muted-foreground"
+                        aria-hidden="true"
+                      />
+                    </span>
+                    <span className="text-sm font-medium text-foreground">
+                      {ticket.team.name}
+                    </span>
                   </div>
                 ) : (
-                  <p className="mt-2 text-sm text-muted-foreground">
+                  <p className="mt-3 rounded-xl border border-dashed border-border/80 bg-surface-muted/30 p-3 text-sm text-muted-foreground">
                     No team assigned
                   </p>
                 )}
               </div>
             </CardContent>
           </Card>
-        </div>
+        </aside>
       </div>
 
+      {/* Preserve existing workflow, relation and attachment components */}
       <TicketWorkflowPanel
         key={`workflow-${ticket.id}`}
         organizationId={organizationId}

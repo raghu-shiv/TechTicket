@@ -177,44 +177,75 @@ function TicketRow({ ticket }: { ticket: Ticket }) {
   const status = statusConfig[ticket.status];
   const priority = priorityConfig[ticket.priority];
 
+  const assigneeInitials = ticket.assignee
+    ? ticket.assignee.name
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0])
+        .join("")
+        .toUpperCase()
+    : "";
+
   return (
     <Link
       href={`/tickets/${ticket.id}`}
-      className="block border-b last:border-b-0 transition-colors hover:bg-muted/40"
+      className="group block border-b border-border/70 transition-colors last:border-b-0 hover:bg-surface-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
     >
-      <div className="grid gap-4 px-5 py-4 lg:grid-cols-[minmax(220px,1.5fr)_140px_150px_180px_140px] lg:items-center">
+      <div className="grid gap-4 px-4 py-4 sm:px-5 sm:py-5 lg:grid-cols-[minmax(220px,1.6fr)_125px_155px_180px_130px] lg:items-center lg:gap-5">
         <div className="min-w-0">
-          <span className="text-xs font-medium text-muted-foreground">
+          <span className="inline-flex max-w-full items-center rounded-md border border-border/70 bg-surface-muted px-2 py-1 font-mono text-[11px] font-semibold tracking-wide text-muted-foreground">
             {ticket.ticketNumber}
           </span>
 
-          <p className="mt-1 truncate text-sm font-medium">{ticket.title}</p>
+          <p className="mt-2 truncate text-sm font-semibold text-card-foreground transition-colors group-hover:text-primary">
+            {ticket.title}
+          </p>
 
-          <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
+          <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
             {ticket.description}
           </p>
         </div>
 
-        <div>
+        <div className="min-w-0">
+          <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-muted-foreground lg:hidden">
+            Status
+          </span>
           <Badge variant={status.variant}>{status.label}</Badge>
         </div>
 
-        <div className="space-y-1">
-          <Badge variant={priority.variant}>{priority.label}</Badge>
+        <div className="min-w-0 space-y-2">
+          <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground lg:hidden">
+            Priority / SLA
+          </span>
 
-          <div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Badge variant={priority.variant}>{priority.label}</Badge>
+          </div>
+
+          <div className="min-w-0">
             <SlaIndicator ticket={ticket} />
           </div>
         </div>
 
         <div className="min-w-0">
+          <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-muted-foreground lg:hidden">
+            Assignee
+          </span>
+
           {ticket.assignee ? (
-            <div className="flex min-w-0 items-center gap-2">
-              <UserRound className="size-4 shrink-0 text-muted-foreground" />
+            <div className="flex min-w-0 items-center gap-2.5">
+              <span
+                className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border/70 bg-surface-muted text-[10px] font-bold text-muted-foreground"
+                aria-hidden="true"
+              >
+                {assigneeInitials}
+              </span>
 
               <div className="min-w-0">
-                <p className="truncate text-sm">{ticket.assignee.name}</p>
-
+                <p className="truncate text-sm font-medium text-foreground">
+                  {ticket.assignee.name}
+                </p>
                 <p className="truncate text-xs text-muted-foreground">
                   {ticket.assignee.email}
                 </p>
@@ -222,14 +253,21 @@ function TicketRow({ ticket }: { ticket: Ticket }) {
             </div>
           ) : (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <UserRound className="size-4" />
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-dashed border-border bg-surface-muted">
+                <UserRound className="size-4" aria-hidden="true" />
+              </span>
               <span>Unassigned</span>
             </div>
           )}
         </div>
 
-        <div className="text-xs text-muted-foreground">
-          {formatDate(ticket.updatedAt)}
+        <div className="min-w-0 text-xs text-muted-foreground">
+          <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-muted-foreground lg:hidden">
+            Updated
+          </span>
+          <time dateTime={ticket.updatedAt}>
+            {formatDate(ticket.updatedAt)}
+          </time>
         </div>
       </div>
     </Link>
@@ -238,25 +276,21 @@ function TicketRow({ ticket }: { ticket: Ticket }) {
 
 function TicketTable({ tickets }: { tickets: Ticket[] }) {
   return (
-    <Card className="overflow-hidden">
-      <div className="hidden border-b bg-muted/30 px-5 py-3 lg:grid lg:grid-cols-[minmax(220px,1.5fr)_140px_150px_180px_140px] lg:items-center lg:gap-4">
-        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+    <Card className="overflow-hidden border-border/80 shadow-card">
+      <div className="hidden border-b border-border/80 bg-surface-muted/70 px-5 py-3 lg:grid lg:grid-cols-[minmax(220px,1.6fr)_125px_155px_180px_130px] lg:items-center lg:gap-5">
+        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
           Ticket
         </span>
-
-        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
           Status
         </span>
-
-        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Priority
+        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+          Priority / SLA
         </span>
-
-        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
           Assignee
         </span>
-
-        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
           Updated
         </span>
       </div>
@@ -282,13 +316,13 @@ function FilterSelect({
   children: React.ReactNode;
 }) {
   return (
-    <label className="flex min-w-0 flex-col gap-1.5">
-      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+    <label className="flex min-w-0 flex-col gap-2">
+      <span className="text-xs font-semibold text-foreground">{label}</span>
 
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus:ring-2 focus:ring-ring"
+        className="h-11 w-full min-w-0 rounded-xl border border-input bg-card px-3.5 text-sm text-foreground shadow-sm transition-[border-color,background-color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         {children}
       </select>
@@ -307,11 +341,11 @@ function ActiveFilter({
     <button
       type="button"
       onClick={onRemove}
-      className="inline-flex items-center gap-1.5 rounded-full border bg-background px-2.5 py-1 text-xs font-medium transition-colors hover:bg-muted"
+      className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-primary/20 bg-brand-soft px-3 py-1.5 text-xs font-medium text-brand-soft-foreground transition-colors hover:border-primary/40 hover:bg-brand-soft/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       aria-label={`Remove ${label} filter`}
     >
-      <span>{label}</span>
-      <X className="size-3.5 text-muted-foreground" />
+      <span className="min-w-0 break-words">{label}</span>
+      <X className="size-3.5 shrink-0" aria-hidden="true" />
     </button>
   );
 }
@@ -332,21 +366,30 @@ function TicketPagination({
   const canGoPrevious = page > 1;
   const canGoNext = page < totalPages;
 
+  const buttonClassName =
+    "inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-border bg-card px-3.5 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-40";
+
   return (
-    <div className="flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 border-t border-border/70 pt-5 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-sm text-muted-foreground">
-        Page <span className="font-medium text-foreground">{page}</span> of{" "}
-        <span className="font-medium text-foreground">{totalPages}</span>
+        Page{" "}
+        <span className="font-semibold tabular-nums text-foreground">
+          {page}
+        </span>{" "}
+        of{" "}
+        <span className="font-semibold tabular-nums text-foreground">
+          {totalPages}
+        </span>
       </p>
 
-      <div className="flex items-center gap-2">
+      <nav aria-label="Ticket pagination" className="flex items-center gap-2">
         <button
           type="button"
           disabled={!canGoPrevious}
           onClick={() => onPageChange(page - 1)}
-          className="inline-flex h-9 items-center gap-2 rounded-md border border-input bg-background px-3 text-sm transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
+          className={buttonClassName}
         >
-          <ArrowLeft className="size-4" />
+          <ArrowLeft className="size-4" aria-hidden="true" />
           Previous
         </button>
 
@@ -354,12 +397,12 @@ function TicketPagination({
           type="button"
           disabled={!canGoNext}
           onClick={() => onPageChange(page + 1)}
-          className="inline-flex h-9 items-center gap-2 rounded-md border border-input bg-background px-3 text-sm transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
+          className={buttonClassName}
         >
           Next
-          <ArrowRight className="size-4" />
+          <ArrowRight className="size-4" aria-hidden="true" />
         </button>
-      </div>
+      </nav>
     </div>
   );
 }
@@ -891,7 +934,7 @@ function TicketsContent() {
         actions={
           <Link
             href="/tickets/create"
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <TicketIcon className="size-4" />
             Raise Ticket
@@ -899,7 +942,7 @@ function TicketsContent() {
         }
       />
 
-      <div className="mt-6 space-y-4">
+      <div className="mt-5 space-y-6">
         <SavedFiltersPanel
           organizationId={organizationId}
           searchParams={new URLSearchParams(searchParams.toString())}
@@ -919,17 +962,19 @@ function TicketsContent() {
         {/* FILTER TOOLBAR                                                     */}
         {/* ------------------------------------------------------------------ */}
 
-        <Card>
-          <CardContent className="p-4 sm:p-5">
+        <Card className="border-border/80 shadow-card">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex flex-col gap-4">
               {/* Toolbar heading */}
               <div className="flex items-center gap-2">
-                <div className="flex size-8 items-center justify-center rounded-md bg-muted">
+                <div className="flex size-9 items-center justify-center rounded-xl border border-border/70 bg-surface-muted">
                   <Filter className="size-4 text-muted-foreground" />
                 </div>
 
                 <div>
-                  <p className="text-sm font-medium">Filter tickets</p>
+                  <p className="text-sm font-semibold text-card-foreground">
+                    Filter tickets
+                  </p>
 
                   <p className="text-xs text-muted-foreground">
                     Refine the ticket list without leaving the page.
@@ -947,12 +992,12 @@ function TicketsContent() {
                   onChange={(event) => handleSearchChange(event.target.value)}
                   placeholder="Search ticket number, title, or description..."
                   aria-label="Search tickets"
-                  className="h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:ring-2 focus:ring-ring"
+                  className="h-11 w-full rounded-xl border border-input bg-card pl-10 pr-3.5 text-sm text-foreground shadow-sm outline-none transition-[border-color,background-color,box-shadow] duration-150 placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 />
               </div>
 
               {/* Select filters */}
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
                 <FilterSelect
                   label="Status"
                   value={status}
@@ -1054,7 +1099,7 @@ function TicketsContent() {
               </div>
 
               {/* Secondary actions */}
-              <div className="flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-4 border-t border-border/70 pt-5 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
                   <label className="flex cursor-pointer items-center gap-2 text-sm">
                     <input
@@ -1083,7 +1128,7 @@ function TicketsContent() {
                   <button
                     type="button"
                     onClick={clearFilters}
-                    className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                    className="inline-flex h-9 items-center gap-2 rounded-lg px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <RotateCcw className="size-4" />
                     Clear filters
@@ -1092,10 +1137,7 @@ function TicketsContent() {
               </div>
               {/* Active filters */}
               {hasFilters && (
-                <div
-                  className="flex flex-wrap items-center gap-2 border-t pt-4"
-                  aria-label="Active filters"
-                >
+                <div className="flex flex-wrap items-center gap-2 border-t border-border/70 pt-5">
                   <span className="mr-1 text-xs font-medium text-muted-foreground">
                     Active filters:
                   </span>
@@ -1136,10 +1178,16 @@ function TicketsContent() {
         ) : (
           <>
             <div className="flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-2">
-                <TicketIcon className="size-4" />
-
-                <span>{ticketsQuery.data?.meta.total ?? 0} tickets</span>
+              <div className="inline-flex items-center gap-2">
+                <span className="flex size-8 items-center justify-center rounded-lg border border-border/70 bg-surface-muted">
+                  <TicketIcon className="size-4" aria-hidden="true" />
+                </span>
+                <span>
+                  <strong className="font-semibold tabular-nums text-foreground">
+                    {ticketsQuery.data?.meta.total ?? 0}
+                  </strong>{" "}
+                  tickets
+                </span>
               </div>
 
               {hasFilters && <span>Filtered results</span>}

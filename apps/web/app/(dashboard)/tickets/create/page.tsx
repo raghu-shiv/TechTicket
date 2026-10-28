@@ -47,16 +47,16 @@ const TICKET_PRIORITIES: Array<{
 ];
 
 const inputClassName =
-  "mt-1.5 h-11 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60";
+  "mt-2 h-11 w-full min-w-0 rounded-xl border border-input bg-card px-3.5 text-sm text-foreground shadow-sm outline-none transition-[border-color,background-color,box-shadow] duration-150 placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background aria-[invalid=true]:border-destructive aria-[invalid=true]:ring-2 aria-[invalid=true]:ring-destructive/15 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:opacity-70";
 
 const textAreaClassName =
-  "mt-1.5 min-h-36 w-full resize-y rounded-md border border-input bg-background px-3 py-2.5 text-sm outline-none transition-colors focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60";
+  "mt-2 min-h-36 w-full resize-y rounded-xl border border-input bg-card px-3.5 py-3 text-sm leading-6 text-foreground shadow-sm outline-none transition-[border-color,background-color,box-shadow] duration-150 placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background aria-[invalid=true]:border-destructive aria-[invalid=true]:ring-2 aria-[invalid=true]:ring-destructive/15 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:opacity-70";
 
 const secondaryLinkClassName =
-  "inline-flex h-10 items-center justify-center gap-2 rounded-md border border-input bg-background px-4 text-sm font-medium transition-colors hover:bg-muted";
+  "inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground shadow-sm transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 const primaryButtonClassName =
-  "inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
+  "inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-sm transition-[background-color,box-shadow,transform] duration-150 hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50";
 
 export default function CreateTicketPage() {
   const router = useRouter();
@@ -231,7 +231,7 @@ export default function CreateTicketPage() {
   }
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader
         title="Raise Ticket"
         description="Describe the issue or request. Your support team will use these details to triage it."
@@ -243,12 +243,12 @@ export default function CreateTicketPage() {
         }
       />
 
-      <Card>
-        <CardContent className="p-5 sm:p-6">
-          <form onSubmit={handleSubmit} noValidate className="space-y-6">
+      <Card className="mx-auto max-w-4xl overflow-hidden border-border/80 shadow-card">
+        <CardContent className="p-5 sm:p-8">
+          <form onSubmit={handleSubmit} noValidate className="space-y-8">
             {apiError && (
               <div
-                className="rounded-md border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm"
+                className="rounded-xl border border-danger-border bg-danger-bg/70 px-4 py-3 text-sm text-danger"
                 role="alert"
               >
                 <p className="font-medium">Ticket could not be submitted</p>
@@ -256,8 +256,11 @@ export default function CreateTicketPage() {
               </div>
             )}
 
-            <div className="space-y-1">
-              <label htmlFor="ticket-title" className="text-sm font-medium">
+            <div className="space-y-2">
+              <label
+                htmlFor="ticket-title"
+                className="block text-sm font-semibold leading-5 text-foreground"
+              >
                 Title <span aria-hidden="true">*</span>
               </label>
               <input
@@ -297,7 +300,7 @@ export default function CreateTicketPage() {
             <div className="space-y-1">
               <label
                 htmlFor="ticket-description"
-                className="text-sm font-medium"
+                className="block text-sm font-semibold leading-5 text-foreground"
               >
                 Description <span aria-hidden="true">*</span>
               </label>
@@ -333,7 +336,10 @@ export default function CreateTicketPage() {
 
             <div className="grid gap-5 sm:grid-cols-2">
               <div>
-                <label htmlFor="ticket-type" className="text-sm font-medium">
+                <label
+                  htmlFor="ticket-type"
+                  className="block text-sm font-semibold leading-5 text-foreground"
+                >
                   Type
                 </label>
                 <select
@@ -357,7 +363,7 @@ export default function CreateTicketPage() {
               <div>
                 <label
                   htmlFor="ticket-priority"
-                  className="text-sm font-medium"
+                  className="block text-sm font-semibold leading-5 text-foreground"
                 >
                   Priority
                 </label>
@@ -381,7 +387,10 @@ export default function CreateTicketPage() {
             </div>
 
             <div>
-              <label htmlFor="ticket-product" className="text-sm font-medium">
+              <label
+                htmlFor="ticket-product"
+                className="block text-sm font-semibold leading-5 text-foreground"
+              >
                 Product{" "}
                 <span className="font-normal text-muted-foreground">
                   (optional)
@@ -424,7 +433,7 @@ export default function CreateTicketPage() {
             <div>
               <label
                 htmlFor="ticket-attachments"
-                className="text-sm font-medium"
+                className="block text-sm font-semibold leading-5 text-foreground"
               >
                 Attachments{" "}
                 <span className="font-normal text-muted-foreground">
@@ -432,7 +441,7 @@ export default function CreateTicketPage() {
                 </span>
               </label>
 
-              <div className="mt-1.5 rounded-md border border-dashed p-4">
+              <div className="mt-2 rounded-2xl border border-dashed border-primary/25 bg-surface-muted/30 p-4 sm:p-5">
                 <label
                   htmlFor="ticket-attachments"
                   className="flex cursor-pointer items-start gap-3"
@@ -466,7 +475,7 @@ export default function CreateTicketPage() {
                       ? "ticket-attachments-error"
                       : "ticket-attachments-help"
                   }
-                  className="mt-3 block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-2 file:text-sm file:font-medium"
+                  className="mt-3 block w-full text-sm text-foreground file:mr-3 file:rounded-lg file:border file:border-border file:bg-card file:px-3 file:py-2 file:text-xs file:font-semibold file:text-foreground hover:file:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
                 />
 
                 <p
@@ -484,7 +493,7 @@ export default function CreateTicketPage() {
                     {files.map((file, index) => (
                       <li
                         key={`${file.name}-${file.lastModified}-${index}`}
-                        className="flex items-center justify-between gap-3"
+                        className="flex items-center justify-between gap-3 rounded-lg border border-border/70 bg-card px-3 py-2"
                       >
                         <span className="min-w-0 truncate">{file.name}</span>
                         <span className="shrink-0 text-xs text-muted-foreground">
@@ -507,7 +516,7 @@ export default function CreateTicketPage() {
               </div>
             </div>
 
-            <div className="flex flex-col-reverse gap-3 border-t pt-5 sm:flex-row sm:justify-end">
+            <div className="flex flex-col-reverse gap-3 border-t border-border/70 pt-6 sm:flex-row sm:justify-end">
               <Link href="/tickets" className={secondaryLinkClassName}>
                 Cancel
               </Link>

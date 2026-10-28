@@ -213,7 +213,7 @@ export function TicketAttachmentsPanel({
 
   return (
     <Card>
-      <CardContent className="space-y-4 p-5 sm:p-6">
+      <CardContent className="space-y-5 p-5 sm:p-7">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Paperclip
@@ -240,12 +240,12 @@ export function TicketAttachmentsPanel({
 
         <form
           onSubmit={handleUpload}
-          className="space-y-3 rounded-lg border border-dashed p-4"
+          className="space-y-4 rounded-2xl border border-dashed border-primary/25 bg-surface-muted/30 p-4 sm:p-5"
         >
           <div>
             <label
               htmlFor={`ticket-attachment-file-${ticketId}`}
-              className="text-sm font-medium"
+              className="block text-sm font-semibold text-foreground"
             >
               Add attachment
             </label>
@@ -262,7 +262,7 @@ export function TicketAttachmentsPanel({
                 setSuccessMessage(null);
               }}
               aria-describedby={`ticket-attachment-help-${ticketId}`}
-              className="mt-2 block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-2 file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+              className="mt-3 block w-full text-sm text-foreground file:mr-3 file:rounded-lg file:border file:border-border file:bg-card file:px-3 file:py-2 file:text-xs file:font-semibold file:text-foreground hover:file:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
             />
 
             <p
@@ -284,7 +284,7 @@ export function TicketAttachmentsPanel({
           <button
             type="submit"
             disabled={!selectedFile || busy}
-            className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"
           >
             {uploadMutation.isPending ? "Uploading..." : "Upload attachment"}
           </button>
@@ -356,7 +356,7 @@ export function TicketAttachmentsPanel({
                 className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="flex min-w-0 items-start gap-3">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-surface-muted">
                     <FileText
                       className="size-5 text-muted-foreground"
                       aria-hidden="true"
@@ -393,7 +393,7 @@ export function TicketAttachmentsPanel({
                     }
                     disabled={busy}
                     aria-label={`Download ${attachment.fileName}`}
-                    className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-input px-3 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+                    className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-border bg-card px-3.5 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
                   >
                     <Download className="size-4" aria-hidden="true" />
                     {downloadingId === attachment.id
@@ -409,7 +409,7 @@ export function TicketAttachmentsPanel({
                       }
                       disabled={busy}
                       aria-label={`Delete ${attachment.fileName}`}
-                      className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-destructive/30 px-3 text-sm text-destructive hover:bg-destructive/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+                      className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-danger-border bg-danger-bg/40 px-3.5 text-sm font-medium text-danger transition-colors hover:bg-danger-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
                     >
                       <Trash2 className="size-4" aria-hidden="true" />
                       {deleteMutation.isPending &&

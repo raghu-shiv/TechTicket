@@ -23,7 +23,7 @@ export function TicketSlaPanel({ ticket }: TicketSlaPanelProps) {
 
   if (!ticket.sla) {
     return (
-      <section className="rounded-lg border bg-card p-5">
+      <section className="rounded-2xl border border-border/80 bg-card p-5 shadow-card">
         <div className="mb-4">
           <h2 className="text-base font-semibold">Service Level Agreement</h2>
           <p className="text-sm text-muted-foreground">
@@ -52,7 +52,7 @@ export function TicketSlaPanel({ ticket }: TicketSlaPanelProps) {
   );
 
   return (
-    <section className="rounded-lg border bg-card p-5">
+    <section className="rounded-2xl border border-border/80 bg-card p-5 shadow-card">
       <div className="mb-4">
         <h2 className="text-base font-semibold">Service Level Agreement</h2>
         <p className="text-sm text-muted-foreground">
@@ -86,7 +86,7 @@ function SlaTimerCard({ title, timer }: SlaTimerCardProps) {
   const isWarning = timer.isWarning && timer.state === "RUNNING";
 
   return (
-    <div className="rounded-md border p-4">
+    <div className="rounded-xl border border-border/80 bg-surface-muted/30 p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-medium">{title}</p>
@@ -147,7 +147,7 @@ function SlaTimerCard({ title, timer }: SlaTimerCardProps) {
       </div>
 
       {isWarning && (
-        <div className="mt-4 flex items-start gap-2 rounded-md border border-warning/30 bg-warning/5 p-3">
+        <div className="mt-4 flex items-start gap-3 rounded-xl border border-warning-border bg-warning-bg/60 p-4">
           <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" />
 
           <div>
@@ -251,7 +251,7 @@ function SlaBreachSummary({ sla }: SlaBreachSummaryProps) {
   }
 
   return (
-    <div className="rounded-md border border-destructive/30 bg-destructive/5 p-4">
+    <div className="rounded-xl border border-danger-border bg-danger-bg/60 p-4">
       <div className="flex items-start gap-3">
         <XCircle className="mt-0.5 size-4 shrink-0 text-destructive" />
 

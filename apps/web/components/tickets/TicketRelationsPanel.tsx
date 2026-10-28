@@ -177,9 +177,9 @@ export function TicketRelationsPanel({
 
   return (
     <Card>
-      <CardContent className="space-y-5 p-5 sm:p-6">
+      <CardContent className="space-y-6 p-5 sm:p-7">
         <div className="flex items-start gap-3">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-primary/15 bg-brand-soft text-brand-soft-foreground">
             <Link2 className="size-5" aria-hidden="true" />
           </div>
 
@@ -194,7 +194,7 @@ export function TicketRelationsPanel({
 
         {notice && (
           <p
-            className="rounded-md border border-emerald-600/30 bg-emerald-600/5 px-3 py-2 text-sm"
+            className="rounded-xl border border-success-border bg-success-bg/70 px-4 py-3 text-sm text-success"
             role="status"
             aria-live="polite"
           >
@@ -231,7 +231,7 @@ export function TicketRelationsPanel({
         )}
 
         {relationsQuery.isSuccess && relations.length > 0 && (
-          <ul className="divide-y">
+          <ul className="divide-y divide-border/70">
             {relations.map((relation) => {
               const label =
                 RELATION_LABELS[relation.type][
@@ -284,7 +284,7 @@ export function TicketRelationsPanel({
                       }
                       disabled={deleteMutation.isPending}
                       aria-label={`Remove relationship with ${relation.ticket.ticketNumber}`}
-                      className="inline-flex h-9 shrink-0 items-center justify-center gap-2 self-start rounded-md border border-input px-3 text-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+                      className="inline-flex h-10 shrink-0 items-center justify-center gap-2 self-start rounded-xl border border-border bg-card px-3.5 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
                     >
                       <Trash2 className="size-4" aria-hidden="true" />
                       Remove
@@ -312,7 +312,7 @@ export function TicketRelationsPanel({
         )}
 
         {canManage && (
-          <section className="space-y-4 border-t pt-5">
+          <section className="space-y-4 border-t border-border/70 pt-6">
             <div>
               <h3 className="text-sm font-semibold">Add a relationship</h3>
               <p className="mt-1 text-sm text-muted-foreground">
@@ -344,7 +344,7 @@ export function TicketRelationsPanel({
                   maxLength={100}
                   placeholder="Enter at least 2 characters..."
                   aria-describedby={`relation-search-help-${ticket.id}`}
-                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="h-11 w-full rounded-xl border border-input bg-card px-3.5 text-sm text-foreground shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   disabled={createMutation.isPending}
                 />
                 <p
@@ -458,7 +458,7 @@ export function TicketRelationsPanel({
                   !relatedTicketId ||
                   !searchIsCurrent
                 }
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {createMutation.isPending
                   ? "Adding relationship..."

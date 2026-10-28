@@ -238,7 +238,7 @@ export function TicketWorkflowPanel({
   return (
     <div className="space-y-6">
       <Card>
-        <CardContent className="space-y-6 p-5 sm:p-6">
+        <CardContent className="space-y-7 p-5 sm:p-7">
           <div>
             <h2 className="text-base font-semibold">Ticket workflow</h2>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -249,7 +249,7 @@ export function TicketWorkflowPanel({
 
           {notice && (
             <p
-              className="rounded-md border border-emerald-600/30 bg-emerald-600/5 px-3 py-2 text-sm"
+              className="rounded-xl border border-success-border bg-success-bg/70 px-4 py-3 text-sm text-success"
               role="status"
               aria-live="polite"
             >
@@ -259,7 +259,7 @@ export function TicketWorkflowPanel({
 
           {canManage && (
             <>
-              <section className="space-y-3 border-t pt-5">
+              <section className="space-y-4 border-t border-border/70 pt-6">
                 <h3 className="text-sm font-semibold">Change status</h3>
                 <form
                   className="flex flex-col gap-3 sm:flex-row"
@@ -275,7 +275,7 @@ export function TicketWorkflowPanel({
                     onChange={(event) =>
                       setStatusTarget(event.target.value as TicketStatus)
                     }
-                    className="h-10 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm"
+                    className="h-11 min-w-0 flex-1 rounded-xl border border-input bg-card px-3.5 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     {NEXT_STATUSES[ticket.status].length === 0 ? (
                       <option value={ticket.status}>
@@ -296,7 +296,7 @@ export function TicketWorkflowPanel({
                       statusTarget === ticket.status ||
                       NEXT_STATUSES[ticket.status].length === 0
                     }
-                    className="h-10 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-50"
+                    className="h-11 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {statusMutation.isPending ? "Saving..." : "Update status"}
                   </button>
@@ -308,7 +308,7 @@ export function TicketWorkflowPanel({
                 )}
               </section>
 
-              <section className="space-y-3 border-t pt-5">
+              <section className="space-y-4 border-t border-border/70 pt-6">
                 <h3 className="text-sm font-semibold">Assign ticket</h3>
                 {staffQuery.isLoading || teamsQuery.isLoading ? (
                   <LoadingState
@@ -360,7 +360,7 @@ export function TicketWorkflowPanel({
                           onChange={(event) =>
                             setAssigneeTarget(event.target.value)
                           }
-                          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          className="h-11 w-full rounded-xl border border-input bg-card px-3.5 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                           <option value="">Unassigned</option>
                           {staffQuery.data?.map((member) => (
@@ -386,7 +386,7 @@ export function TicketWorkflowPanel({
                           onChange={(event) =>
                             setTeamTarget(event.target.value)
                           }
-                          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          className="h-11 w-full rounded-xl border border-input bg-card px-3.5 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                           <option value="">No team assigned</option>
                           {availableTeams.map((team) => (
@@ -433,7 +433,7 @@ export function TicketWorkflowPanel({
                 )}
               </section>
 
-              <section className="space-y-3 border-t pt-5">
+              <section className="space-y-4 border-t border-border/70 pt-6">
                 <h3 className="text-sm font-semibold">Request approval</h3>
                 <p className="text-sm text-muted-foreground">
                   The request will appear in the selected approver&apos;s inbox,
@@ -500,7 +500,7 @@ export function TicketWorkflowPanel({
                       !approverTarget ||
                       possibleApprovers.length === 0
                     }
-                    className="h-10 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-50"
+                    className="h-11 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {approvalMutation.isPending
                       ? "Requesting..."
@@ -520,7 +520,7 @@ export function TicketWorkflowPanel({
             </>
           )}
 
-          <section className="space-y-3 border-t pt-5">
+          <section className="space-y-4 border-t border-border/70 pt-6">
             <h3 className="text-sm font-semibold">Comments</h3>
 
             {commentsQuery.isLoading && (
@@ -549,7 +549,10 @@ export function TicketWorkflowPanel({
             )}
 
             {commentsQuery.data?.map((comment) => (
-              <article key={comment.id} className="rounded-md border p-3">
+              <article
+                key={comment.id}
+                className="rounded-xl border border-border/80 bg-surface-muted/30 p-4"
+              >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-sm font-medium">{comment.author.name}</p>
                   <div className="flex items-center gap-2">
@@ -590,7 +593,7 @@ export function TicketWorkflowPanel({
                 maxLength={10000}
                 rows={3}
                 placeholder="Write a comment..."
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="min-h-28 w-full resize-y rounded-xl border border-input bg-card px-3.5 py-3 text-sm leading-6 text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
 
               {canManage && (
@@ -610,7 +613,7 @@ export function TicketWorkflowPanel({
               <button
                 type="submit"
                 disabled={commentMutation.isPending || !commentBody.trim()}
-                className="h-10 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-50"
+                className="h-11 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {commentMutation.isPending ? "Posting..." : "Post comment"}
               </button>
@@ -690,7 +693,7 @@ export function TicketWorkflowPanel({
                   onClick={() =>
                     setActivityPage((page) => Math.max(1, page - 1))
                   }
-                  className="h-9 rounded-md border border-input px-3 text-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+                  className="h-10 rounded-xl border border-border bg-card px-3.5 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
                 >
                   Previous page
                 </button>
@@ -717,7 +720,7 @@ export function TicketWorkflowPanel({
                       Math.min(activityQuery.data.meta.totalPages, page + 1),
                     )
                   }
-                  className="h-9 rounded-md border border-input px-3 text-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+                  className="h-10 rounded-xl border border-border bg-card px-3.5 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
                 >
                   Next page
                 </button>

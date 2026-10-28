@@ -148,6 +148,7 @@ function MetricCard({
 }) {
   const effectiveState: DashboardDataState =
     state === "ready" && value === undefined ? "unavailable" : state;
+
   const displayedValue =
     effectiveState === "ready"
       ? new Intl.NumberFormat().format(value!)
@@ -155,41 +156,57 @@ function MetricCard({
         ? "Loading…"
         : "Unavailable";
 
+  const isError = effectiveState === "error";
+  const isUnavailable = effectiveState === "unavailable";
+
   return (
-    <Card>
-      <CardContent className="p-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-sm text-muted-foreground">{title}</p>
+    <Card className="h-full border-border/80 shadow-card">
+      <CardContent className="h-full p-5 sm:p-6">
+        <div className="flex h-full items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium leading-5 text-muted-foreground">
+              {title}
+            </p>
+
             <p
               aria-live="polite"
-              className="mt-2 text-2xl font-semibold tracking-tight"
+              className="mt-3 font-display text-3xl font-semibold leading-none tracking-tight text-card-foreground tabular-nums sm:text-4xl"
             >
               {displayedValue}
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">
+
+            <p className="mt-3 max-w-xs text-xs leading-5 text-muted-foreground">
               {effectiveState === "ready"
                 ? description
                 : effectiveState === "loading"
                   ? "Loading live data…"
-                  : effectiveState === "error"
+                  : isError
                     ? "The API request failed. No fallback value is shown."
                     : "The API returned no usable metric."}
             </p>
+
             {effectiveState === "ready" && comparison && (
-              <p className="mt-2 text-xs text-muted-foreground">{comparison}</p>
+              <p className="mt-3 inline-flex max-w-full rounded-lg border border-border/70 bg-surface-muted px-2.5 py-1.5 text-xs font-medium leading-5 text-muted-foreground">
+                {comparison}
+              </p>
             )}
-            {effectiveState === "error" && (
+
+            {isError && (
               <button
                 type="button"
                 onClick={onRetry}
-                className="mt-2 text-xs font-medium underline underline-offset-4"
+                className="mt-3 inline-flex rounded-lg text-xs font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 Retry
               </button>
             )}
+
+            {isUnavailable && (
+              <span className="sr-only">Metric unavailable</span>
+            )}
           </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-primary/15 bg-brand-soft text-brand-soft-foreground">
             <Icon className="size-5" aria-hidden="true" />
           </div>
         </div>
@@ -202,24 +219,26 @@ function QuickAction({ item }: { item: QuickActionItem }) {
   const Icon = item.icon;
 
   return (
-    <Card className="h-full transition-colors hover:border-primary/40 hover:bg-muted/20">
+    <Card className="group h-full overflow-hidden border-border/80 shadow-card transition-[border-color,background-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-popover">
       <CardContent className="h-full p-0">
         <Link
           href={item.href}
-          className="flex h-full min-h-24 items-start gap-3 rounded-xl p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="flex h-full min-h-28 items-start gap-3.5 rounded-2xl p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset sm:p-5"
         >
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-primary/15 bg-brand-soft text-brand-soft-foreground transition-colors duration-150 group-hover:border-primary/30">
             <Icon className="size-5" aria-hidden="true" />
           </span>
+
           <span className="min-w-0 flex-1">
-            <span className="flex items-center gap-1 text-sm font-semibold">
+            <span className="flex items-center gap-1.5 text-sm font-semibold leading-5 text-card-foreground">
               {item.title}
               <ArrowUpRight
-                className="size-3.5 text-muted-foreground"
+                className="size-3.5 shrink-0 text-muted-foreground transition-transform duration-150 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
                 aria-hidden="true"
               />
             </span>
-            <span className="mt-1 block text-xs leading-5 text-muted-foreground">
+
+            <span className="mt-1.5 block text-xs leading-5 text-muted-foreground">
               {item.description}
             </span>
           </span>
@@ -239,10 +258,10 @@ function PriorityDistribution({
   onRetry: () => void;
 }) {
   return (
-    <Card>
-      <CardHeader>
+    <Card className="h-full border-border/80 shadow-card">
+      <CardHeader className="pb-4">
         <CardTitle>Active Ticket Priority</CardTitle>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm leading-6 text-muted-foreground">
           Open, in-progress, and pending tickets only
         </p>
       </CardHeader>
@@ -270,15 +289,18 @@ function PriorityDistribution({
         ) : (
           <div className="space-y-5">
             {points.map((point) => (
-              <div key={point.key}>
-                <div className="mb-1.5 flex items-center justify-between gap-3 text-sm">
-                  <span>{point.label}</span>
-                  <span className="tabular-nums text-muted-foreground">
+              <div key={point.key} className="space-y-2.5">
+                <div className="flex items-center justify-between gap-3 text-sm">
+                  <span className="font-medium text-foreground">
+                    {point.label}
+                  </span>
+                  <span className="shrink-0 text-xs font-medium tabular-nums text-muted-foreground">
                     {point.count} · {point.percentage.toFixed(1)}%
                   </span>
                 </div>
+
                 <div
-                  className="h-2 overflow-hidden rounded-full bg-muted"
+                  className="h-2.5 overflow-hidden rounded-full bg-surface-muted"
                   role="progressbar"
                   aria-label={`${point.label} active ticket share`}
                   aria-valuemin={0}
@@ -286,7 +308,7 @@ function PriorityDistribution({
                   aria-valuenow={point.percentage}
                 >
                   <div
-                    className="h-full rounded-full bg-primary transition-[width]"
+                    className="h-full rounded-full bg-primary transition-[width] duration-300 ease-standard"
                     style={{ width: `${point.percentage}%` }}
                   />
                 </div>
@@ -710,14 +732,14 @@ export function OperationalDashboard() {
       : undefined;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
         title="Dashboard"
         description="Live workload, SLA attention, and shortcuts for daily support operations."
         actions={
           <Link
             href="/tickets/create"
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <TicketIcon className="size-4" aria-hidden="true" />
             Raise Ticket
@@ -727,7 +749,7 @@ export function OperationalDashboard() {
 
       <section
         aria-label="Current operational metrics"
-        className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
+        className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:gap-5"
       >
         <MetricCard
           title="Open Tickets"
@@ -800,21 +822,21 @@ export function OperationalDashboard() {
         />
       </section>
 
-      <section aria-label="Quick actions" className="space-y-3">
+      <section aria-label="Quick actions" className="space-y-4">
         <div>
           <h2 className="text-base font-semibold">Quick Actions</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Jump directly to the work that needs attention.
           </p>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
           {quickActions.map((item) => (
             <QuickAction item={item} key={item.title} />
           ))}
         </div>
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
+      <section className="grid min-w-0 gap-5 2xl:grid-cols-[minmax(0,1.5fr)_minmax(360px,1fr)]">
         <TicketTrends
           state={trendState}
           points={normalizedTrend}

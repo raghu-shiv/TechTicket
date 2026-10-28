@@ -56,7 +56,7 @@ export function SlaBreachHistory({
   if (activityQuery.isLoading) {
     return (
       <Card>
-        <CardContent className="p-6">
+        <CardContent className="p-5 sm:p-6">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="size-4 animate-spin" />
             Loading SLA breach history...
@@ -69,7 +69,7 @@ export function SlaBreachHistory({
   if (activityQuery.isError) {
     return (
       <Card>
-        <CardContent className="p-6">
+        <CardContent className="p-5 sm:p-6">
           <div className="flex items-start gap-3">
             <ShieldAlert className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
 
@@ -92,7 +92,7 @@ export function SlaBreachHistory({
 
   return (
     <Card>
-      <CardContent className="p-6">
+      <CardContent className="p-5 sm:p-6">
         <div className="mb-5">
           <h2 className="text-sm font-semibold">SLA breach history</h2>
 
@@ -102,7 +102,7 @@ export function SlaBreachHistory({
         </div>
 
         {activities.length === 0 ? (
-          <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+          <div className="rounded-xl border border-dashed border-border/80 bg-surface-muted/30 p-4 text-sm text-muted-foreground">
             No SLA breaches have been recorded.
           </div>
         ) : (
@@ -113,7 +113,7 @@ export function SlaBreachHistory({
               return (
                 <div
                   key={activity.id}
-                  className="flex gap-3 rounded-md border p-4"
+                  className="flex gap-3 rounded-xl border border-border/80 bg-surface-muted/30 p-4"
                 >
                   <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive">
                     <Icon className="size-4" />
