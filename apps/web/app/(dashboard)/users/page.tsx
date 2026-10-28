@@ -202,10 +202,11 @@ export default function UsersPage() {
     );
   if (!canManage) {
     return (
-      <div className="space-y-5">
+      <div className="space-y-6">
         <PageHeader
           title="Users"
           description="Organization member directory and access management."
+          className="mb-0"
         />
         <EmptyState
           icon={ShieldCheck}
@@ -217,10 +218,11 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <PageHeader
         title="Users"
         description="Manage membership and organization roles. Changes affect only this organization."
+        className="mb-0"
       />
 
       <Card>
@@ -239,7 +241,7 @@ export default function UsersPage() {
             onChange={(event) => handleMemberFilterChange(event.target.value)}
             placeholder="Filter by name or email..."
             autoComplete="off"
-            className="mt-1.5 h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+            className="mt-1.5 h-11 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
           />
 
           <p className="mt-2 text-xs text-muted-foreground">
@@ -278,7 +280,7 @@ export default function UsersPage() {
                 onChange={(event) => setEmail(event.target.value)}
                 disabled={addMutation.isPending}
                 placeholder="person@company.com"
-                className="mt-1.5 h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
+                className="mt-1.5 h-11 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
             <div>
@@ -294,7 +296,7 @@ export default function UsersPage() {
                   )
                 }
                 disabled={addMutation.isPending}
-                className="mt-1.5 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                className="mt-1.5 h-11 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground shadow-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {editableRoles.map((role) => (
                   <option key={role} value={role}>
@@ -306,14 +308,17 @@ export default function UsersPage() {
             <button
               type="submit"
               disabled={addMutation.isPending}
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             >
               <UserPlus className="size-4" />{" "}
               {addMutation.isPending ? "Adding..." : "Add member"}
             </button>
           </form>
           {formError && (
-            <p className="mt-3 text-sm text-destructive" role="alert">
+            <p
+              className="mt-3 rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-sm text-destructive"
+              role="alert"
+            >
               {formError}
             </p>
           )}
@@ -350,8 +355,8 @@ export default function UsersPage() {
         />
       )}
       {membersQuery.isSuccess && filteredMembers.length > 0 && (
-        <Card className="overflow-hidden">
-          <div className="flex items-center justify-between border-b px-5 py-4">
+        <Card className="overflow-hidden rounded-2xl">
+          <div className="flex items-center justify-between border-b border-border bg-muted/20 px-5 py-4 sm:px-6">
             <h2 className="text-sm font-semibold">Organization members</h2>
             <Badge variant="secondary">
               {filteredMembers.length}
@@ -359,7 +364,7 @@ export default function UsersPage() {
             </Badge>
           </div>
 
-          <div className="divide-y">
+          <div className="divide-y divide-border">
             {filteredMembers.map((member) => {
               const isSelf = member.userId === membership.userId;
               const isProtectedOwner =
@@ -377,7 +382,7 @@ export default function UsersPage() {
                   tabIndex={isSelected ? -1 : undefined}
                   aria-current={isSelected ? "true" : undefined}
                   className={[
-                    "flex flex-col gap-3 px-5 py-4 md:flex-row md:items-center md:justify-between",
+                    "group flex flex-col gap-4 px-5 py-5 transition-colors hover:bg-muted/20 md:flex-row md:items-center md:justify-between",
                     isSelected
                       ? "bg-primary/5 ring-2 ring-inset ring-primary/30"
                       : "",
@@ -424,7 +429,7 @@ export default function UsersPage() {
                           role: event.target.value as OrganizationRole,
                         })
                       }
-                      className="h-9 rounded-md border border-input bg-background px-3 text-sm disabled:opacity-60"
+                      className="h-10 rounded-xl border border-input bg-background px-3 text-sm text-foreground shadow-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {rolesForCurrentAdmin.map((role) => (
                         <option key={role} value={role}>
@@ -445,7 +450,7 @@ export default function UsersPage() {
                             ? "Admins cannot remove an owner"
                             : "Remove member from this organization"
                       }
-                      className="inline-flex h-9 items-center gap-2 rounded-md border border-destructive/40 px-3 text-sm text-destructive hover:bg-destructive/5 disabled:pointer-events-none disabled:opacity-40"
+                      className="inline-flex h-9 items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40"
                     >
                       <UserX className="size-4" /> Remove
                     </button>
@@ -456,7 +461,7 @@ export default function UsersPage() {
           </div>
           {(roleMutation.isError || removeMutation.isError) && (
             <div
-              className="border-t bg-destructive/5 px-5 py-3 text-sm text-destructive"
+              className="border-t border-destructive/20 bg-destructive/5 px-5 py-3 text-sm text-destructive sm:px-6"
               role="alert"
             >
               {roleMutation.error instanceof Error

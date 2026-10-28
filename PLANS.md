@@ -93,7 +93,7 @@ Scope: `components/ui/` and `components/shared/`.
 
 ### UI/UX-4 — Core Ticketing Experience
 
-**NEXT**
+**COMPLETE**
 
 Scope: Dashboard, Tickets, Ticket Detail, and Create Ticket.
 
@@ -110,7 +110,7 @@ Scope: Dashboard, Tickets, Ticket Detail, and Create Ticket.
 
 ### UI/UX-5 — Operational and Administration Pages
 
-**PLANNED**
+**NEXT**
 
 Scope: Approvals, Ticket Library, Products, Users, Settings, Profile, and
 Notifications.

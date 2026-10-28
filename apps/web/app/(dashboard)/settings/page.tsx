@@ -99,7 +99,7 @@ function WorkingSettingCard({ setting }: { setting: WorkingSetting }) {
 
   return (
     <Link href={setting.href} className="group block rounded-xl">
-      <Card className="h-full transition-colors group-hover:border-primary/40 group-hover:bg-muted/20 group-focus-visible:outline-none group-focus-visible:ring-2 group-focus-visible:ring-ring">
+      <Card className="h-full rounded-2xl border border-border bg-card shadow-sm transition-colors group-hover:border-primary/40 group-hover:shadow-md group-focus-visible:outline-none group-focus-visible:ring-2 group-focus-visible:ring-ring">
         <CardHeader>
           <div className="flex items-start justify-between gap-4">
             <div className="flex min-w-0 items-start gap-3">
@@ -134,7 +134,7 @@ function PlannedSettingCard({ setting }: { setting: PlannedSetting }) {
   const Icon = setting.icon;
 
   return (
-    <Card className="h-full">
+    <Card className="h-full rounded-2xl border-dashed border-border bg-muted/20 shadow-none">
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-start gap-3">
@@ -167,6 +167,7 @@ export default function SettingsPage() {
       <PageHeader
         title="Settings"
         description="Manage workspace configuration and your personal account."
+        className="mb-0"
       />
 
       <section className="space-y-4" aria-labelledby="working-settings-heading">
@@ -180,7 +181,7 @@ export default function SettingsPage() {
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {workingSettings.map((setting) => (
             <WorkingSettingCard key={setting.href} setting={setting} />
           ))}
@@ -198,7 +199,7 @@ export default function SettingsPage() {
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {plannedSettings.map((setting) => (
             <PlannedSettingCard key={setting.title} setting={setting} />
           ))}

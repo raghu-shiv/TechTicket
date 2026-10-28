@@ -144,10 +144,11 @@ export default function ProfilePage() {
 
   if (isPending) {
     return (
-      <div className="space-y-5">
+      <div className="space-y-6">
         <PageHeader
           title="Your Profile"
           description="View and update your personal account details."
+          className="mb-0"
         />
 
         <Card>
@@ -162,10 +163,11 @@ export default function ProfilePage() {
 
   if (!user) {
     return (
-      <div className="space-y-5">
+      <div className="space-y-6">
         <PageHeader
           title="Your Profile"
           description="View and update your personal account details."
+          className="mb-0"
         />
 
         <Card>
@@ -191,16 +193,17 @@ export default function ProfilePage() {
       .toUpperCase() || "U";
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <PageHeader
         title="Your Profile"
         description="Manage the personal details associated with your TechTicket account."
+        className="mb-0"
       />
 
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-sm font-semibold text-primary">
+            <div className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-primary/10 text-sm font-semibold text-primary">
               {image ? (
                 <Image
                   src={image}
@@ -241,7 +244,7 @@ export default function ProfilePage() {
                   value={name}
                   onChange={(event) => changeName(event.target.value)}
                   disabled={isSaving}
-                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
+                  className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 />
               </div>
 
@@ -263,7 +266,7 @@ export default function ProfilePage() {
                   value={image}
                   onChange={(event) => changeImage(event.target.value)}
                   disabled={isSaving}
-                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
+                  className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 />
 
                 <p className="text-xs text-muted-foreground">
@@ -282,10 +285,10 @@ export default function ProfilePage() {
                   value={user.email}
                   readOnly
                   aria-readonly="true"
-                  className="h-10 w-full rounded-md border border-input bg-muted/40 px-3 text-sm text-muted-foreground"
+                  className="h-11 w-full cursor-not-allowed rounded-xl border border-input bg-muted/40 px-3 text-sm text-muted-foreground"
                 />
 
-                <p className="text-xs text-muted-foreground">
+                <p className="rounded-lg border border-border bg-muted/30 px-3 py-2 text-xs leading-5 text-muted-foreground">
                   Email changes are not enabled in the current configuration.
                 </p>
               </div>
@@ -322,18 +325,24 @@ export default function ProfilePage() {
             </div>
 
             {formError && (
-              <p className="text-sm text-destructive" role="alert">
+              <p
+                className="rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-sm text-destructive"
+                role="alert"
+              >
                 {formError}
               </p>
             )}
 
             {successMessage && (
-              <p className="text-sm text-emerald-600" role="status">
+              <p
+                className="rounded-xl border border-success/25 bg-success/10 px-3 py-2.5 text-sm text-success"
+                role="status"
+              >
                 {successMessage}
               </p>
             )}
 
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border pt-5">
               <p className="text-xs text-muted-foreground">
                 Only your display name and profile image can be changed here.
               </p>
@@ -341,7 +350,7 @@ export default function ProfilePage() {
               <button
                 type="submit"
                 disabled={isSaving || !isDirty || !name.trim()}
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isSaving ? (
                   <Loader2 className="size-4 animate-spin" aria-hidden="true" />
@@ -357,7 +366,7 @@ export default function ProfilePage() {
       </Card>
 
       <Card>
-        <CardContent className="flex items-start gap-3 p-5">
+        <CardContent className="flex items-start gap-3 rounded-2xl border border-border bg-muted/20 p-5 sm:p-6">
           <UserRound
             className="mt-0.5 size-5 shrink-0 text-muted-foreground"
             aria-hidden="true"

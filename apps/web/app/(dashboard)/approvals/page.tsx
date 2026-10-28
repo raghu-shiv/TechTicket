@@ -67,7 +67,7 @@ function ApprovalCard({
 }) {
   return (
     <Card>
-      <CardContent className="space-y-4 p-5 sm:p-6">
+      <CardContent className="space-y-5 p-5 sm:p-6 lg:p-7">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
@@ -91,13 +91,13 @@ function ApprovalCard({
           </div>
           <Link
             href={`/tickets/${encodeURIComponent(item.ticket.id)}`}
-            className="inline-flex h-9 shrink-0 items-center justify-center gap-2 self-start rounded-md border border-input px-3 text-sm font-medium hover:bg-muted"
+            className="inline-flex h-10 shrink-0 items-center justify-center gap-2 self-start rounded-xl border border-border bg-card px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             View ticket <ExternalLink className="size-3.5" />
           </Link>
         </div>
 
-        <div className="grid gap-3 rounded-lg bg-muted/30 p-3 text-sm sm:grid-cols-3">
+        <div className="grid gap-4 rounded-xl border border-border/70 bg-muted/20 p-4 text-sm sm:grid-cols-3">
           <div>
             <p className="text-xs text-muted-foreground">Requester</p>
             <p className="mt-1 font-medium">{item.ticket.requester.name}</p>
@@ -118,7 +118,7 @@ function ApprovalCard({
         </div>
 
         {item.comment && (
-          <div className="rounded-md border px-3 py-2 text-sm">
+          <div className="rounded-xl border border-border bg-muted/20 px-4 py-3 text-sm">
             <p className="text-xs font-medium text-muted-foreground">
               Latest approval comment
             </p>
@@ -127,7 +127,7 @@ function ApprovalCard({
         )}
 
         {canAct && item.status === "PENDING" && (
-          <div className="space-y-3 border-t pt-4">
+          <div className="space-y-4 border-t border-border pt-5">
             <label
               className="block text-sm font-medium"
               htmlFor={`approval-comment-${item.id}`}
@@ -145,14 +145,14 @@ function ApprovalCard({
               rows={2}
               disabled={busy}
               placeholder="Add context for your decision..."
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
+              className="min-h-20 w-full resize-y rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             />
             <div className="flex flex-wrap justify-end gap-2">
               <button
                 type="button"
                 disabled={busy}
                 onClick={() => onAction("reject")}
-                className="inline-flex h-9 items-center gap-2 rounded-md border border-destructive/40 px-3 text-sm font-medium text-destructive hover:bg-destructive/5 disabled:opacity-50"
+                className="inline-flex h-10 items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-4 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <X className="size-4" /> Reject
               </button>
@@ -160,7 +160,7 @@ function ApprovalCard({
                 type="button"
                 disabled={busy}
                 onClick={() => onAction("approve")}
-                className="inline-flex h-9 items-center gap-2 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Check className="size-4" /> Approve
               </button>
@@ -240,13 +240,14 @@ export default function ApprovalsPage() {
   const items = inboxQuery.data ?? [];
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <PageHeader
         title="Approvals"
         description="Review approval requests assigned to your account in this organization."
+        className="mb-0"
       />
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-5">
         <div>
           <p className="text-sm font-medium">My approval inbox</p>
           <p className="text-xs text-muted-foreground">
@@ -277,7 +278,7 @@ export default function ApprovalsPage() {
             aria-label="Refresh approvals"
             onClick={() => void inboxQuery.refetch()}
             disabled={inboxQuery.isFetching}
-            className="inline-flex size-10 items-center justify-center rounded-md border border-input hover:bg-muted disabled:opacity-50"
+            className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
           >
             <RefreshCw
               className={`size-4 ${inboxQuery.isFetching ? "animate-spin" : ""}`}
@@ -288,7 +289,7 @@ export default function ApprovalsPage() {
 
       {actionMutation.isError && (
         <div
-          className="rounded-md border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm"
+          className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
           role="alert"
         >
           {actionMutation.error instanceof Error
@@ -323,7 +324,7 @@ export default function ApprovalsPage() {
         />
       )}
       {inboxQuery.isSuccess && items.length > 0 && (
-        <div className="space-y-4">
+        <div className="space-y-5">
           {items.map((item) => (
             <ApprovalCard
               key={item.id}

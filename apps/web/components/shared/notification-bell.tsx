@@ -233,7 +233,7 @@ export function NotificationBell() {
         ref={bellRef}
         type="button"
         onClick={toggleDropdown}
-        className="relative inline-flex size-10 items-center justify-center rounded-lg hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="relative inline-flex size-10 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`}
         aria-haspopup="dialog"
         aria-expanded={isOpen}
@@ -258,9 +258,9 @@ export function NotificationBell() {
           role="dialog"
           aria-label="Notification center"
           aria-modal="false"
-          className="absolute right-0 top-full z-50 mt-2 flex max-h-[min(75vh,38rem)] w-[min(92vw,26rem)] flex-col overflow-hidden rounded-xl border bg-card shadow-xl"
+          className="absolute right-0 top-full z-50 mt-2 flex max-h-[min(75vh,38rem)] w-[min(92vw,26rem)] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-xl"
         >
-          <div className="flex shrink-0 items-center justify-between border-b px-4 py-3">
+          <div className="flex shrink-0 items-center justify-between border-b border-border bg-muted/20 px-4 py-3.5">
             <div>
               <h2 className="text-sm font-semibold">Notifications</h2>
               <p className="mt-0.5 text-xs text-muted-foreground">
@@ -272,7 +272,7 @@ export function NotificationBell() {
               type="button"
               onClick={() => void notificationsQuery.refetch()}
               disabled={notificationsQuery.isFetching}
-              className="rounded-md px-2 py-1.5 text-xs font-medium text-primary hover:bg-accent disabled:opacity-50"
+              className="rounded-lg px-3 py-2 text-xs font-semibold text-primary transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             >
               {notificationsQuery.isFetching ? "Refreshing..." : "Refresh"}
             </button>
@@ -292,7 +292,10 @@ export function NotificationBell() {
           )}
 
           {organizationsQuery.isError && (
-            <div className="px-4 py-6" role="alert">
+            <div
+              className="mx-3 my-3 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-4"
+              role="alert"
+            >
               <p className="text-sm font-medium">Unable to load workspace</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 {organizationsQuery.error.message}
@@ -329,7 +332,10 @@ export function NotificationBell() {
           )}
 
           {organizationId && notificationsQuery.isError && (
-            <div className="px-4 py-6" role="alert">
+            <div
+              className="mx-3 my-3 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-4"
+              role="alert"
+            >
               <p className="text-sm font-medium">
                 Unable to load notifications
               </p>
@@ -351,7 +357,7 @@ export function NotificationBell() {
 
           {markReadMutation.isError && (
             <p
-              className="border-b px-4 py-2 text-xs text-destructive"
+              className="border-b border-destructive/20 bg-destructive/5 px-4 py-2.5 text-xs text-destructive"
               role="alert"
             >
               {getErrorText(
@@ -364,7 +370,7 @@ export function NotificationBell() {
           {organizationId &&
             notificationsQuery.isSuccess &&
             notifications.length === 0 && (
-              <div className="px-4 py-10 text-center">
+              <div className="px-4 py-12 text-center">
                 <Bell
                   className="mx-auto size-6 text-muted-foreground"
                   aria-hidden="true"
@@ -386,8 +392,8 @@ export function NotificationBell() {
                   <article
                     key={notification.id}
                     className={[
-                      "border-b px-4 py-3 last:border-b-0",
-                      notification.readAt ? "bg-card" : "bg-primary/[0.04]",
+                      "border-b border-border px-4 py-4 transition-colors hover:bg-muted/30 last:border-b-0",
+                      notification.readAt ? "bg-card" : "bg-primary/[0.05]",
                     ].join(" ")}
                   >
                     <div className="flex items-start gap-3">
@@ -475,7 +481,7 @@ export function NotificationBell() {
             )}
 
           {organizationId && notificationsQuery.isSuccess && totalPages > 1 && (
-            <div className="flex shrink-0 items-center justify-between border-t px-3 py-2">
+            <div className="flex shrink-0 items-center justify-between border-t border-border bg-muted/20 px-3 py-2.5">
               <button
                 type="button"
                 disabled={page <= 1}

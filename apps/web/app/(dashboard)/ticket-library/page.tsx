@@ -35,9 +35,11 @@ import type { TicketLibraryEntry } from "@/types/ticket-library";
 import type { Ticket } from "@/types/tickets";
 
 const inputClass =
-  "mt-1.5 h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring disabled:opacity-60";
+  "mt-1.5 h-11 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50";
+
 const textAreaClass =
-  "mt-1.5 min-h-28 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring disabled:opacity-60";
+  "mt-1.5 min-h-32 w-full resize-y rounded-xl border border-input bg-background px-3 py-3 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50";
+
 const PAGE_SIZE = 20;
 
 function uniqueTags(value: string): string[] {
@@ -364,16 +366,17 @@ export default function TicketLibraryPage() {
   ];
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <PageHeader
         title="Ticket Library"
+        className="mb-0"
         description="Search reusable knowledge articles with problem descriptions and resolutions. This knowledge base is separate from ticket operations and Ticket Library Reports."
         actions={
           canWrite ? (
             <button
               type="button"
               onClick={beginCreate}
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <FilePlus2 className="size-4" /> New article
             </button>
@@ -383,7 +386,7 @@ export default function TicketLibraryPage() {
 
       {showForm && canWrite && (
         <Card>
-          <CardContent className="space-y-4 p-5 sm:p-6">
+          <CardContent className="space-y-5 p-5 sm:p-6 lg:p-7">
             <div>
               <h2 className="text-base font-semibold">
                 {editingEntry
@@ -530,7 +533,10 @@ export default function TicketLibraryPage() {
                 </div>
               </div>
               {formError && (
-                <p className="text-sm text-destructive" role="alert">
+                <p
+                  className="rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-sm text-destructive"
+                  role="alert"
+                >
                   {formError}
                 </p>
               )}
@@ -539,14 +545,14 @@ export default function TicketLibraryPage() {
                   type="button"
                   onClick={resetForm}
                   disabled={saveMutation.isPending}
-                  className="h-10 rounded-md border border-input px-4 text-sm hover:bg-muted"
+                  className="inline-flex h-10 items-center justify-center rounded-xl border border-border bg-card px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saveMutation.isPending}
-                  className="h-10 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                  className="inline-flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {saveMutation.isPending
                     ? "Saving..."
@@ -561,7 +567,7 @@ export default function TicketLibraryPage() {
       )}
 
       <Card>
-        <CardContent className="grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_240px]">
+        <CardContent className="grid gap-4 rounded-2xl p-4 sm:grid-cols-[minmax(0,1fr)_240px] sm:p-5">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <label htmlFor="library-search" className="sr-only">
@@ -572,7 +578,7 @@ export default function TicketLibraryPage() {
               value={search}
               onChange={(event) => updateLibrarySearch(event.target.value)}
               placeholder="Search title, problem, resolution, or tags..."
-              className="h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm"
+              className="h-11 w-full rounded-xl border border-input bg-background pl-10 pr-3 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
           <div>
@@ -608,7 +614,7 @@ export default function TicketLibraryPage() {
                   );
                 }
               }}
-              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground shadow-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
             >
               <option value="">All products</option>
               {(productsQuery.data ?? []).map((product) => (
@@ -670,8 +676,8 @@ export default function TicketLibraryPage() {
               aria-label={`Knowledge article: ${article.title}`}
               className="scroll-mt-24 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <Card>
-                <CardContent className="space-y-4 p-5 sm:p-6">
+              <Card className="overflow-hidden rounded-2xl transition-colors hover:border-primary/30">
+                <CardContent className="space-y-5 p-5 sm:p-6 lg:p-7">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
                       <h2 className="text-base font-semibold">
@@ -711,7 +717,7 @@ export default function TicketLibraryPage() {
                         <button
                           type="button"
                           onClick={() => beginEdit(article)}
-                          className="inline-flex h-9 items-center gap-2 rounded-md border border-input px-3 text-sm hover:bg-muted"
+                          className="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                           <Pencil className="size-3.5" /> Edit
                         </button>
@@ -727,7 +733,7 @@ export default function TicketLibraryPage() {
                                 deleteMutation.mutate(article.id);
                             }}
                             disabled={deleteMutation.isPending}
-                            className="inline-flex h-9 items-center gap-2 rounded-md border border-destructive/40 px-3 text-sm text-destructive hover:bg-destructive/5 disabled:opacity-50"
+                            className="inline-flex h-9 items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             <Trash2 className="size-3.5" /> Delete
                           </button>
@@ -735,8 +741,8 @@ export default function TicketLibraryPage() {
                       </div>
                     )}
                   </div>
-                  <div className="grid gap-4 border-t pt-4 md:grid-cols-2">
-                    <section>
+                  <div className="grid gap-4 border-t border-border pt-5 md:grid-cols-2">
+                    <section className="rounded-xl border border-border/70 bg-muted/20 p-4">
                       <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         Problem
                       </h3>
@@ -744,7 +750,7 @@ export default function TicketLibraryPage() {
                         {article.problem}
                       </p>
                     </section>
-                    <section>
+                    <section className="rounded-xl border border-border/70 bg-muted/20 p-4">
                       <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         Resolution
                       </h3>
@@ -758,7 +764,7 @@ export default function TicketLibraryPage() {
             </div>
           ))}
           {entriesQuery.data.meta.totalPages > 1 && (
-            <div className="flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 rounded-xl border border-border bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-muted-foreground">
                 Page {page} of {entriesQuery.data.meta.totalPages}
               </p>
@@ -770,7 +776,7 @@ export default function TicketLibraryPage() {
                     setPage(Math.max(1, effectivePage - 1));
                   }}
                   disabled={page <= 1 || entriesQuery.isFetching}
-                  className="h-9 rounded-md border border-input px-3 text-sm hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
+                  className="inline-flex h-9 items-center justify-center rounded-lg border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
                 >
                   Previous
                 </button>
@@ -789,7 +795,7 @@ export default function TicketLibraryPage() {
                     page >= entriesQuery.data.meta.totalPages ||
                     entriesQuery.isFetching
                   }
-                  className="h-9 rounded-md border border-input px-3 text-sm hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
+                  className="inline-flex h-9 items-center justify-center rounded-lg border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
                 >
                   Next
                 </button>
@@ -799,7 +805,10 @@ export default function TicketLibraryPage() {
         </div>
       )}
       {deleteMutation.isError && (
-        <p className="text-sm text-destructive" role="alert">
+        <p
+          className="rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-sm text-destructive"
+          role="alert"
+        >
           {deleteMutation.error instanceof Error
             ? deleteMutation.error.message
             : "Unable to delete article."}

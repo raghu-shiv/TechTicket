@@ -163,17 +163,18 @@ export default function ProductsPage() {
   const products = productsQuery.data ?? [];
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <PageHeader
         title="Products"
         description="View products associated with tickets. Owners and admins can manage the product catalog."
+        className="mb-0"
       />
 
       {canManage && (
         <Card>
-          <CardContent className="p-5 sm:p-6">
+          <CardContent className="p-5 sm:p-6 lg:p-7">
             <div className="mb-4 flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-primary/15 bg-primary/10 text-primary">
                 {editingId ? (
                   <Pencil className="size-5" />
                 ) : (
@@ -206,7 +207,7 @@ export default function ProductsPage() {
                   value={name}
                   onChange={(event) => setName(event.target.value)}
                   disabled={saveMutation.isPending}
-                  className="mt-1.5 h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
+                  className="mt-1.5 h-11 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                   placeholder="e.g. ERP"
                 />
               </div>
@@ -226,7 +227,7 @@ export default function ProductsPage() {
                   value={description}
                   onChange={(event) => setDescription(event.target.value)}
                   disabled={saveMutation.isPending}
-                  className="mt-1.5 h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
+                  className="mt-1.5 h-11 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                   placeholder="What this product covers"
                 />
               </div>
@@ -234,7 +235,7 @@ export default function ProductsPage() {
                 <button
                   type="submit"
                   disabled={saveMutation.isPending}
-                  className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {saveMutation.isPending
                     ? "Saving..."
@@ -247,7 +248,7 @@ export default function ProductsPage() {
                     type="button"
                     onClick={cancelEdit}
                     disabled={saveMutation.isPending}
-                    className="h-10 rounded-md border border-input px-3 text-sm hover:bg-muted"
+                    className="inline-flex h-11 items-center justify-center rounded-xl border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Cancel
                   </button>
@@ -255,7 +256,10 @@ export default function ProductsPage() {
               </div>
             </form>
             {formError && (
-              <p className="mt-3 text-sm text-destructive" role="alert">
+              <p
+                className="mt-3 rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-sm text-destructive"
+                role="alert"
+              >
                 {formError}
               </p>
             )}
@@ -287,18 +291,18 @@ export default function ProductsPage() {
         />
       )}
       {productsQuery.isSuccess && products.length > 0 && (
-        <Card className="overflow-hidden">
-          <div className="flex items-center justify-between border-b px-5 py-4">
+        <Card className="overflow-hidden rounded-2xl">
+          <div className="flex items-center justify-between border-b border-border bg-muted/20 px-5 py-4 sm:px-6">
             <h2 className="text-sm font-semibold">Product catalog</h2>
             <Badge variant="secondary">{products.length}</Badge>
           </div>
-          <div className="divide-y">
+          <div className="divide-y divide-border">
             {products.map((product) => {
               const ticketCount = product._count?.tickets ?? 0;
               return (
                 <div
                   key={product.id}
-                  className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-4 px-5 py-5 transition-colors hover:bg-muted/20 sm:flex-row sm:items-center sm:justify-between sm:px-6"
                 >
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
@@ -321,7 +325,7 @@ export default function ProductsPage() {
                       <button
                         type="button"
                         onClick={() => beginEdit(product)}
-                        className="inline-flex h-9 items-center gap-2 rounded-md border border-input px-3 text-sm hover:bg-muted"
+                        className="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
                         <Pencil className="size-3.5" /> Edit
                       </button>
@@ -334,7 +338,7 @@ export default function ProductsPage() {
                             isActive: !product.isActive,
                           })
                         }
-                        className="h-9 rounded-md border border-input px-3 text-sm hover:bg-muted disabled:opacity-50"
+                        className="inline-flex h-9 items-center justify-center rounded-lg border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {product.isActive ? "Deactivate" : "Reactivate"}
                       </button>
@@ -350,7 +354,7 @@ export default function ProductsPage() {
                             )
                               deleteMutation.mutate(product.id);
                           }}
-                          className="inline-flex h-9 items-center gap-2 rounded-md border border-destructive/40 px-3 text-sm text-destructive hover:bg-destructive/5 disabled:opacity-50"
+                          className="inline-flex h-9 items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           <Trash2 className="size-3.5" /> Delete
                         </button>
@@ -363,7 +367,7 @@ export default function ProductsPage() {
           </div>
           {(lifecycleMutation.isError || deleteMutation.isError) && (
             <div
-              className="border-t bg-destructive/5 px-5 py-3 text-sm text-destructive"
+              className="border-t border-destructive/20 bg-destructive/5 px-5 py-3 text-sm text-destructive sm:px-6"
               role="alert"
             >
               {lifecycleMutation.error instanceof Error
