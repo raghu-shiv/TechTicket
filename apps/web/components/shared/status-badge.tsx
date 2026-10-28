@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import type { BadgeVariant } from "@/components/ui/badge";
 
 export type TicketStatus =
   | "open"
@@ -12,14 +13,7 @@ const statusConfig: Record<
   TicketStatus,
   {
     label: string;
-    variant:
-      | "default"
-      | "secondary"
-      | "success"
-      | "warning"
-      | "danger"
-      | "info"
-      | "outline";
+    variant: BadgeVariant;
   }
 > = {
   open: {
@@ -28,11 +22,11 @@ const statusConfig: Record<
   },
   in_progress: {
     label: "In Progress",
-    variant: "warning",
+    variant: "default",
   },
   pending: {
     label: "Pending",
-    variant: "secondary",
+    variant: "warning",
   },
   resolved: {
     label: "Resolved",
@@ -40,7 +34,7 @@ const statusConfig: Record<
   },
   closed: {
     label: "Closed",
-    variant: "outline",
+    variant: "neutral",
   },
   cancelled: {
     label: "Cancelled",

@@ -22,18 +22,20 @@ export function StatCard({
   trend,
 }: StatCardProps) {
   return (
-    <Card>
-      <CardContent className="p-5">
-        <div className="flex items-start justify-between">
-          <div className="min-w-0">
-            <p className="text-sm text-muted-foreground">{title}</p>
+    <Card className="h-full">
+      <CardContent className="p-5 sm:p-6">
+        <div className="flex h-full items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium leading-5 text-muted-foreground">
+              {title}
+            </p>
 
-            <p className="mt-2 text-2xl font-semibold tracking-tight">
+            <p className="mt-2 font-display text-3xl font-semibold leading-none tracking-tight text-card-foreground tabular-nums">
               {value}
             </p>
 
             {description && (
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-3 text-xs leading-5 text-muted-foreground">
                 {description}
               </p>
             )}
@@ -41,10 +43,8 @@ export function StatCard({
             {trend && (
               <p
                 className={cn(
-                  "mt-2 text-xs font-medium",
-                  trend.positive
-                    ? "text-emerald-600 dark:text-emerald-400"
-                    : "text-red-600 dark:text-red-400",
+                  "mt-3 text-xs font-semibold leading-5",
+                  trend.positive ? "text-success" : "text-danger",
                 )}
               >
                 {trend.value}
@@ -52,8 +52,8 @@ export function StatCard({
             )}
           </div>
 
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <Icon className="size-5" />
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-primary/15 bg-brand-soft text-brand-soft-foreground">
+            <Icon className="size-5" aria-hidden="true" />
           </div>
         </div>
       </CardContent>

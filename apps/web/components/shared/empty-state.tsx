@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface EmptyStateProps {
   icon: LucideIcon;
@@ -24,37 +25,32 @@ export function EmptyState({
 
   return (
     <div
-      className={
+      className={cn(
+        "rounded-2xl border border-dashed border-border/80 bg-card/70",
         compact
-          ? "flex items-start gap-3 rounded-lg border border-dashed p-3 text-left"
-          : "flex min-h-72 flex-col items-center justify-center rounded-xl border border-dashed px-6 text-center"
-      }
+          ? "flex items-start gap-3 p-4 text-left"
+          : "flex min-h-72 flex-col items-center justify-center px-6 py-10 text-center shadow-sm",
+      )}
     >
       <div
-        className={[
-          "flex shrink-0 items-center justify-center rounded-full bg-muted",
-          compact ? "size-8" : "size-12",
-        ].join(" ")}
+        className={cn(
+          "flex shrink-0 items-center justify-center rounded-xl border border-border/70 bg-surface-muted text-muted-foreground",
+          compact ? "size-9" : "size-12",
+        )}
       >
-        <Icon
-          className={
-            compact
-              ? "size-4 text-muted-foreground"
-              : "size-5 text-muted-foreground"
-          }
-          aria-hidden="true"
-        />
+        <Icon className={compact ? "size-4" : "size-5"} aria-hidden="true" />
       </div>
 
-      <div className={compact ? "min-w-0 flex-1" : ""}>
-        <h3 className="text-sm font-semibold">{title}</h3>
+      <div className={cn("min-w-0", compact ? "flex-1" : "mt-4")}>
+        <h3 className="text-sm font-semibold leading-5 text-foreground">
+          {title}
+        </h3>
 
         <p
-          className={
-            compact
-              ? "mt-1 text-sm text-muted-foreground"
-              : "mt-1 max-w-sm text-sm text-muted-foreground"
-          }
+          className={cn(
+            "text-sm leading-6 text-muted-foreground",
+            compact ? "mt-1" : "mx-auto mt-2 max-w-md",
+          )}
         >
           {description}
         </p>

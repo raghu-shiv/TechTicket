@@ -67,7 +67,7 @@ Tailwind classes continue to work; no application logic is changed.
 
 ### UI/UX-2 — Application Shell and Navigation
 
-**NEXT**
+**COMPLETE**
 
 Files: `components/layout/app-shell.tsx`, `sidebar.tsx`, `topbar.tsx`, and
 `mobile-nav.tsx`.
@@ -81,7 +81,7 @@ Files: `components/layout/app-shell.tsx`, `sidebar.tsx`, `topbar.tsx`, and
 
 ### UI/UX-3 — Shared UI Components
 
-**PLANNED**
+**COMPLETE**
 
 Scope: `components/ui/` and `components/shared/`.
 
@@ -93,7 +93,7 @@ Scope: `components/ui/` and `components/shared/`.
 
 ### UI/UX-4 — Core Ticketing Experience
 
-**PLANNED**
+**NEXT**
 
 Scope: Dashboard, Tickets, Ticket Detail, and Create Ticket.
 

@@ -3,6 +3,7 @@
 import { AlertTriangle, RefreshCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface ErrorStateProps {
   title?: string;
@@ -22,17 +23,17 @@ export function ErrorState({
   return (
     <div
       role="alert"
-      className={
+      className={cn(
         compact
-          ? "flex items-start gap-3 rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-left"
-          : "flex min-h-72 flex-col items-center justify-center px-6 text-center"
-      }
+          ? "flex items-start gap-3 rounded-xl border border-danger-border/70 bg-danger-bg/70 p-4 text-left"
+          : "flex min-h-72 flex-col items-center justify-center rounded-2xl border border-danger-border/40 bg-card px-6 py-10 text-center",
+      )}
     >
       <div
-        className={[
-          "flex shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive",
-          compact ? "size-8" : "size-12",
-        ].join(" ")}
+        className={cn(
+          "flex shrink-0 items-center justify-center rounded-xl border border-danger-border/60 bg-danger-bg text-danger",
+          compact ? "size-9" : "size-12",
+        )}
       >
         <AlertTriangle
           className={compact ? "size-4" : "size-5"}
@@ -40,15 +41,16 @@ export function ErrorState({
         />
       </div>
 
-      <div className={compact ? "min-w-0 flex-1" : ""}>
-        <h3 className="text-sm font-semibold">{title}</h3>
+      <div className={cn("min-w-0", compact ? "flex-1" : "mt-4")}>
+        <h3 className="text-sm font-semibold leading-5 text-foreground">
+          {title}
+        </h3>
 
         <p
-          className={
-            compact
-              ? "mt-1 break-words text-sm text-muted-foreground"
-              : "mt-1 max-w-sm text-sm text-muted-foreground"
-          }
+          className={cn(
+            "break-words text-sm leading-6 text-muted-foreground",
+            compact ? "mt-1" : "mx-auto mt-2 max-w-md",
+          )}
         >
           {description}
         </p>
