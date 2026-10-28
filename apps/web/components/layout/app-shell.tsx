@@ -13,18 +13,20 @@ interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-dvh bg-background text-foreground">
       <Sidebar />
 
       <MobileNav />
 
       <CommandMenu />
 
-      <div className="lg:pl-64">
+      <div className="min-w-0 lg:pl-64">
         <Topbar />
 
-        <main className="min-h-[calc(100vh-4rem)] p-4 sm:p-6 lg:p-8">
-          <div className="mx-auto w-full max-w-[1600px]">{children}</div>
+        <main className="min-h-[calc(100dvh-4rem)] px-4 py-6 sm:px-6 sm:py-8 xl:px-8 2xl:px-10">
+          <div className="mx-auto w-full max-w-[1680px] min-w-0">
+            {children}
+          </div>
         </main>
       </div>
     </div>

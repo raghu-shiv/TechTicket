@@ -13,11 +13,12 @@ export function Topbar() {
   const isMobileSidebarOpen = useUIStore((state) => state.isMobileSidebarOpen);
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:px-6">
-      <div className="flex w-full items-center gap-4">
+    <header className="sticky top-0 z-30 h-16 border-b border-border/80 bg-background/90 shadow-sm shadow-slate-950/[0.025] backdrop-blur-xl supports-[backdrop-filter]:bg-background/80">
+      <div className="mx-auto flex h-full w-full max-w-[1680px] items-center gap-3 px-4 sm:gap-4 sm:px-6 xl:px-8 2xl:px-10">
+        {/* Mobile navigation trigger */}
         <button
           type="button"
-          className="rounded-lg p-2 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:hidden"
+          className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-colors duration-150 hover:bg-surface-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background lg:hidden"
           aria-label="Open navigation"
           aria-expanded={isMobileSidebarOpen}
           aria-controls="mobile-navigation"
@@ -27,6 +28,7 @@ export function Topbar() {
           <Menu className="size-5" aria-hidden="true" />
         </button>
 
+        {/* Desktop global search trigger */}
         <button
           type="button"
           onClick={openCommandMenu}
@@ -34,48 +36,70 @@ export function Topbar() {
           aria-haspopup="dialog"
           aria-controls="global-ticket-search-dialog"
           aria-keyshortcuts="Control+K Meta+K"
-          className="relative hidden h-10 max-w-md flex-1 items-center text-left md:flex"
+          className="group relative hidden h-10 w-full max-w-[34rem] flex-1 items-center text-left focus-visible:outline-none md:flex"
         >
-          <Search
-            className="absolute left-3 size-4 text-muted-foreground"
-            aria-hidden="true"
-          />
-
-          <span className="w-full truncate rounded-lg border bg-muted/30 py-2.5 pl-10 pr-28 text-sm text-muted-foreground transition hover:bg-muted/50">
-            Search tickets and knowledge articles...
+          <span className="absolute left-3.5 flex items-center justify-center text-muted-foreground transition-colors group-hover:text-primary">
+            <Search className="size-4" aria-hidden="true" />
           </span>
 
-          <kbd className="absolute right-3 rounded border bg-background px-1.5 py-0.5 text-[10px] text-muted-foreground">
-            Ctrl K / ⌘ K
-          </kbd>
+          <span className="flex h-full w-full min-w-0 items-center justify-between gap-3 rounded-xl border border-border/80 bg-surface/80 pl-10 pr-3 text-sm text-muted-foreground shadow-sm transition-colors duration-150 group-hover:border-primary/30 group-hover:bg-card group-focus-visible:ring-2 group-focus-visible:ring-ring group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-background">
+            <span className="truncate">
+              Search tickets and knowledge articles...
+            </span>
+
+            <kbd className="hidden shrink-0 items-center gap-1 rounded-md border border-border bg-surface-muted px-2 py-1 font-mono text-[10px] font-medium leading-none text-muted-foreground lg:inline-flex">
+              <span>Ctrl</span>
+              <span className="opacity-60">+</span>
+              <span>K</span>
+              <span className="mx-0.5 opacity-40">/</span>
+              <span>⌘</span>
+              <span className="opacity-60">+</span>
+              <span>K</span>
+            </kbd>
+          </span>
         </button>
 
-        <div className="ml-auto flex items-center gap-1">
+        {/* Top bar actions */}
+        <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
+          {/* Mobile search trigger */}
           <button
             type="button"
             onClick={openCommandMenu}
-            className="rounded-lg p-2 hover:bg-accent md:hidden"
+            className="inline-flex size-10 items-center justify-center rounded-xl text-muted-foreground transition-colors duration-150 hover:bg-surface-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background md:hidden"
             aria-label="Search tickets and knowledge articles"
             aria-haspopup="dialog"
             aria-controls="global-ticket-search-dialog"
             aria-keyshortcuts="Control+K Meta+K"
-            title="Search tickets and knowledge articles..."
+            title="Search tickets and knowledge articles"
           >
             <Search className="size-5" aria-hidden="true" />
           </button>
 
-          <NotificationBell />
+          {/* Notification entry point */}
+          <div className="[&>div>button]:rounded-xl [&>div>button]:text-muted-foreground [&>div>button]:transition-colors [&>div>button:hover]:bg-surface-muted [&>div>button:hover]:text-foreground">
+            <NotificationBell />
+          </div>
 
-          <Link
-            href="/settings"
-            className="rounded-lg p-2 hover:bg-accent"
-            aria-label="Settings"
-            title="Settings"
-          >
-            <Settings className="size-5" aria-hidden="true" />
-          </Link>
+          {/* Account and workspace actions */}
+          <div className="flex items-center gap-0.5 rounded-2xl border border-border/80 bg-surface/80 p-1 shadow-sm">
+            <Link
+              href="/settings"
+              className="inline-flex size-9 items-center justify-center rounded-xl text-muted-foreground transition-colors duration-150 hover:bg-surface-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              aria-label="Settings"
+              title="Settings"
+            >
+              <Settings className="size-[18px]" aria-hidden="true" />
+            </Link>
 
-          <UserMenu />
+            <span
+              className="mx-0.5 hidden h-6 w-px bg-border sm:block"
+              aria-hidden="true"
+            />
+
+            <div className="[&>div>button]:rounded-xl [&>div>button]:transition-colors [&>div>button:hover]:bg-surface-muted">
+              <UserMenu />
+            </div>
+          </div>
         </div>
       </div>
     </header>
