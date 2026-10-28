@@ -1,82 +1,611 @@
+
 @import "tailwindcss";
 
+/*
+ * TechTicket Design System
+ * Phase 1 — Global tokens and accessible base styles
+ *
+ * Theme switching:
+ * - next-themes applies the .dark class to the HTML element.
+ * - Tailwind dark: utilities are explicitly tied to that class.
+ * - Existing semantic utilities such as bg-background, text-foreground,
+ *   bg-card, border-input, and ring-ring remain available.
+ */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------------------------------------------------------------
+   LIGHT THEME — DEFAULT
+   --------------------------------------------------------------- */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+
+  /* Typography */
+  --font-body:
+    Inter, "Segoe UI", ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --font-heading:
+    Inter, "Segoe UI", ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --font-code:
+    "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+
+  /* Page and surfaces */
+  --background: #f6f8fc;
+  --foreground: #172033;
+
+  --surface: #ffffff;
+  --surface-foreground: #172033;
+  --surface-muted: #f0f3f8;
+  --surface-raised: #ffffff;
 
   --card: #ffffff;
-  --card-foreground: #171717;
+  --card-foreground: #172033;
 
   --popover: #ffffff;
-  --popover-foreground: #171717;
+  --popover-foreground: #172033;
 
-  --primary: #f97316;
+  /* Brand — accessible orange */
+  --primary: #c2410c;
+  --primary-hover: #9a3412;
   --primary-foreground: #ffffff;
 
-  --secondary: #f4f4f5;
-  --secondary-foreground: #18181b;
+  --brand-soft: #fff1e7;
+  --brand-soft-foreground: #9a3412;
+  --brand-border: #fdba74;
 
-  --muted: #f4f4f5;
-  --muted-foreground: #71717a;
+  /* Secondary surfaces and interactive accents */
+  --secondary: #edf1f7;
+  --secondary-foreground: #273449;
 
-  --accent: #f4f4f5;
-  --accent-foreground: #18181b;
+  --muted: #f0f3f8;
+  --muted-foreground: #58677d;
 
-  --destructive: #dc2626;
+  --accent: #fff1e7;
+  --accent-foreground: #9a3412;
+
+  /* Feedback and destructive actions */
+  --destructive: #b91c1c;
   --destructive-foreground: #ffffff;
 
-  --border: #e4e4e7;
-  --input: #e4e4e7;
-  --ring: #f97316;
+  --border: #dce3ed;
+  --input: #cbd5e1;
+  --ring: #ea580c;
+  --ring-offset: #ffffff;
 
-  --radius: 0.625rem;
+  /* Sidebar and navigation */
+  --sidebar-background: #ffffff;
+  --sidebar-foreground: #273449;
+  --sidebar-muted-foreground: #64748b;
+  --sidebar-border: #e5eaf2;
+  --sidebar-active: #fff1e7;
+  --sidebar-active-foreground: #9a3412;
+
+  /* Shared semantic feedback colors */
+  --success: #166534;
+  --success-foreground: #ffffff;
+  --success-bg: #dcfce7;
+  --success-border: #86efac;
+
+  --warning: #92400e;
+  --warning-foreground: #ffffff;
+  --warning-bg: #fef3c7;
+  --warning-border: #fcd34d;
+
+  --danger: #b91c1c;
+  --danger-foreground: #ffffff;
+  --danger-bg: #fee2e2;
+  --danger-border: #fca5a5;
+
+  --info: #1d4ed8;
+  --info-foreground: #ffffff;
+  --info-bg: #dbeafe;
+  --info-border: #93c5fd;
+
+  --neutral: #475569;
+  --neutral-foreground: #ffffff;
+  --neutral-bg: #e2e8f0;
+  --neutral-border: #cbd5e1;
+
+  /* Ticket status colors */
+  --status-open: var(--info);
+  --status-open-bg: var(--info-bg);
+  --status-open-border: var(--info-border);
+
+  --status-in-progress: var(--primary);
+  --status-in-progress-bg: var(--brand-soft);
+  --status-in-progress-border: var(--brand-border);
+
+  --status-pending: var(--warning);
+  --status-pending-bg: var(--warning-bg);
+  --status-pending-border: var(--warning-border);
+
+  --status-resolved: var(--success);
+  --status-resolved-bg: var(--success-bg);
+  --status-resolved-border: var(--success-border);
+
+  --status-closed: var(--neutral);
+  --status-closed-bg: var(--neutral-bg);
+  --status-closed-border: var(--neutral-border);
+
+  /* Ticket priority colors */
+  --priority-low: var(--neutral);
+  --priority-low-bg: var(--neutral-bg);
+  --priority-low-border: var(--neutral-border);
+
+  --priority-medium: var(--info);
+  --priority-medium-bg: var(--info-bg);
+  --priority-medium-border: var(--info-border);
+
+  --priority-high: var(--warning);
+  --priority-high-bg: var(--warning-bg);
+  --priority-high-border: var(--warning-border);
+
+  --priority-urgent: var(--danger);
+  --priority-urgent-bg: var(--danger-bg);
+  --priority-urgent-border: var(--danger-border);
+
+  /* SLA presentation states */
+  --sla-normal: var(--info);
+  --sla-normal-bg: var(--info-bg);
+  --sla-normal-border: var(--info-border);
+
+  --sla-warning: var(--warning);
+  --sla-warning-bg: var(--warning-bg);
+  --sla-warning-border: var(--warning-border);
+
+  --sla-breached: var(--danger);
+  --sla-breached-bg: var(--danger-bg);
+  --sla-breached-border: var(--danger-border);
+
+  --sla-completed: var(--success);
+  --sla-completed-bg: var(--success-bg);
+  --sla-completed-border: var(--success-border);
+
+  /* Selection and scrollbar */
+  --selection-background: #fed7aa;
+  --selection-foreground: #7c2d12;
+
+  --scrollbar-track: #f0f3f8;
+  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-thumb-hover: #94a3b8;
+
+  /* Shape */
+  --radius: 0.75rem;
+
+  /* Elevation */
+  --elevation-card:
+    0 1px 2px rgb(15 23 42 / 0.04),
+    0 4px 12px rgb(15 23 42 / 0.025);
+  --elevation-popover:
+    0 16px 40px rgb(15 23 42 / 0.14),
+    0 2px 8px rgb(15 23 42 / 0.05);
+
+  /* Motion */
+  --motion-fast: 120ms;
+  --motion-normal: 180ms;
+  --motion-slow: 260ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0, 0, 1.1);
 }
+
+/* ---------------------------------------------------------------
+   DARK THEME
+   --------------------------------------------------------------- */
 
 .dark {
-  --background: #09090b;
-  --foreground: #fafafa;
+  color-scheme: dark;
 
-  --card: #111113;
-  --card-foreground: #fafafa;
+  /* Page and surfaces */
+  --background: #0b1120;
+  --foreground: #edf2f8;
 
-  --popover: #111113;
-  --popover-foreground: #fafafa;
+  --surface: #111b2b;
+  --surface-foreground: #edf2f8;
+  --surface-muted: #172336;
+  --surface-raised: #162033;
 
+  --card: #111b2b;
+  --card-foreground: #edf2f8;
+
+  --popover: #162033;
+  --popover-foreground: #edf2f8;
+
+  /* Brand */
   --primary: #fb923c;
-  --primary-foreground: #18181b;
+  --primary-hover: #fdba74;
+  --primary-foreground: #271307;
 
-  --secondary: #27272a;
-  --secondary-foreground: #fafafa;
+  --brand-soft: #431f0d;
+  --brand-soft-foreground: #fed7aa;
+  --brand-border: #9a3412;
 
-  --muted: #27272a;
-  --muted-foreground: #a1a1aa;
+  /* Secondary surfaces and interactive accents */
+  --secondary: #202c3d;
+  --secondary-foreground: #e2e8f0;
 
-  --accent: #27272a;
-  --accent-foreground: #fafafa;
+  --muted: #1a2638;
+  --muted-foreground: #a2b2c8;
 
-  --destructive: #ef4444;
-  --destructive-foreground: #fafafa;
+  --accent: #342519;
+  --accent-foreground: #fed7aa;
 
-  --border: #27272a;
-  --input: #27272a;
+  /* Feedback and destructive actions */
+  --destructive: #f87171;
+  --destructive-foreground: #450a0a;
+
+  --border: #29374b;
+  --input: #394a61;
   --ring: #fb923c;
+  --ring-offset: #0b1120;
+
+  /* Sidebar and navigation */
+  --sidebar-background: #0e1726;
+  --sidebar-foreground: #e2e8f0;
+  --sidebar-muted-foreground: #9eacc0;
+  --sidebar-border: #243247;
+  --sidebar-active: #342519;
+  --sidebar-active-foreground: #fed7aa;
+
+  /* Shared semantic feedback colors */
+  --success: #86efac;
+  --success-foreground: #052e16;
+  --success-bg: #052e16;
+  --success-border: #166534;
+
+  --warning: #fcd34d;
+  --warning-foreground: #422006;
+  --warning-bg: #422006;
+  --warning-border: #92400e;
+
+  --danger: #fca5a5;
+  --danger-foreground: #450a0a;
+  --danger-bg: #450a0a;
+  --danger-border: #991b1b;
+
+  --info: #93c5fd;
+  --info-foreground: #172554;
+  --info-bg: #172554;
+  --info-border: #1d4ed8;
+
+  --neutral: #cbd5e1;
+  --neutral-foreground: #1e293b;
+  --neutral-bg: #1e293b;
+  --neutral-border: #475569;
+
+  /* Ticket status colors inherit the theme-aware semantic tokens */
+  --status-open: var(--info);
+  --status-open-bg: var(--info-bg);
+  --status-open-border: var(--info-border);
+
+  --status-in-progress: var(--brand-soft-foreground);
+  --status-in-progress-bg: var(--brand-soft);
+  --status-in-progress-border: var(--brand-border);
+
+  --status-pending: var(--warning);
+  --status-pending-bg: var(--warning-bg);
+  --status-pending-border: var(--warning-border);
+
+  --status-resolved: var(--success);
+  --status-resolved-bg: var(--success-bg);
+  --status-resolved-border: var(--success-border);
+
+  --status-closed: var(--neutral);
+  --status-closed-bg: var(--neutral-bg);
+  --status-closed-border: var(--neutral-border);
+
+  /* Ticket priority colors */
+  --priority-low: var(--neutral);
+  --priority-low-bg: var(--neutral-bg);
+  --priority-low-border: var(--neutral-border);
+
+  --priority-medium: var(--info);
+  --priority-medium-bg: var(--info-bg);
+  --priority-medium-border: var(--info-border);
+
+  --priority-high: var(--warning);
+  --priority-high-bg: var(--warning-bg);
+  --priority-high-border: var(--warning-border);
+
+  --priority-urgent: var(--danger);
+  --priority-urgent-bg: var(--danger-bg);
+  --priority-urgent-border: var(--danger-border);
+
+  /* SLA presentation states */
+  --sla-normal: var(--info);
+  --sla-normal-bg: var(--info-bg);
+  --sla-normal-border: var(--info-border);
+
+  --sla-warning: var(--warning);
+  --sla-warning-bg: var(--warning-bg);
+  --sla-warning-border: var(--warning-border);
+
+  --sla-breached: var(--danger);
+  --sla-breached-bg: var(--danger-bg);
+  --sla-breached-border: var(--danger-border);
+
+  --sla-completed: var(--success);
+  --sla-completed-bg: var(--success-bg);
+  --sla-completed-border: var(--success-border);
+
+  /* Selection and scrollbar */
+  --selection-background: #7c2d12;
+  --selection-foreground: #ffedd5;
+
+  --scrollbar-track: #111b2b;
+  --scrollbar-thumb: #394a61;
+  --scrollbar-thumb-hover: #536780;
+
+  /* Elevation */
+  --elevation-card:
+    0 1px 2px rgb(0 0 0 / 0.18),
+    0 4px 14px rgb(0 0 0 / 0.12);
+  --elevation-popover:
+    0 18px 44px rgb(0 0 0 / 0.36),
+    0 2px 8px rgb(0 0 0 / 0.2);
 }
+
+/* ---------------------------------------------------------------
+   TAILWIND CSS V4 TOKEN MAPPING
+   --------------------------------------------------------------- */
+
+@theme inline {
+  /* Fonts */
+  --font-sans: var(--font-body);
+  --font-display: var(--font-heading);
+  --font-mono: var(--font-code);
+
+  /* Typography scale: available as text-display, text-page-title, etc. */
+  --text-display: 2.5rem;
+  --text-display--line-height: 1.1;
+
+  --text-page-title: 1.875rem;
+  --text-page-title--line-height: 1.2;
+
+  --text-section-title: 1.25rem;
+  --text-section-title--line-height: 1.4;
+
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.5;
+
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1.4;
+
+  /* Backgrounds and surfaces */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-surface: var(--surface);
+  --color-surface-foreground: var(--surface-foreground);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-raised: var(--surface-raised);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  /* Brand and interaction */
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-soft-foreground: var(--brand-soft-foreground);
+  --color-brand-border: var(--brand-border);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset: var(--ring-offset);
+
+  /* Navigation */
+  --color-sidebar-background: var(--sidebar-background);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted-foreground: var(--sidebar-muted-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-active-foreground: var(--sidebar-active-foreground);
+
+  /* Semantic colors */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-bg: var(--success-bg);
+  --color-success-border: var(--success-border);
+
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-bg: var(--warning-bg);
+  --color-warning-border: var(--warning-border);
+
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-danger-bg: var(--danger-bg);
+  --color-danger-border: var(--danger-border);
+
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-bg: var(--info-bg);
+  --color-info-border: var(--info-border);
+
+  --color-neutral: var(--neutral);
+  --color-neutral-foreground: var(--neutral-foreground);
+  --color-neutral-bg: var(--neutral-bg);
+  --color-neutral-border: var(--neutral-border);
+
+  /* Ticket statuses */
+  --color-status-open: var(--status-open);
+  --color-status-open-bg: var(--status-open-bg);
+  --color-status-open-border: var(--status-open-border);
+
+  --color-status-in-progress: var(--status-in-progress);
+  --color-status-in-progress-bg: var(--status-in-progress-bg);
+  --color-status-in-progress-border: var(--status-in-progress-border);
+
+  --color-status-pending: var(--status-pending);
+  --color-status-pending-bg: var(--status-pending-bg);
+  --color-status-pending-border: var(--status-pending-border);
+
+  --color-status-resolved: var(--status-resolved);
+  --color-status-resolved-bg: var(--status-resolved-bg);
+  --color-status-resolved-border: var(--status-resolved-border);
+
+  --color-status-closed: var(--status-closed);
+  --color-status-closed-bg: var(--status-closed-bg);
+  --color-status-closed-border: var(--status-closed-border);
+
+  /* Ticket priorities */
+  --color-priority-low: var(--priority-low);
+  --color-priority-low-bg: var(--priority-low-bg);
+  --color-priority-low-border: var(--priority-low-border);
+
+  --color-priority-medium: var(--priority-medium);
+  --color-priority-medium-bg: var(--priority-medium-bg);
+  --color-priority-medium-border: var(--priority-medium-border);
+
+  --color-priority-high: var(--priority-high);
+  --color-priority-high-bg: var(--priority-high-bg);
+  --color-priority-high-border: var(--priority-high-border);
+
+  --color-priority-urgent: var(--priority-urgent);
+  --color-priority-urgent-bg: var(--priority-urgent-bg);
+  --color-priority-urgent-border: var(--priority-urgent-border);
+
+  /* SLA states */
+  --color-sla-normal: var(--sla-normal);
+  --color-sla-normal-bg: var(--sla-normal-bg);
+  --color-sla-normal-border: var(--sla-normal-border);
+
+  --color-sla-warning: var(--sla-warning);
+  --color-sla-warning-bg: var(--sla-warning-bg);
+  --color-sla-warning-border: var(--sla-warning-border);
+
+  --color-sla-breached: var(--sla-breached);
+  --color-sla-breached-bg: var(--sla-breached-bg);
+  --color-sla-breached-border: var(--sla-breached-border);
+
+  --color-sla-completed: var(--sla-completed);
+  --color-sla-completed-bg: var(--sla-completed-bg);
+  --color-sla-completed-border: var(--sla-completed-border);
+
+  /* Radius scale */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+
+  /* Elevation utilities: shadow-card and shadow-popover */
+  --shadow-card: var(--elevation-card);
+  --shadow-popover: var(--elevation-popover);
+
+  /* Motion */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0, 0, 1.1);
+}
+
+/* ---------------------------------------------------------------
+   BASE STYLES
+   --------------------------------------------------------------- */
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    border-color: var(--border);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
+
+  body {
+    min-height: 100%;
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    color: var(--selection-foreground);
+    background-color: var(--selection-background);
+  }
+
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* ---------------------------------------------------------------
+   SCROLLBARS
+   --------------------------------------------------------------- */
 
 * {
-  border-color: var(--border);
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
 
-html {
-  scroll-behavior: smooth;
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
 }
 
-button,
-a {
-  -webkit-tap-highlight-color: transparent;
+::-webkit-scrollbar-thumb {
+  border: 2px solid var(--scrollbar-track);
+  border-radius: 999px;
+  background: var(--scrollbar-thumb);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* ---------------------------------------------------------------
+   REDUCED MOTION
+   --------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

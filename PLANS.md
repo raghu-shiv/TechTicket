@@ -6,7 +6,177 @@ The roadmap is intentionally incremental: each feature should be
 implemented, built, and verified before moving to the next dependent
 feature.
 
-# Current Phase
+# Current Priority — Frontend UI/UX Design Refresh
+
+**Status: PLANNED — Phase 1 is the next implementation step**
+
+The next priority is a presentation-only upgrade of the existing TechTicket
+frontend. The goal is to make the product feel like a cohesive, polished
+enterprise SaaS application while preserving all existing frontend behavior.
+Both light and dark themes must be designed and verified independently.
+
+## Design Direction
+
+- Retain the existing orange brand accent, using it intentionally for primary
+  actions, active navigation, and important interactive states.
+- Establish a consistent visual hierarchy for page titles, section headings,
+  KPI labels, ticket metadata, form labels, and supporting text.
+- Create coordinated light/dark surface layers, borders, inputs, popovers,
+  focus rings, shadows, radii, and semantic colors.
+- Improve scanability for tickets, status and priority indicators, SLA states,
+  operational workflows, and analytics.
+- Keep layouts responsive across mobile, tablet, laptop, and wide desktop widths.
+- Use accessible contrast, visible keyboard focus, clear interactive targets,
+  non-color status cues, and reduced-motion-aware transitions.
+- Use `apps/web/app/globals.css` as the source of truth for theme tokens,
+  typography, and global presentation conventions.
+
+## Scope Boundary — Preserve Frontend Logic
+
+This is a visual design refresh, not a functional rewrite.
+
+**In scope:** global CSS tokens, font stack and type scale, Tailwind presentation
+classes, spacing, responsive composition, surface treatments, borders, shadows,
+hover/focus styles, and visual-only refinements to existing components.
+
+**Out of scope:** API clients, React Query hooks and query keys, Zustand actions,
+state transitions, form validation, event handlers, routes and destinations,
+authorization conditions, data calculations, backend contracts, or workflow
+semantics. If a visual change requires functional behavior to change, defer that
+change rather than including it silently.
+
+## Implementation Phases
+
+### UI/UX-1 — Global Design System
+
+**COMPLETE**
+
+Primary file: `apps/web/app/globals.css`.
+
+- Refine semantic light and dark tokens for page backgrounds, cards, elevated
+  surfaces, popovers, foregrounds, muted text, borders, inputs, and focus rings.
+- Define typography conventions, a deliberate system font stack, heading/body
+  scales, line heights, radii, shadows, and transition conventions.
+- Normalize semantic colors for ticket status, priority, SLA states, success,
+  warning, and errors.
+- Review global focus-visible, text-selection, and reduced-motion treatment.
+- Preserve the existing `.dark` class and `next-themes` integration.
+
+**Exit criteria:** tokens render correctly in both themes; existing semantic
+Tailwind classes continue to work; no application logic is changed.
+
+### UI/UX-2 — Application Shell and Navigation
+
+**NEXT**
+
+Files: `components/layout/app-shell.tsx`, `sidebar.tsx`, `topbar.tsx`, and
+`mobile-nav.tsx`.
+
+- Refine sidebar branding, navigation spacing, grouping, active-route indicators,
+  and hover/focus states.
+- Polish the top bar, search entry point, notification bell, account menu, and
+  settings affordance.
+- Standardize page gutters, content width, header alignment, and vertical rhythm.
+- Preserve mobile drawer behavior, focus management, keyboard handling, and routes.
+
+### UI/UX-3 — Shared UI Components
+
+**PLANNED**
+
+Scope: `components/ui/` and `components/shared/`.
+
+- Unify buttons, cards, badges, inputs, selects, textareas, and form controls.
+- Align control heights, radii, typography, disabled states, hover behavior, and
+  focus rings.
+- Refine `PageHeader`, `StatCard`, `EmptyState`, `ErrorState`, and `LoadingState`.
+- Reuse shared presentation components where possible without changing behavior.
+
+### UI/UX-4 — Core Ticketing Experience
+
+**PLANNED**
+
+Scope: Dashboard, Tickets, Ticket Detail, and Create Ticket.
+
+- Dashboard: improve KPI hierarchy, charts, priority breakdowns, SLA warnings,
+  quick actions, and recently updated ticket scanability.
+- Ticket list: refine row density, ticket number/title hierarchy, status/priority
+  badges, assignee presentation, filters, sorting, and pagination.
+- Ticket detail: make ticket metadata, SLA context, workflow/activity, comments,
+  relations, and attachments easier to navigate visually.
+- Ticket creation: improve field grouping, labels, validation feedback, file
+  selection, and submit/cancel hierarchy.
+- Preserve existing ticket creation, assignment, status, comments, approvals,
+  attachment operations, realtime updates, and all data contracts.
+
+### UI/UX-5 — Operational and Administration Pages
+
+**PLANNED**
+
+Scope: Approvals, Ticket Library, Products, Users, Settings, Profile, and
+Notifications.
+
+- Standardize page headers, filters, lists, action placement, badges, and
+  loading/error/empty states.
+- Improve dense-content layouts and clarify primary versus destructive actions.
+- Clearly distinguish planned/unavailable features from supported controls.
+- Keep the **Ticket Library** label consistent and preserve role-aware UI states.
+
+### UI/UX-6 — Analytics and Reporting
+
+**PLANNED**
+
+Scope: `/reports` and specialized report pages.
+
+- Improve KPI hierarchy, chart readability, report filter presentation, legends,
+  date selectors, export controls, tables, and drill-down affordances.
+- Define consistent chart colors that remain distinguishable in both themes.
+- Preserve existing metrics, aggregations, filter behavior, date boundaries,
+  drill-downs, and export functionality.
+
+### UI/UX-7 — Responsive and Accessibility Polish
+
+**PLANNED**
+
+- Check mobile, tablet, laptop, and wide-desktop layouts.
+- Verify keyboard navigation, focus indicators, accessible names, and contrast.
+- Do not use color as the only indicator for ticket status, priority, or urgency.
+- Review target sizes, wrapping, overflow, and responsive table behavior.
+- Ensure animations and transitions respect reduced-motion preferences.
+
+### UI/UX-8 — Regression and Visual Verification
+
+**PLANNED**
+
+- Run frontend tests, TypeScript, lint, and production build checks.
+- Inspect representative routes in both light and dark themes at desktop and
+  mobile widths.
+- Verify that links, menus, forms, filters, pagination, ticket workflows, and
+  theme switching still behave as before.
+- Fix visual regressions and review the browser console.
+
+Verification commands:
+
+```powershell
+docker compose exec web npm run test
+docker compose exec web npx tsc --noEmit
+docker compose exec web npm run lint
+docker compose exec web npm run build
+```
+
+## Execution Order and Completion Criteria
+
+Complete UI/UX-1 first, then UI/UX-2 and UI/UX-3 before restyling individual
+pages. Continue through UI/UX-4 to UI/UX-6, then perform the accessibility and
+regression passes in UI/UX-7 and UI/UX-8. Keep each step small and verifiable.
+
+The visual refresh is complete only when both themes are consistent, responsive
+layouts are checked, all existing frontend interactions remain intact, and the
+frontend quality gates pass. The existing UI-1 through UI-7 functional milestones
+remain complete; this roadmap is a separate visual-design effort.
+
+---
+
+# Platform Delivery History
 
 ## Phase 7 --- Analytics
 
@@ -1270,7 +1440,7 @@ The original milestone sequence has been completed through UI-7:
 7. UI-6 — Settings and Profile navigation — **COMPLETE AND VERIFIED**; organization profile editing, dedicated team management, and notification preferences remain planned.
 8. UI-7 — UI consistency, accessibility, and dead-action sweep — **COMPLETE AND VERIFIED**.
 
-**Next planned milestone:** Phase 8 — Production Hardening, as outlined below. Deferred domain/settings items should be prioritized explicitly and designed before implementation; they are not implicitly included in the completed UI milestones.
+**Next planned milestone:** UI/UX-1 — Global Design System. The Frontend UI/UX Design Refresh roadmap above takes priority before Phase 8 — Production Hardening. Phase 8 remains planned after the visual refresh; deferred domain/settings items should be prioritized explicitly and designed before implementation and are not implicitly included in the completed UI milestones.
 
 Do not begin a milestone by assuming an endpoint or persisted model exists. Inspect the blueprint, current route tree, schema, API contract, and permissions first. Reuse verified services, preserve organization isolation, and document unsupported functionality explicitly.
 
@@ -1278,7 +1448,7 @@ Do not begin a milestone by assuming an endpoint or persisted model exists. Insp
 
 # Phase 8 --- Production Hardening
 
-**PLANNED — AFTER OPERATIONAL UI COMPLETION**
+**PLANNED — AFTER FRONTEND UI/UX DESIGN REFRESH**
 
 - Unit and integration test coverage gaps
 - Full E2E regression and CI enforcement
@@ -2007,19 +2177,20 @@ Phase 7 — Analytics subsequently completed and is now COMPLETE AND VERIFIED.
 
 # Next Development Direction
 
-Phase 4 is complete.
-Phase 5-A through Phase 5-F are **COMPLETE AND VERIFIED**.
-Phase 6-A through Phase 6-F are **COMPLETE AND VERIFIED**.
-Phase 7-A through 7-J are **COMPLETE AND VERIFIED**, including Usage Reports,
-Ticket Library Reports, Exports, and Full Analytics Verification.
+Phases 4 through 7 are **COMPLETE AND VERIFIED**, including Phase 7-A through
+7-J Analytics and Reporting. Product UI-1 through UI-7 are also **COMPLETE AND
+VERIFIED**. Preserve the established Ticket Library naming and the removal of
+Tasks navigation.
 
-Product UI Completion milestones UI-1 through UI-7 are **COMPLETE AND VERIFIED**.
-The desktop and mobile navigation use the **Ticket Library** label, and Tasks
-remains removed. Preserve these decisions across future changes.
+The next planned milestone is **UI/UX-1 — Global Design System** from the
+Frontend UI/UX Design Refresh roadmap at the top of this document. The refresh
+is a presentation-only effort covering both light and dark themes. It must not
+change frontend logic, API contracts, query/state behavior, routing, permissions,
+validation, or business calculations.
 
-The next planned milestone is **Phase 8 — Production Hardening**, covering
-regression/CI enforcement, security and authorization review, performance,
-database/index optimization, observability, backup/restore validation, CI/CD,
-and production deployment validation. Departments, organization profile editing,
-dedicated team management, and notification preferences remain deferred follow-ons
-that require explicit domain/contract design and prioritization.
+The visual roadmap proceeds through the global token system, application shell,
+shared components, core ticketing screens, operational/admin pages, analytics,
+responsive/accessibility polish, and final regression verification. **Phase 8 —
+Production Hardening** remains planned after this visual refresh. Departments,
+organization profile editing, dedicated team management, and notification
+preferences remain deferred follow-ons requiring explicit domain/contract design.

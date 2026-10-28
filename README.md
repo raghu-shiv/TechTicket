@@ -8,20 +8,30 @@ approval workflows.
 
 ## Current Status
 
-**Phase 4 — Workflow is complete and verified through Phase 4-J — Ticket
-History Refinement. Phase 5-A through Phase 5-F are COMPLETE AND VERIFIED.
-Phase 6-A through Phase 6-F — SLA Policy Management, Ticket SLA Timer
-Experience, SLA Warnings, SLA Breach Operations, SLA Dashboard, and Full SLA
-Verification — are COMPLETE AND VERIFIED. Phase 7-A through 7-D — Analytics
-Foundation, Analytics Dashboard, Product Analytics, and Employee Dashboard —
-are COMPLETE AND VERIFIED. Phase 7-E.1 through 7-E.10 — SLA Reports —,
-Phase 7-F — TAT Reports —, and Phase 7-H — Ticket Library Reports — are also
-COMPLETE AND VERIFIED.**
+**Core delivery status:** Phases 4 through 7 are complete and verified.
+Product UI-1 through UI-7 — including ticket creation, core navigation,
+operational dashboard, global search, notifications, settings/profile, and the
+UI consistency/accessibility sweep — are also complete and verified.
 
-Phase 7 — Analytics remains in progress overall. The next implementation is
-7-G — Usage Reports. TAT Reports remains a separate reporting surface for
-actual elapsed operational time, explicitly distinguished from SLA target
-duration and compliance.
+**Current priority: Frontend UI/UX Design Refresh — PLANNED; UI/UX-1 is next.**
+This is a presentation-only redesign of the existing Next.js frontend. Both
+light and dark themes will be upgraded, with `apps/web/app/globals.css` as the
+source of truth for colors, typography, surface tokens, radii, and global
+presentation conventions. Frontend logic and existing behavior are out of scope.
+
+Latest user-confirmed UI-7 verification:
+
+```text
+Frontend tests                 26 files, 292/292 tests passed
+Frontend TypeScript            PASS
+Frontend lint                  PASS
+API E2E regression checkpoint  41 files, 564/564 tests passed
+Manual UI verification         PASS
+```
+
+The API E2E count above is the reported regression checkpoint; it is retained
+as a project record rather than a claim that the suite was rerun during the
+latest visual-planning step.
 
 Latest verified backend state:
 
@@ -67,6 +77,108 @@ Latest verified backend state:
     comparisons
 
 See [`PLANS.md`](./PLANS.md) for the detailed implementation tracker.
+
+## Frontend UI/UX Design Refresh Roadmap
+
+**Status: PLANNED — UI/UX-1 is the next implementation step**
+
+The goal is to give TechTicket a coherent, polished enterprise SaaS interface
+while preserving existing frontend logic. Keep the orange brand accent, improve
+information hierarchy and scanability, define accessible semantic colors, and
+design both light and dark themes deliberately rather than treating dark mode as
+an inverted light theme.
+
+### Scope Boundary — Visual Changes Only
+
+In scope: `apps/web/app/globals.css` design tokens; typography; spacing; Tailwind
+presentation classes; layout composition; surface, border, radius and shadow
+treatments; hover/focus styles; responsive presentation; and visual-only
+refinements to existing components.
+
+Out of scope: API clients, React Query hooks/query keys, Zustand actions, state
+transitions, form validation, event handlers, routes and destinations,
+authorization conditions, data calculations, backend contracts, and workflow
+semantics. If a visual improvement requires a functional change, defer it rather
+than including it silently.
+
+### UI/UX-1 — Global Design System (**PLANNED — NEXT**)
+
+Primary file: `apps/web/app/globals.css`.
+
+- Refine light/dark tokens for page background, cards, elevated surfaces,
+  popovers, foregrounds, muted text, borders, inputs, and focus rings.
+- Define a deliberate system font stack, typography scale, line heights, radii,
+  shadows, and transition conventions.
+- Normalize semantic colors for ticket status, priority, SLA states, success,
+  warning, and errors.
+- Review global focus-visible, text-selection, and reduced-motion behavior.
+- Preserve the `.dark` class and existing `next-themes` integration.
+
+### UI/UX-2 — Application Shell and Navigation (**PLANNED**)
+
+Refine the sidebar, top bar, search and notification entry points, account menu,
+settings affordance, content width, page gutters, active-route indicators, and
+mobile drawer presentation. Preserve the existing routes, focus handling,
+keyboard behavior, and navigation actions.
+
+### UI/UX-3 — Shared UI Components (**PLANNED**)
+
+Unify buttons, cards, badges, inputs, selects, textareas, `PageHeader`, `StatCard`,
+and shared loading/error/empty states. Align control heights, typography,
+radii, disabled treatments, hover behavior, and focus rings without changing
+component behavior.
+
+### UI/UX-4 — Core Ticketing Experience (**PLANNED**)
+
+Refresh the Dashboard KPI hierarchy, charts and quick actions; ticket-list rows,
+filters and pagination; ticket-detail metadata, workflow, comments, relations,
+attachments and SLA context; and ticket-creation form grouping and feedback.
+Preserve all existing ticket data, status transitions, assignments, approvals,
+attachments, comments, realtime behavior, and API contracts.
+
+### UI/UX-5 — Operational and Administration Pages (**PLANNED**)
+
+Apply the shared design system to Approvals, Ticket Library, Products, Users,
+Settings, Profile, and Notifications. Improve dense-content readability, action
+hierarchy, status badges, and loading/error/empty states. Keep **Ticket Library**
+labeling consistent and preserve role-aware presentation.
+
+### UI/UX-6 — Analytics and Reporting (**PLANNED**)
+
+Refine KPI hierarchy, chart readability and color contrast, legends, date selectors,
+filters, tables, exports, and drill-down affordances for `/reports` and specialized
+reports. Keep existing metrics, aggregations, filters, date boundaries, and export
+behavior unchanged.
+
+### UI/UX-7 — Responsive and Accessibility Polish (**PLANNED**)
+
+Check mobile, tablet, laptop, and wide-desktop layouts; keyboard navigation;
+visible focus indicators; accessible names; contrast; non-color status cues;
+interactive target sizes; text wrapping and overflow; and reduced-motion behavior.
+
+### UI/UX-8 — Regression and Visual Verification (**PLANNED**)
+
+Verify representative routes in both themes at desktop and mobile widths. Run
+frontend tests, TypeScript, lint, and production build; verify existing links,
+menus, forms, filters, pagination, ticket workflows, and theme switching; and
+review browser-console warnings.
+
+```powershell
+docker compose exec web npm run test
+docker compose exec web npx tsc --noEmit
+docker compose exec web npm run lint
+docker compose exec web npm run build
+```
+
+**Execution order:** complete UI/UX-1 first, then the application shell and shared
+components (UI/UX-2 and UI/UX-3), followed by core ticketing, operational/admin
+pages, analytics, accessibility, and regression verification. The visual refresh
+is complete only after both themes and responsive layouts are checked and existing
+frontend behavior remains intact. Phase 8 — Production Hardening remains planned
+after this redesign.
+
+See [`PLANS.md`](./PLANS.md) for the detailed milestone tracker and exit criteria.
+
 
 ## Phase 5 Productivity Checkpoint
 
@@ -434,9 +546,9 @@ Production build     SUCCESS
 
 ## Phase 4-J --- Ticket History Refinement
 
-**NEXT**
+**COMPLETE AND VERIFIED**
 
-Planned scope:
+Implemented and verified scope:
 
 -   Activity categorization
 -   Timeline metadata
@@ -973,11 +1085,11 @@ Frontend tests                  7/7 files, 86/86 tests passed
 Frontend production build       SUCCESS
 ```
 
-Phase 6 — SLA is complete and verified. Phase 7 — Analytics remains in progress overall; 7-A through 7-D, 7-E.1 through 7-E.10, 7-F TAT Reports, and 7-H Ticket Library Reports are complete and verified.
+Phase 6 — SLA and Phase 7 — Analytics are complete and verified, including 7-G Usage Reports, 7-I Exports, and 7-J Full Analytics Verification. The next priority is the Frontend UI/UX Design Refresh documented above.
 
 ## Phase 7 — Analytics
 
-**Status: IN PROGRESS**
+**Status: COMPLETE AND VERIFIED**
 
 Phase 7 turns the existing ticket, activity, SLA, assignment, organization,
 and ticket-library data into organization-scoped analytics and reporting.
@@ -1211,10 +1323,16 @@ messages were not reported as failed test assertions.
 
 ### 7-G — Usage Reports
 
-**PLANNED**
+**COMPLETE AND VERIFIED**
 
-Organization usage analytics from persisted ticket, activity, comment,
-attachment, approval, notification, and supported user-activity data.
+Implemented `/reports/usage` using persisted ticket, activity, comment,
+attachment, approval, membership, and supported user-activity data. The report
+includes ticket creation/activity, comments, attachment usage, approval volume,
+active users/agents, summary metrics, date-range reporting, and daily trends.
+Notification counts remain explicitly unavailable because notification activity
+is not persisted in a suitable form; no fabricated counts or duplicate persistence
+were introduced. API E2E, frontend TypeScript/lint/tests/build, and manual UI
+verification passed at the recorded milestone checkpoint.
 
 ### 7-H — Ticket Library Reports
 
@@ -1263,19 +1381,31 @@ confirmed that the UI was verified and behaved as expected.
 
 ### 7-I — Exports
 
-**PLANNED**
+**COMPLETE AND VERIFIED**
 
-Controlled CSV, XLSX where justified, and JSON exports using the same
-organization-scoped metric/query definitions as on-screen reports.
+Implemented controlled **CSV and JSON** analytics/report exports using the same
+organization-scoped query and metric definitions as on-screen reports. Exports
+preserve supported filters/date ranges, enforce server-side authorization and
+organization isolation, define stable field contracts, stream serialization, and
+neutralize spreadsheet formula injection in CSV text fields. The current report
+payload is assembled in memory before serialization; database cursor/batch streaming
+for very large exports remains a possible future enhancement. Analytics export
+E2E tests passed 7/7, and backend/frontend quality gates passed at the recorded
+milestone checkpoint.
 
 ### 7-J — Full Analytics Verification
 
-**PLANNED**
+**COMPLETE AND VERIFIED**
 
-Final Phase 7 verification will cover analytics tests, report E2E coverage,
-organization isolation, permissions, date/time boundaries, empty states,
-aggregation correctness, drill-downs, exports, backend/frontend lint,
-TypeScript, builds, full regression, and documentation.
+Final Phase 7 verification covered analytics tests, focused report E2E coverage,
+organization isolation, permissions, date/time boundaries, empty/no-data states,
+aggregation correctness, drill-downs, export correctness, backend/frontend
+TypeScript, lint, production builds, full regression, and documentation.
+
+Recorded Phase 7 checkpoint: 44 backend unit tests, 524 API E2E tests, and 205
+frontend tests passed; backend/frontend TypeScript, lint, production builds, and
+manual analytics UI verification passed. Later UI milestones expanded the suite;
+see the current status at the top of this README for the more recent UI-7 checkpoint.
 
 ## Roadmap
 
@@ -1331,14 +1461,14 @@ TypeScript, builds, full regression, and documentation.
     -   4-I.6 --- Assignment transition coverage --- **COMPLETE**
     -   4-I.7 --- Realtime queue membership changes --- **COMPLETE**
     -   4-I.8 --- Full verification --- **COMPLETE AND VERIFIED**
--   Ticket history refinement (4-J) --- **NEXT**
-    -   Activity categorization --- **PLANNED**
-    -   Timeline metadata --- **PLANNED**
-    -   Human-readable event descriptions --- **PLANNED**
-    -   Actor presentation --- **PLANNED**
-    -   History filtering --- **PLANNED**
-    -   Pagination --- **PLANNED**
-    -   Realtime history integration --- **PLANNED**
+-   Ticket history refinement (4-J) --- **COMPLETE AND VERIFIED**
+    -   Activity categorization --- **COMPLETE AND VERIFIED**
+    -   Timeline metadata --- **COMPLETE AND VERIFIED**
+    -   Human-readable event descriptions --- **COMPLETE AND VERIFIED**
+    -   Actor presentation --- **COMPLETE AND VERIFIED**
+    -   History filtering --- **COMPLETE AND VERIFIED**
+    -   Pagination --- **COMPLETE AND VERIFIED**
+    -   Realtime history integration --- **COMPLETE AND VERIFIED**
 
 ### Phase 5 --- Productivity
 
@@ -1374,10 +1504,10 @@ TypeScript, builds, full regression, and documentation.
 -   7-D Employee Dashboard --- **COMPLETE AND VERIFIED**
 -   7-E SLA Reports --- **COMPLETE AND VERIFIED**
 -   7-F TAT Reports --- **COMPLETE AND VERIFIED**
--   7-G Usage Reports --- **PLANNED**
+-   7-G Usage Reports --- **COMPLETE AND VERIFIED**
 -   7-H Ticket Library Reports --- **COMPLETE AND VERIFIED**
--   7-I Exports --- **PLANNED**
--   7-J Full Analytics Verification --- **PLANNED**
+-   7-I Exports --- **COMPLETE AND VERIFIED**
+-   7-J Full Analytics Verification --- **COMPLETE AND VERIFIED**
 
 ### Production Hardening
 
@@ -1447,6 +1577,11 @@ Phase 7-D Employee Dashboard          COMPLETE AND VERIFIED
 Phase 7-E SLA Reports UI              COMPLETE AND VERIFIED
 Phase 7-F TAT Reports                 COMPLETE AND VERIFIED
 Phase 7-H Ticket Library Reports       COMPLETE AND VERIFIED
+Phase 7-G Usage Reports                 COMPLETE AND VERIFIED
+Phase 7-I Exports                       COMPLETE AND VERIFIED
+Phase 7-J Full Analytics Verification   COMPLETE AND VERIFIED
+UI-1 through UI-7 product milestones    COMPLETE AND VERIFIED
+Frontend UI/UX Design Refresh            PLANNED — UI/UX-1 NEXT
 ```
 
 ## Phase 6 — SLA
@@ -1455,7 +1590,7 @@ Phase 7-H Ticket Library Reports       COMPLETE AND VERIFIED
 
 Phase 3-H established the underlying SLA automation foundation. Phase 6
 focuses on the product-level SLA experience and operational workflow.
-Phase 6-F is complete and verified; Phase 7 Analytics is now the active roadmap.
+Phase 6-F is complete and verified. Phase 7 Analytics has since been completed and verified; the next priority is the Frontend UI/UX Design Refresh.
 
 - SLA policies
 - SLA timers
@@ -1473,16 +1608,18 @@ Implementation boundary:
 
 # Next Development Direction
 
-Phase 4 is complete.
-Phase 5-A through Phase 5-F are **COMPLETE AND VERIFIED**.
-Phase 6-A through Phase 6-F are **COMPLETE AND VERIFIED**.
-Phase 7-A through 7-D — Analytics Foundation, Analytics Dashboard, Product
-Analytics, and Employee Dashboard — are **COMPLETE AND VERIFIED**.
-Phase 7-E.1 through 7-E.10 — SLA Reports — are **COMPLETE AND VERIFIED**.
-Phase 7-F — TAT Reports — is **COMPLETE AND VERIFIED**.
-Phase 7-H — Ticket Library Reports — is **COMPLETE AND VERIFIED**.
+Phases 4 through 7 are **COMPLETE AND VERIFIED**, including Usage Reports,
+Ticket Library Reports, Exports, and Full Analytics Verification. Product UI-1
+through UI-7 are **COMPLETE AND VERIFIED**. Preserve the established Ticket
+Library label and keep the removed Tasks navigation out of the product.
 
-Phase 7 remains in progress overall. The next implementation is **7-G — Usage
-Reports**, using persisted ticket/activity, comment, attachment, approval,
-notification, and supported user-activity data. 7-I Exports and 7-J Full
-Analytics Verification remain planned for later.
+The next planned milestone is **UI/UX-1 — Global Design System**, followed by
+the eight-phase Frontend UI/UX Design Refresh roadmap near the top of this README.
+This is a presentation-only effort for both light and dark themes; frontend logic,
+API contracts, routing, state behavior, permissions, validation, and calculations
+must remain unchanged.
+
+Phase 8 — Production Hardening remains planned after the visual refresh.
+Departments, organization profile editing, dedicated team management, and
+notification preferences remain deferred follow-ons that need explicit domain,
+contract, authorization, and prioritization decisions before implementation.
