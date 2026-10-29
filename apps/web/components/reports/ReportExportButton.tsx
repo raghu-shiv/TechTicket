@@ -112,7 +112,7 @@ export function ReportExportButton({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 report-export-control">
       <div className="flex flex-wrap items-center gap-2">
         <label className="sr-only" htmlFor={`export-format-${report}`}>
           Export format
@@ -121,7 +121,7 @@ export function ReportExportButton({
         <select
           id={`export-format-${report}`}
           aria-label="Export format"
-          className="rounded-md border bg-background px-3 py-2 text-sm"
+          className="report-control"
           value={format}
           onChange={(event) => setFormat(event.target.value as ExportFormat)}
           disabled={exporting || disabled}
@@ -132,7 +132,7 @@ export function ReportExportButton({
 
         <button
           type="button"
-          className="rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+          className="report-export-button"
           onClick={() => void downloadExport()}
           disabled={
             exporting || disabled || organization.isLoading || !organizationId
@@ -143,7 +143,10 @@ export function ReportExportButton({
       </div>
 
       {error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p
+          role="alert"
+          className="rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-sm text-destructive"
+        >
           {error}
         </p>
       )}

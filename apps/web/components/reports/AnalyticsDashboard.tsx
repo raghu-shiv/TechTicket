@@ -161,7 +161,7 @@ export function AnalyticsDashboard() {
           </p>
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="report-filter-toolbar flex flex-col gap-3 sm:flex-row">
           <div>
             <label
               htmlFor="analytics-from"
@@ -173,6 +173,7 @@ export function AnalyticsDashboard() {
             <Input
               id="analytics-from"
               type="date"
+              className="report-control"
               value={from}
               onChange={(event) => setFrom(event.target.value)}
             />
@@ -189,6 +190,7 @@ export function AnalyticsDashboard() {
             <Input
               id="analytics-to"
               type="date"
+              className="report-control"
               value={to}
               onChange={(event) => setTo(event.target.value)}
             />
@@ -263,7 +265,7 @@ export function AnalyticsDashboard() {
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <div className="rounded-lg border p-4">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="size-4 text-emerald-600" />
+                  <CheckCircle2 className="size-4 text-success" />
 
                   <span className="text-sm font-medium">SLA compliant</span>
                 </div>
@@ -275,7 +277,7 @@ export function AnalyticsDashboard() {
 
               <div className="rounded-lg border p-4">
                 <div className="flex items-center gap-2">
-                  <AlertTriangle className="size-4 text-red-600" />
+                  <AlertTriangle className="size-4 text-danger" />
 
                   <span className="text-sm font-medium">SLA breached</span>
                 </div>
@@ -460,7 +462,7 @@ function VolumeChart({
 
   return (
     <div className="w-full">
-      <div className="w-full overflow-x-auto">
+      <div className="w-full overflow-x-auto report-chart-scroll">
         <svg
           viewBox={`0 0 ${width} ${height}`}
           className="h-auto min-w-[600px] w-full"
@@ -538,7 +540,7 @@ function VolumeChart({
                   width={barWidth}
                   height={barHeight}
                   rx="4"
-                  className="fill-primary/70 transition-opacity hover:opacity-80"
+                  className="fill-chart-1/80 transition-opacity hover:opacity-90"
                 />
 
                 {/* Value above bar */}

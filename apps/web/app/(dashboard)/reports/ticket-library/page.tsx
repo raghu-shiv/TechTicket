@@ -7,6 +7,7 @@ export default function TicketLibraryReportPage() {
       <PageHeader
         title="Ticket Library Reports"
         description="Explore tickets by status, priority, team, employee, date, unassigned state, and saved-filter criteria. Open any count to view its matching tickets."
+        className="mb-0"
       />
       <TicketLibraryReport />
     </div>

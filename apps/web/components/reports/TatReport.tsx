@@ -40,7 +40,7 @@ function MetricCard({ title, metric }: { title: string; metric: TatMetric }) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
-        <p className="text-2xl font-semibold">
+        <p className="font-display text-3xl font-semibold leading-none tracking-tight tabular-nums">
           {formatMinutes(metric.averageMinutes)}
         </p>
         <p className="text-sm text-muted-foreground">
@@ -78,8 +78,8 @@ function BreakdownTable({
             No data for the selected filters.
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto report-table-wrap">
+            <table className="w-full text-sm report-table">
               <thead>
                 <tr className="border-b text-left text-muted-foreground">
                   <th className="py-2 pr-4 font-medium">Group</th>
@@ -149,7 +149,7 @@ export function TatReport() {
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="report-filter-panel">
         <CardHeader>
           <CardTitle>Actual elapsed operational time</CardTitle>
         </CardHeader>
@@ -158,52 +158,50 @@ export function TatReport() {
             TAT is measured from actual ticket timestamps. SLA target durations
             and compliance are reported separately.
           </p>
+          <div className="flex justify-between">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <label className="space-y-1 text-sm">
+                <span className="font-medium">Created from</span>
+                <input
+                  className="report-control"
+                  value={from}
+                  onChange={(event) => {
+                    setFrom(event.target.value);
+                    setPage(1);
+                  }}
+                />
+              </label>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <label className="space-y-1 text-sm">
-              <span className="font-medium">Created from</span>
-              <input
-                className="w-full rounded-md border bg-background px-3 py-2"
-                type="date"
-                value={from}
-                onChange={(event) => {
-                  setFrom(event.target.value);
-                  setPage(1);
-                }}
-              />
-            </label>
-
-            <label className="space-y-1 text-sm">
-              <span className="font-medium">Created to</span>
-              <input
-                className="w-full rounded-md border bg-background px-3 py-2"
-                type="date"
-                value={to}
-                onChange={(event) => {
-                  setTo(event.target.value);
-                  setPage(1);
-                }}
-              />
-            </label>
+              <label className="space-y-1 text-sm">
+                <span className="font-medium">Created to</span>
+                <input
+                  className="report-control"
+                  type="date"
+                  value={to}
+                  onChange={(event) => {
+                    setTo(event.target.value);
+                    setPage(1);
+                  }}
+                />
+              </label>
+            </div>
+            <ReportExportButton
+              report="tat"
+              params={{
+                dateField: "createdAt",
+                from: from || undefined,
+                to: to || undefined,
+                status: "RESOLVED",
+                page,
+                limit: 25,
+              }}
+            />
           </div>
         </CardContent>
-        <ReportExportButton
-          report="tat"
-          params={{
-            dateField: "createdAt",
-            from: from || undefined,
-            to: to || undefined,
-            status: "RESOLVED",
-            page,
-            limit: 25,
-          }}
-        />
       </Card>
-
       {isLoading && (
         <p className="text-sm text-muted-foreground">Loading TAT report…</p>
       )}
-
       {isError && (
         <p role="alert" className="text-sm text-destructive">
           {error instanceof Error
@@ -211,7 +209,6 @@ export function TatReport() {
             : "Unable to load TAT report."}
         </p>
       )}
-
       {report && (
         <>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -262,8 +259,8 @@ export function TatReport() {
                   No trend data for the selected period.
                 </p>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                <div className="overflow-x-auto report-table-wrap">
+                  <table className="w-full text-sm report-table">
                     <thead>
                       <tr className="border-b text-left text-muted-foreground">
                         <th className="py-2 pr-4 font-medium">Date (UTC)</th>
@@ -317,8 +314,8 @@ export function TatReport() {
                   No resolved tickets with valid resolution duration.
                 </p>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                <div className="overflow-x-auto report-table-wrap">
+                  <table className="w-full text-sm report-table">
                     <thead>
                       <tr className="border-b text-left text-muted-foreground">
                         <th className="py-2 pr-4 font-medium">Ticket</th>
@@ -334,7 +331,7 @@ export function TatReport() {
                         <tr className="border-b last:border-0" key={ticket.id}>
                           <td className="py-3 pr-4">
                             <a
-                              className="font-medium underline underline-offset-4"
+                              className="report-drilldown-link"
                               href={`/tickets/${ticket.id}`}
                             >
                               {ticket.ticketNumber}

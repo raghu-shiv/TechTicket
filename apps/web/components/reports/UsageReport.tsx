@@ -123,7 +123,9 @@ function MetricCard({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-1">
-        <p className="text-2xl font-semibold">{formatCount(value)}</p>
+        <p className="font-display text-3xl font-semibold leading-none tracking-tight tabular-nums">
+          {formatCount(value)}
+        </p>
         {description && (
           <p className="text-xs text-muted-foreground">{description}</p>
         )}
@@ -183,7 +185,7 @@ export function UsageReport() {
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="report-filter-panel">
         <CardHeader>
           <CardTitle>Organization usage</CardTitle>
         </CardHeader>
@@ -199,7 +201,7 @@ export function UsageReport() {
               <span className="font-medium">From date (UTC)</span>
               <input
                 aria-label="From date"
-                className="w-full rounded-md border bg-background px-3 py-2"
+                className="report-control"
                 type="date"
                 value={from}
                 onChange={(event) => setFrom(event.target.value)}
@@ -210,7 +212,7 @@ export function UsageReport() {
               <span className="font-medium">To date (UTC)</span>
               <input
                 aria-label="To date"
-                className="w-full rounded-md border bg-background px-3 py-2"
+                className="report-control"
                 type="date"
                 value={to}
                 onChange={(event) => setTo(event.target.value)}
@@ -372,7 +374,7 @@ export function UsageReport() {
                               aria-valuenow={value}
                             >
                               <div
-                                className="h-full rounded-full bg-primary"
+                                className="h-full rounded-full bg-chart-1"
                                 style={{ width: `${width}%` }}
                               />
                             </div>
@@ -399,8 +401,8 @@ export function UsageReport() {
                   No daily usage records are available.
                 </p>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                <div className="overflow-x-auto report-table-wrap">
+                  <table className="w-full text-sm report-table">
                     <thead>
                       <tr className="border-b text-left text-muted-foreground">
                         <th className="py-2 pr-4 font-medium">Date (UTC)</th>

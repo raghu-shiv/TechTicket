@@ -172,7 +172,7 @@ export function ProductDashboard() {
           </p>
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="report-filter-toolbar flex flex-col gap-3 sm:flex-row">
           <div>
             <label
               htmlFor="product-analytics-from"
@@ -184,6 +184,7 @@ export function ProductDashboard() {
             <Input
               id="product-analytics-from"
               type="date"
+              className="report-control"
               value={from}
               onChange={(event) => setFrom(event.target.value)}
             />
@@ -200,6 +201,7 @@ export function ProductDashboard() {
             <Input
               id="product-analytics-to"
               type="date"
+              className="report-control"
               value={to}
               onChange={(event) => setTo(event.target.value)}
             />
@@ -217,7 +219,7 @@ export function ProductDashboard() {
               id="product-analytics-product"
               value={productId}
               onChange={(event) => setProductId(event.target.value)}
-              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus:ring-2 focus:ring-ring"
+              className="report-control"
             >
               <option value="">All products</option>
 
@@ -377,8 +379,8 @@ export function ProductDashboard() {
               />
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px] text-sm">
+            <div className="overflow-x-auto report-table-wrap">
+              <table className="w-full min-w-[900px] text-sm report-table">
                 <thead>
                   <tr className="border-y bg-muted/30 text-left">
                     <th className="px-5 py-3 font-medium text-muted-foreground">
@@ -429,7 +431,7 @@ export function ProductDashboard() {
                         <p
                           className={
                             product.isActive
-                              ? "mt-1 text-xs text-emerald-600"
+                              ? "mt-1 text-xs text-success"
                               : "mt-1 text-xs text-muted-foreground"
                           }
                         >
@@ -511,7 +513,7 @@ function SelectedProduct({ product }: { product: ProductAnalyticsProduct }) {
                 <span
                   className={
                     product.isActive
-                      ? "rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600"
+                      ? "rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success"
                       : "rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
                   }
                 >
@@ -645,7 +647,7 @@ function PriorityDistribution({
 
                 <div className="h-2 overflow-hidden rounded-full bg-muted">
                   <div
-                    className="h-full rounded-full bg-primary"
+                    className={`h-full rounded-full ${priorityBarClass(point.label)}`}
                     style={{
                       width: `${Math.min(Math.max(point.percentage, 0), 100)}%`,
                     }}
@@ -815,7 +817,7 @@ function ProductTrendChart({
     .join(" ");
 
   return (
-    <div className="w-full overflow-x-auto">
+    <div className="w-full overflow-x-auto report-chart-scroll">
       <svg
         viewBox={`0 0 ${width} ${height}`}
         className="h-auto min-w-[600px] w-full"
@@ -860,7 +862,7 @@ function ProductTrendChart({
         <path
           d={path}
           fill="none"
-          className="stroke-primary"
+          className="stroke-chart-1"
           strokeWidth="3"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -872,7 +874,7 @@ function ProductTrendChart({
 
           return (
             <g key={`${point.date}-${index}`}>
-              <circle cx={x} cy={y} r="4" className="fill-primary" />
+              <circle cx={x} cy={y} r="4" className="fill-chart-1" />
 
               <title>
                 {formatDate(point.date)}: {point.count}{" "}
@@ -898,4 +900,19 @@ function ProductTrendChart({
       </svg>
     </div>
   );
+}
+
+function priorityBarClass(label: string): string {
+  switch (label.toUpperCase()) {
+    case "LOW":
+      return "bg-chart-2";
+    case "MEDIUM":
+      return "bg-chart-3";
+    case "HIGH":
+      return "bg-chart-5";
+    case "URGENT":
+      return "bg-chart-6";
+    default:
+      return "bg-chart-1";
+  }
 }

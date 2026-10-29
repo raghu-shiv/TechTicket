@@ -7,6 +7,7 @@ export default function TatReportPage() {
       <PageHeader
         title="TAT Reports"
         description="Analyze actual elapsed time to first response and resolution, independently of SLA targets and compliance."
+        className="mb-0"
       />
       <TatReport />
     </div>

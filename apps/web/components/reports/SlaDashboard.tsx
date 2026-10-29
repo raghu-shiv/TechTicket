@@ -321,8 +321,8 @@ export function SlaDashboard() {
             />
           ) : (
             <>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+              <div className="overflow-x-auto report-table-wrap">
+                <table className="w-full text-sm report-table">
                   <thead>
                     <tr className="border-b text-left">
                       <th className="px-3 py-3 font-medium">Ticket</th>

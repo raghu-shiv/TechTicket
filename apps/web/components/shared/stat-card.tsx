@@ -22,15 +22,15 @@ export function StatCard({
   trend,
 }: StatCardProps) {
   return (
-    <Card className="h-full">
+    <Card className="h-full overflow-hidden border-border/80 shadow-sm">
       <CardContent className="p-5 sm:p-6">
         <div className="flex h-full items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium leading-5 text-muted-foreground">
+            <p className="text-xs font-semibold uppercase leading-5 tracking-wide text-muted-foreground">
               {title}
             </p>
 
-            <p className="mt-2 font-display text-3xl font-semibold leading-none tracking-tight text-card-foreground tabular-nums">
+            <p className="mt-3 font-display text-3xl font-semibold leading-none tracking-tight text-card-foreground tabular-nums sm:text-4xl">
               {value}
             </p>
 

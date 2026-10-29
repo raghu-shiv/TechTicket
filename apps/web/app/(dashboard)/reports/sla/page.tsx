@@ -7,6 +7,7 @@ export default function SlaDashboardPage() {
       <PageHeader
         title="SLA Dashboard"
         description="Monitor active, at-risk, and breached SLA tickets, compliance, and operational performance."
+        className="mb-0"
       />
 
       <SlaDashboard />

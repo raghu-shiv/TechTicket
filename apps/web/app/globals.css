@@ -188,6 +188,14 @@
   --motion-slow: 260ms;
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-emphasized: cubic-bezier(0.2, 0, 0, 1.1);
+
+  /* Reporting chart palette — light theme */
+  --chart-1: #c2410c;
+  --chart-2: #2563eb;
+  --chart-3: #0f766e;
+  --chart-4: #7c3aed;
+  --chart-5: #b45309;
+  --chart-6: #b91c1c;
 }
 
 /* ---------------------------------------------------------------
@@ -336,6 +344,14 @@
   --scrollbar-track: #111b2b;
   --scrollbar-thumb: #394a61;
   --scrollbar-thumb-hover: #536780;
+
+  /* Reporting chart palette — dark theme */
+  --chart-1: #fb923c;
+  --chart-2: #60a5fa;
+  --chart-3: #2dd4bf;
+  --chart-4: #c4b5fd;
+  --chart-5: #fbbf24;
+  --chart-6: #f87171;
 
   /* Elevation */
   --elevation-card:
@@ -517,6 +533,14 @@
   /* Motion */
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-emphasized: cubic-bezier(0.2, 0, 0, 1.1);
+
+  /* Reporting chart color utilities */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-chart-6: var(--chart-6);
 }
 
 /* ---------------------------------------------------------------
@@ -608,4 +632,212 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ================================================================
+   PHASE 6 — ANALYTICS & REPORTING
+   ================================================================ */
+
+.report-control {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 2.75rem;
+  border: 1px solid var(--input);
+  border-radius: 0.75rem;
+  background-color: var(--background);
+  padding: 0.625rem 0.75rem;
+  color: var(--foreground);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  transition:
+    border-color var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-fast) var(--ease-standard),
+    background-color var(--motion-fast) var(--ease-standard);
+}
+
+.report-control::placeholder {
+  color: var(--muted-foreground);
+  opacity: 0.85;
+}
+
+.report-control:focus-visible {
+  border-color: var(--ring);
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.report-control:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+/* Keep native date input affordances usable in both themes. */
+.report-control[type="date"] {
+  color-scheme: inherit;
+}
+
+/* Filter panels use the same surface as other application cards. */
+.report-filter-panel {
+  border-color: var(--border);
+  background-color: var(--card);
+  box-shadow: var(--elevation-card);
+}
+
+/* Compact filter groups beside dashboard titles. */
+.report-filter-toolbar {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background-color: var(--card);
+  padding: 1rem;
+  box-shadow: var(--elevation-card);
+}
+
+.report-filter-toolbar > div {
+  min-width: 0;
+}
+
+.report-filter-toolbar .report-control {
+  min-width: 0;
+}
+
+/* Export actions are visually primary and remain visibly disabled. */
+.report-export-control {
+  min-width: 0;
+}
+
+.report-export-control .report-control {
+  width: auto;
+}
+
+.report-export-button {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--primary);
+  border-radius: 0.75rem;
+  background-color: var(--primary);
+  padding: 0.625rem 1rem;
+  color: var(--primary-foreground);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  transition:
+    filter var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-fast) var(--ease-standard);
+}
+
+.report-export-button:hover:not(:disabled) {
+  filter: brightness(0.96);
+}
+
+.report-export-button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.report-export-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Horizontal overflow should be contained within the report. */
+.report-table-wrap,
+.report-chart-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.report-chart-scroll svg {
+  display: block;
+  max-width: none;
+}
+
+/* Consistent table headers, padding, and row separation. */
+.report-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: var(--foreground);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.report-table thead th {
+  border-bottom: 1px solid var(--border);
+  background-color: var(--surface-muted);
+  padding: 0.75rem 1rem;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.report-table tbody td {
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 1rem;
+  vertical-align: middle;
+}
+
+.report-table tbody tr {
+  transition: background-color var(--motion-fast) var(--ease-standard);
+}
+
+.report-table tbody tr:hover {
+  background-color: color-mix(in srgb, var(--muted) 55%, transparent);
+}
+
+.report-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+/* Wrap and align chart legends consistently. */
+.report-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+}
+
+.report-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+/* Compact breakdown summaries and drill-down affordances. */
+.report-breakdown-card {
+  border: 1px solid var(--border);
+  border-radius: 0.875rem;
+  background-color: var(--card);
+  padding: 1rem;
+}
+
+.report-drilldown-link {
+  border-radius: 0.25rem;
+  color: var(--primary);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 0.2em;
+  transition: text-decoration-color var(--motion-fast) var(--ease-standard);
+}
+
+.report-drilldown-link:hover {
+  text-decoration-color: currentColor;
+}
+
+.report-drilldown-link:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
 }

@@ -7,6 +7,7 @@ export default function EmployeeDashboardPage() {
       <PageHeader
         title="Employee Dashboard"
         description="Review agent workload, response and resolution performance, SLA compliance, reopen activity, and authorized team comparisons."
+        className="mb-0"
       />
       <EmployeeDashboard />
     </div>

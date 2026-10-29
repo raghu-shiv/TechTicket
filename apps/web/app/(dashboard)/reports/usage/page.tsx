@@ -7,6 +7,7 @@ export default function UsageReportPage() {
       <PageHeader
         title="Usage Reports"
         description="Measure recorded ticket, activity, comment, attachment, and approval usage across your organization."
+        className="mb-0"
       />
       <UsageReport />
     </div>

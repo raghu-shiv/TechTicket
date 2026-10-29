@@ -86,7 +86,7 @@ function FilterSelect({
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        className="report-control"
       >
         {children}
       </select>
@@ -134,7 +134,7 @@ function WorkloadBars({
                 aria-valuenow={row.count}
               >
                 <div
-                  className="h-full rounded-full bg-primary"
+                  className="h-full rounded-full bg-chart-1"
                   style={{ width: `${(row.count / maximum) * 100}%` }}
                 />
               </div>
@@ -250,7 +250,12 @@ export function EmployeeDashboard() {
 
   return (
     <div className="space-y-6">
-      <Card>
+      <ReportExportButton
+        report="employees"
+        disabled={!validRange || denied}
+        params={params}
+      />
+      <Card className="report-filter-panel">
         <CardHeader>
           <CardTitle>Performance filters</CardTitle>
           <p className="text-sm text-muted-foreground">
@@ -264,6 +269,7 @@ export function EmployeeDashboard() {
             From
             <Input
               type="date"
+              className="report-control"
               value={from}
               onChange={(event) => setFrom(event.target.value)}
             />
@@ -272,15 +278,12 @@ export function EmployeeDashboard() {
             To
             <Input
               type="date"
+              className="report-control"
               value={to}
               onChange={(event) => setTo(event.target.value)}
             />
           </label>
-          <ReportExportButton
-            report="employees"
-            disabled={!validRange || denied}
-            params={params}
-          />
+
           {canViewOrganization && (
             <FilterSelect
               label="Employee"
@@ -447,8 +450,8 @@ export function EmployeeDashboard() {
               No tickets were resolved in the selected period.
             </p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+            <div className="overflow-x-auto report-table-wrap">
+              <table className="w-full text-sm report-table">
                 <thead>
                   <tr className="border-b text-left text-muted-foreground">
                     <th className="py-2 pr-4 font-medium">
@@ -473,7 +476,7 @@ export function EmployeeDashboard() {
                           </span>
                           <div className="h-2 flex-1 rounded-full bg-muted">
                             <div
-                              className="h-2 rounded-full bg-primary"
+                              className="h-2 rounded-full bg-chart-1"
                               style={{
                                 width: `${(point.resolvedTickets / Math.max(1, ...report.resolutionTrend.map((item) => item.resolvedTickets))) * 100}%`,
                               }}

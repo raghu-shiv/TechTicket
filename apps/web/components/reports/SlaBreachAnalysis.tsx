@@ -122,11 +122,11 @@ function MetricCard({
 }) {
   const iconClassName =
     variant === "danger"
-      ? "text-red-600"
+      ? "text-danger"
       : variant === "warning"
-        ? "text-amber-600"
+        ? "text-warning"
         : variant === "success"
-          ? "text-emerald-600"
+          ? "text-success"
           : "text-muted-foreground";
 
   return (
@@ -196,8 +196,8 @@ function DimensionTable({
       </CardHeader>
 
       <CardContent>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto report-table-wrap">
+          <table className="w-full text-sm report-table">
             <thead>
               <tr className="border-b text-left">
                 <th className="px-3 py-3 font-medium">Dimension</th>
@@ -350,19 +350,19 @@ function BreachTrend({ points }: { points: SlaBreachTrendPoint[] }) {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle>Breach Trend</CardTitle>
 
-          <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+          <div className="report-legend text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
-              <span className="size-2 rounded-full bg-primary" />
+              <span className="size-2 rounded-full bg-chart-1" />
               Tracked
             </span>
 
             <span className="flex items-center gap-1">
-              <span className="size-2 rounded-full bg-red-500" />
+              <span className="size-2 rounded-full bg-chart-6" />
               Breached
             </span>
 
             <span className="flex items-center gap-1">
-              <span className="size-2 rounded-full bg-amber-500" />
+              <span className="size-2 rounded-full bg-chart-5" />
               At Risk
             </span>
           </div>
@@ -370,7 +370,7 @@ function BreachTrend({ points }: { points: SlaBreachTrendPoint[] }) {
       </CardHeader>
 
       <CardContent>
-        <div className="w-full overflow-x-auto">
+        <div className="w-full overflow-x-auto report-chart-scroll">
           <svg
             viewBox={`0 0 ${width} ${height}`}
             className="h-auto min-w-[650px] w-full"
@@ -408,7 +408,7 @@ function BreachTrend({ points }: { points: SlaBreachTrendPoint[] }) {
             <path
               d={trackedPath}
               fill="none"
-              className="stroke-primary"
+              className="stroke-chart-1"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -417,7 +417,7 @@ function BreachTrend({ points }: { points: SlaBreachTrendPoint[] }) {
             <path
               d={breachedPath}
               fill="none"
-              className="stroke-red-500"
+              className="stroke-chart-6"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -426,7 +426,7 @@ function BreachTrend({ points }: { points: SlaBreachTrendPoint[] }) {
             <path
               d={atRiskPath}
               fill="none"
-              className="stroke-amber-500"
+              className="stroke-chart-5"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -446,14 +446,14 @@ function BreachTrend({ points }: { points: SlaBreachTrendPoint[] }) {
                     cx={x}
                     cy={getY(point.breached)}
                     r="3"
-                    className="fill-red-500"
+                    className="fill-chart-6"
                   />
 
                   <circle
                     cx={x}
                     cy={getY(point.atRisk)}
                     r="3"
-                    className="fill-amber-500"
+                    className="fill-chart-5"
                   />
 
                   {(index === 0 ||
@@ -496,7 +496,7 @@ function PerformanceBreakdown({
             <div>
               <p className="text-xs text-muted-foreground">Breached</p>
 
-              <p className="mt-1 text-2xl font-semibold">
+              <p className="mt-2 font-display text-3xl font-semibold leading-none tracking-tight tabular-nums">
                 {analysis.firstResponse.breached}
               </p>
             </div>
@@ -522,7 +522,7 @@ function PerformanceBreakdown({
             <div>
               <p className="text-xs text-muted-foreground">Breached</p>
 
-              <p className="mt-1 text-2xl font-semibold">
+              <p className="mt-2 font-display text-3xl font-semibold leading-none tracking-tight tabular-nums">
                 {analysis.resolution.breached}
               </p>
             </div>

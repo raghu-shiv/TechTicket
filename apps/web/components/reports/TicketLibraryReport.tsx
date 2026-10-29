@@ -80,14 +80,14 @@ function MetricCard({
       <CardContent>
         <Link
           href={href}
-          className="text-3xl font-semibold underline-offset-4 hover:underline"
+          className="text-3xl report-drilldown-link font-semibold underline-offset-4 hover:underline"
         >
           {formatCount(value)}
         </Link>
         {description && (
           <p className="mt-1 text-xs text-muted-foreground">{description}</p>
         )}
-        <p className="mt-3 text-xs font-medium text-primary">
+        <p className="mt-3 text-xs font-medium text-primary report-drilldown-link">
           View matching tickets →
         </p>
       </CardContent>
@@ -112,7 +112,7 @@ function FilterSelect({
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        className="report-control"
       >
         {children}
       </select>
@@ -136,7 +136,7 @@ function DateFilter({
         type="date"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        className="report-control"
       />
     </label>
   );
@@ -184,7 +184,7 @@ function BreakdownCard({
                 </div>
                 <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
                   <div
-                    className="h-full rounded-full bg-primary/70"
+                    className="h-full rounded-full bg-chart-1/80"
                     style={{
                       width: `${Math.min(100, (row.count / maximum) * 100)}%`,
                     }}
@@ -300,7 +300,11 @@ function TicketLibraryReportContent() {
 
   return (
     <div className="space-y-6">
-      <Card>
+      <ReportExportButton
+        report="ticket-library"
+        params={Object.fromEntries(currentParams.entries())}
+      />
+      <Card className="report-filter-panel">
         <CardHeader>
           <CardTitle>Report filters</CardTitle>
           <p className="text-sm text-muted-foreground">
@@ -321,7 +325,7 @@ function TicketLibraryReportContent() {
                   updateFilters({ search: event.target.value || null })
                 }
                 placeholder="Ticket number, title, description"
-                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                className="report-control"
               />
             </label>
 
@@ -430,7 +434,7 @@ function TicketLibraryReportContent() {
                   })
                 }
                 placeholder="Filter by requester"
-                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                className="report-control"
               />
             </label>
 
@@ -470,10 +474,6 @@ function TicketLibraryReportContent() {
               <option value="createdAt">Created date</option>
               <option value="updatedAt">Updated date</option>
             </FilterSelect>
-            <ReportExportButton
-              report="ticket-library"
-              params={Object.fromEntries(currentParams.entries())}
-            />
           </div>
 
           <div className="flex flex-wrap items-center gap-4">
@@ -484,7 +484,7 @@ function TicketLibraryReportContent() {
             <button
               type="button"
               onClick={() => setLastDays(7)}
-              className="rounded-md border px-3 py-1.5 text-sm hover:bg-muted"
+              className="inline-flex min-h-10 items-center justify-center rounded-xl border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               Last 7 days
             </button>
@@ -492,7 +492,7 @@ function TicketLibraryReportContent() {
             <button
               type="button"
               onClick={() => setLastDays(30)}
-              className="rounded-md border px-3 py-1.5 text-sm hover:bg-muted"
+              className="inline-flex min-h-10 items-center justify-center rounded-xl border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               Last 30 days
             </button>
@@ -507,7 +507,7 @@ function TicketLibraryReportContent() {
                   updatedTo: null,
                 })
               }
-              className="rounded-md border px-3 py-1.5 text-sm hover:bg-muted"
+              className="inline-flex min-h-10 items-center justify-center rounded-xl border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               Clear dates
             </button>
@@ -653,8 +653,8 @@ function TicketLibraryReportContent() {
               No date data for the selected filters.
             </p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+            <div className="overflow-x-auto report-table-wrap">
+              <table className="w-full text-sm report-table">
                 <thead>
                   <tr className="border-b text-left text-muted-foreground">
                     <th className="py-2 pr-4 font-medium">Date</th>
@@ -689,7 +689,7 @@ function TicketLibraryReportContent() {
                         <td className="py-3">
                           <Link
                             href={href}
-                            className="font-medium text-primary hover:underline"
+                            className="report-drilldown-link font-medium text-primary hover:underline"
                           >
                             View tickets
                           </Link>
@@ -723,7 +723,7 @@ function TicketLibraryReportContent() {
               {report.savedFilters.map((savedFilter) => (
                 <div
                   key={savedFilter.id}
-                  className="flex flex-col gap-2 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 transition-colors hover:bg-muted/20 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="min-w-0">
                     <p className="truncate font-medium">{savedFilter.name}</p>
@@ -739,7 +739,7 @@ function TicketLibraryReportContent() {
                     </span>
                     <Link
                       href={buildSavedFilterUrl(savedFilter.filters)}
-                      className="shrink-0 text-sm font-medium text-primary hover:underline"
+                      className="shrink-0 text-sm report-drilldown-link font-medium text-primary hover:underline"
                     >
                       Open tickets
                     </Link>

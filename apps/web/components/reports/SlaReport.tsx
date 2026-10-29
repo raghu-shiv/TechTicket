@@ -367,14 +367,16 @@ export function SlaReport() {
 
   return (
     <div className="space-y-6">
-      <SlaReportHeader />
+      <div className="flex justify-between">
+        <SlaReportHeader />
+        <ReportExportButton report="sla" params={filters} />
+      </div>
 
       <SlaReportFilterPanel
         filters={filters}
         updateFilter={updateFilter}
         resetFilters={resetFilters}
       />
-      <ReportExportButton report="sla" params={filters} />
       <section
         aria-label="SLA overview"
         className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5"
@@ -491,8 +493,10 @@ export function SlaReport() {
 
 function SlaReportHeader() {
   return (
-    <div>
-      <h1 className="text-2xl font-semibold tracking-tight">SLA Reports</h1>
+    <div className="space-y-1.5">
+      <h1 className="font-display text-page-title font-semibold leading-tight tracking-tight">
+        SLA Reports
+      </h1>
       <p className="mt-1 text-sm text-muted-foreground">
         Analyze SLA compliance, breaches, at-risk tickets, first-response
         performance, and resolution performance.
@@ -514,7 +518,7 @@ function SlaReportFilterPanel({
   resetFilters: () => void;
 }) {
   return (
-    <Card>
+    <Card className="report-filter-panel">
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <CardTitle>Report filters</CardTitle>
@@ -689,6 +693,7 @@ function FilterInput({
       <Input
         id={id}
         type={type}
+        className="report-control"
         value={value}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
@@ -722,7 +727,7 @@ function FilterSelect({
         id={id}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+        className="report-control"
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>
@@ -874,13 +879,13 @@ function SlaTrendCard({ trend }: { trend: SlaReportTrendPoint[] }) {
       <CardHeader>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle>SLA Trend</CardTitle>
-          <div className="flex gap-4 text-xs text-muted-foreground">
+          <div className="report-legend text-xs text-muted-foreground">
             <span className="flex items-center gap-2">
-              <span className="size-2 rounded-full bg-primary" />
+              <span className="size-2 rounded-full bg-chart-1" />
               Tracked
             </span>
             <span className="flex items-center gap-2">
-              <span className="size-2 rounded-full bg-red-500" />
+              <span className="size-2 rounded-full bg-chart-6" />
               Breached
             </span>
           </div>
@@ -888,7 +893,7 @@ function SlaTrendCard({ trend }: { trend: SlaReportTrendPoint[] }) {
       </CardHeader>
 
       <CardContent>
-        <div className="w-full overflow-x-auto">
+        <div className="w-full overflow-x-auto report-chart-scroll">
           <svg
             viewBox={`0 0 ${width} ${height}`}
             className="h-auto min-w-[650px] w-full"
@@ -898,7 +903,7 @@ function SlaTrendCard({ trend }: { trend: SlaReportTrendPoint[] }) {
             <path
               d={buildPath((point) => point.tracked)}
               fill="none"
-              className="stroke-primary"
+              className="stroke-chart-1"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -906,7 +911,7 @@ function SlaTrendCard({ trend }: { trend: SlaReportTrendPoint[] }) {
             <path
               d={buildPath((point) => point.breached)}
               fill="none"
-              className="stroke-red-500"
+              className="stroke-chart-6"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -922,13 +927,13 @@ function SlaTrendCard({ trend }: { trend: SlaReportTrendPoint[] }) {
                   cx={getX(index)}
                   cy={getY(point.tracked)}
                   r="3"
-                  className="fill-primary"
+                  className="fill-chart-1"
                 />
                 <circle
                   cx={getX(index)}
                   cy={getY(point.breached)}
                   r="3"
-                  className="fill-red-500"
+                  className="fill-chart-6"
                 />
                 {(index === 0 ||
                   index === trend.length - 1 ||
@@ -980,8 +985,8 @@ function SlaPriorityCard({ points }: { points: SlaReportPriorityPoint[] }) {
       </CardHeader>
 
       <CardContent>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto report-table-wrap">
+          <table className="w-full text-sm report-table">
             <thead>
               <tr className="border-b text-left">
                 <th className="px-3 py-3 font-medium">Priority</th>
@@ -999,13 +1004,13 @@ function SlaPriorityCard({ points }: { points: SlaReportPriorityPoint[] }) {
                 <tr key={point.key} className="border-b last:border-0">
                   <td className="px-3 py-3 font-medium">{point.label}</td>
                   <td className="px-3 py-3 text-right">{point.tracked}</td>
-                  <td className="px-3 py-3 text-right text-red-600">
+                  <td className="px-3 py-3 text-right text-danger">
                     {point.breached}
                   </td>
                   <td className="px-3 py-3 text-right">
                     {formatRate(point.breachRate)}
                   </td>
-                  <td className="px-3 py-3 text-right text-amber-600">
+                  <td className="px-3 py-3 text-right text-warning">
                     {point.atRisk}
                   </td>
                   <td className="px-3 py-3 text-right">
@@ -1060,8 +1065,8 @@ function SlaDimensionCard({
       </CardHeader>
 
       <CardContent>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto report-table-wrap">
+          <table className="w-full text-sm report-table">
             <thead>
               <tr className="border-b text-left">
                 <th className="px-3 py-3 font-medium">Name</th>
@@ -1079,13 +1084,13 @@ function SlaDimensionCard({
                 <tr key={point.key} className="border-b last:border-0">
                   <td className="px-3 py-3 font-medium">{point.label}</td>
                   <td className="px-3 py-3 text-right">{point.tracked}</td>
-                  <td className="px-3 py-3 text-right text-red-600">
+                  <td className="px-3 py-3 text-right text-danger">
                     {point.breached}
                   </td>
                   <td className="px-3 py-3 text-right">
                     {formatRate(point.breachRate)}
                   </td>
-                  <td className="px-3 py-3 text-right text-amber-600">
+                  <td className="px-3 py-3 text-right text-warning">
                     {point.atRisk}
                   </td>
                   <td className="px-3 py-3 text-right">

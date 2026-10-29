@@ -84,7 +84,7 @@ const reports = [
 
 export default function ReportsPage() {
   return (
-    <div className="space-y-12">
+    <div className="space-y-10">
       <section aria-labelledby="overall-analytics">
         <div className="mb-6">
           <h2 id="overall-analytics" className="text-xl font-semibold">
@@ -125,8 +125,8 @@ export default function ReportsPage() {
               <Card
                 className={
                   available
-                    ? "h-full transition-colors hover:border-primary/40"
-                    : "h-full opacity-70"
+                    ? "h-full rounded-2xl border-border/80 shadow-sm transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-md"
+                    : "h-full rounded-2xl border-dashed border-border bg-muted/20 opacity-80 shadow-none"
                 }
               >
                 <CardContent className="flex h-full flex-col p-6">

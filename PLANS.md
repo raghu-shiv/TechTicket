@@ -110,7 +110,7 @@ Scope: Dashboard, Tickets, Ticket Detail, and Create Ticket.
 
 ### UI/UX-5 — Operational and Administration Pages
 
-**NEXT**
+**COMPLETE**
 
 Scope: Approvals, Ticket Library, Products, Users, Settings, Profile, and
 Notifications.
@@ -123,7 +123,7 @@ Notifications.
 
 ### UI/UX-6 — Analytics and Reporting
 
-**PLANNED**
+**COMPLETE**
 
 Scope: `/reports` and specialized report pages.
 
@@ -135,7 +135,7 @@ Scope: `/reports` and specialized report pages.
 
 ### UI/UX-7 — Responsive and Accessibility Polish
 
-**PLANNED**
+**NEXT**
 
 - Check mobile, tablet, laptop, and wide-desktop layouts.
 - Verify keyboard navigation, focus indicators, accessible names, and contrast.
