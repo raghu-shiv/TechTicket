@@ -78,15 +78,30 @@ function BreakdownTable({
             No data for the selected filters.
           </p>
         ) : (
-          <div className="overflow-x-auto report-table-wrap">
+          <div
+            className="overflow-x-auto report-table-wrap"
+            role="region"
+            aria-label={`${title} table`}
+            tabIndex={0}
+          >
             <table className="w-full text-sm report-table">
               <thead>
                 <tr className="border-b text-left text-muted-foreground">
-                  <th className="py-2 pr-4 font-medium">Group</th>
-                  <th className="py-2 pr-4 font-medium">First response avg</th>
-                  <th className="py-2 pr-4 font-medium">Resolution avg</th>
-                  <th className="py-2 pr-4 font-medium">Resolution median</th>
-                  <th className="py-2 font-medium">Resolution P90</th>
+                  <th scope="col" className="py-2 pr-4 font-medium">
+                    Group
+                  </th>
+                  <th scope="col" className="py-2 pr-4 font-medium">
+                    First response avg
+                  </th>
+                  <th scope="col" className="py-2 pr-4 font-medium">
+                    Resolution avg
+                  </th>
+                  <th scope="col" className="py-2 pr-4 font-medium">
+                    Resolution median
+                  </th>
+                  <th scope="col" className="py-2 font-medium">
+                    Resolution P90
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -259,19 +274,30 @@ export function TatReport() {
                   No trend data for the selected period.
                 </p>
               ) : (
-                <div className="overflow-x-auto report-table-wrap">
+                <div
+                  className="overflow-x-auto report-table-wrap"
+                  role="region"
+                  aria-label="TAT trend table"
+                  tabIndex={0}
+                >
                   <table className="w-full text-sm report-table">
                     <thead>
                       <tr className="border-b text-left text-muted-foreground">
-                        <th className="py-2 pr-4 font-medium">Date (UTC)</th>
-                        <th className="py-2 pr-4 font-medium">Tickets</th>
-                        <th className="py-2 pr-4 font-medium">
+                        <th scope="col" className="py-2 pr-4 font-medium">
+                          Date (UTC)
+                        </th>
+                        <th scope="col" className="py-2 pr-4 font-medium">
+                          Tickets
+                        </th>
+                        <th scope="col" className="py-2 pr-4 font-medium">
                           First response avg
                         </th>
-                        <th className="py-2 pr-4 font-medium">
+                        <th scope="col" className="py-2 pr-4 font-medium">
                           Resolution avg
                         </th>
-                        <th className="py-2 font-medium">Resolution P90</th>
+                        <th scope="col" className="py-2 font-medium">
+                          Resolution P90
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -314,16 +340,33 @@ export function TatReport() {
                   No resolved tickets with valid resolution duration.
                 </p>
               ) : (
-                <div className="overflow-x-auto report-table-wrap">
+                <div
+                  className="overflow-x-auto report-table-wrap"
+                  role="region"
+                  aria-label="Resolved ticket drill-down table and pagination"
+                  tabIndex={0}
+                >
                   <table className="w-full text-sm report-table">
                     <thead>
                       <tr className="border-b text-left text-muted-foreground">
-                        <th className="py-2 pr-4 font-medium">Ticket</th>
-                        <th className="py-2 pr-4 font-medium">Priority</th>
-                        <th className="py-2 pr-4 font-medium">Team</th>
-                        <th className="py-2 pr-4 font-medium">Assignee</th>
-                        <th className="py-2 pr-4 font-medium">Product</th>
-                        <th className="py-2 font-medium">Resolution TAT</th>
+                        <th scope="col" className="py-2 pr-4 font-medium">
+                          Ticket
+                        </th>
+                        <th scope="col" className="py-2 pr-4 font-medium">
+                          Priority
+                        </th>
+                        <th scope="col" className="py-2 pr-4 font-medium">
+                          Team
+                        </th>
+                        <th scope="col" className="py-2 pr-4 font-medium">
+                          Assignee
+                        </th>
+                        <th scope="col" className="py-2 pr-4 font-medium">
+                          Product
+                        </th>
+                        <th scope="col" className="py-2 font-medium">
+                          Resolution TAT
+                        </th>
                       </tr>
                     </thead>
                     <tbody>

@@ -18,7 +18,7 @@ export function Topbar() {
         {/* Mobile navigation trigger */}
         <button
           type="button"
-          className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-colors duration-150 hover:bg-surface-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background lg:hidden"
+          className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-colors duration-150 hover:bg-surface-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background lg:hidden"
           aria-label="Open navigation"
           aria-expanded={isMobileSidebarOpen}
           aria-controls="mobile-navigation"
@@ -36,7 +36,7 @@ export function Topbar() {
           aria-haspopup="dialog"
           aria-controls="global-ticket-search-dialog"
           aria-keyshortcuts="Control+K Meta+K"
-          className="group relative hidden h-10 w-full max-w-[34rem] flex-1 items-center text-left focus-visible:outline-none md:flex"
+          className="group relative hidden h-11 w-full max-w-[34rem] flex-1 items-center text-left focus-visible:outline-none md:flex"
         >
           <span className="absolute left-3.5 flex items-center justify-center text-muted-foreground transition-colors group-hover:text-primary">
             <Search className="size-4" aria-hidden="true" />
@@ -65,7 +65,7 @@ export function Topbar() {
           <button
             type="button"
             onClick={openCommandMenu}
-            className="inline-flex size-10 items-center justify-center rounded-xl text-muted-foreground transition-colors duration-150 hover:bg-surface-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background md:hidden"
+            className="inline-flex size-11 items-center justify-center rounded-xl text-muted-foreground transition-colors duration-150 hover:bg-surface-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background md:hidden"
             aria-label="Search tickets and knowledge articles"
             aria-haspopup="dialog"
             aria-controls="global-ticket-search-dialog"
@@ -84,7 +84,7 @@ export function Topbar() {
           <div className="flex items-center gap-0.5 rounded-2xl border border-border/80 bg-surface/80 p-1 shadow-sm">
             <Link
               href="/settings"
-              className="inline-flex size-9 items-center justify-center rounded-xl text-muted-foreground transition-colors duration-150 hover:bg-surface-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              className="inline-flex size-11 items-center justify-center rounded-xl text-muted-foreground transition-colors duration-150 hover:bg-surface-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               aria-label="Settings"
               title="Settings"
             >

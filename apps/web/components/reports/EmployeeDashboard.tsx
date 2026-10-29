@@ -450,15 +450,22 @@ export function EmployeeDashboard() {
               No tickets were resolved in the selected period.
             </p>
           ) : (
-            <div className="overflow-x-auto report-table-wrap">
+            <div
+              className="overflow-x-auto report-table-wrap"
+              role="region"
+              aria-label="Resolution trend table"
+              tabIndex={0}
+            >
               <table className="w-full text-sm report-table">
                 <thead>
                   <tr className="border-b text-left text-muted-foreground">
-                    <th className="py-2 pr-4 font-medium">
+                    <th scope="col" className="py-2 pr-4 font-medium">
                       Resolved date (UTC)
                     </th>
-                    <th className="py-2 pr-4 font-medium">Resolved tickets</th>
-                    <th className="py-2 font-medium">
+                    <th scope="col" className="py-2 pr-4 font-medium">
+                      Resolved tickets
+                    </th>
+                    <th scope="col" className="py-2 font-medium">
                       Average resolution time
                     </th>
                   </tr>

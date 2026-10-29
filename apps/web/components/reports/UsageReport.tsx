@@ -401,16 +401,33 @@ export function UsageReport() {
                   No daily usage records are available.
                 </p>
               ) : (
-                <div className="overflow-x-auto report-table-wrap">
+                <div
+                  className="overflow-x-auto report-table-wrap"
+                  role="region"
+                  aria-label="Daily usage details table"
+                  tabIndex={0}
+                >
                   <table className="w-full text-sm report-table">
                     <thead>
                       <tr className="border-b text-left text-muted-foreground">
-                        <th className="py-2 pr-4 font-medium">Date (UTC)</th>
-                        <th className="py-2 pr-4 font-medium">Tickets</th>
-                        <th className="py-2 pr-4 font-medium">Activities</th>
-                        <th className="py-2 pr-4 font-medium">Comments</th>
-                        <th className="py-2 pr-4 font-medium">Attachments</th>
-                        <th className="py-2 font-medium">Approval requests</th>
+                        <th scope="col" className="py-2 pr-4 font-medium">
+                          Date (UTC)
+                        </th>
+                        <th scope="col" className="py-2 pr-4 font-medium">
+                          Tickets
+                        </th>
+                        <th scope="col" className="py-2 pr-4 font-medium">
+                          Activities
+                        </th>
+                        <th scope="col" className="py-2 pr-4 font-medium">
+                          Comments
+                        </th>
+                        <th scope="col" className="py-2 pr-4 font-medium">
+                          Attachments
+                        </th>
+                        <th scope="col" className="py-2 font-medium">
+                          Approval requests
+                        </th>
                       </tr>
                     </thead>
                     <tbody>

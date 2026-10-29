@@ -321,21 +321,36 @@ export function SlaDashboard() {
             />
           ) : (
             <>
-              <div className="overflow-x-auto report-table-wrap">
+              <div
+                className="overflow-x-auto report-table-wrap"
+                role="region"
+                aria-label="SLA tickets table"
+                tabIndex={0}
+              >
                 <table className="w-full text-sm report-table">
                   <thead>
                     <tr className="border-b text-left">
-                      <th className="px-3 py-3 font-medium">Ticket</th>
+                      <th scope="col" className="px-3 py-3 font-medium">
+                        Ticket
+                      </th>
 
-                      <th className="px-3 py-3 font-medium">Priority</th>
+                      <th scope="col" className="px-3 py-3 font-medium">
+                        Priority
+                      </th>
 
-                      <th className="px-3 py-3 font-medium">Assignee</th>
+                      <th scope="col" className="px-3 py-3 font-medium">
+                        Assignee
+                      </th>
 
-                      <th className="px-3 py-3 font-medium">SLA</th>
+                      <th scope="col" className="px-3 py-3 font-medium">
+                        SLA
+                      </th>
 
-                      <th className="px-3 py-3 font-medium">Created</th>
+                      <th scope="col" className="px-3 py-3 font-medium">
+                        Created
+                      </th>
 
-                      <th className="px-3 py-3" />
+                      <th scope="col" className="px-3 py-3" />
                     </tr>
                   </thead>
 

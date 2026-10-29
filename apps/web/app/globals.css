@@ -841,3 +841,174 @@
   outline: 2px solid var(--ring);
   outline-offset: 3px;
 }
+
+/* ================================================================
+   PHASE 7 — RESPONSIVE & ACCESSIBILITY POLISH
+   ================================================================ */
+
+/* A keyboard-only shortcut to the main content. */
+.skip-link {
+  position: fixed;
+  z-index: 200;
+  top: 0.5rem;
+  left: 0.5rem;
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(calc(-100% - 1rem));
+  border: 2px solid var(--ring);
+  border-radius: 0.75rem;
+  background: var(--card);
+  padding: 0.625rem 1rem;
+  color: var(--foreground);
+  font-size: 0.875rem;
+  font-weight: 700;
+  box-shadow: var(--elevation-popover);
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+/* Keep long titles, IDs, URLs, and user-provided text within their layout. */
+main {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+main img,
+main video,
+main canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+main pre,
+main code {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+/* A visible indicator for scrollable regions that receive keyboard focus. */
+.report-table-wrap:focus-visible,
+.report-chart-scroll:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+
+/* Make horizontally scrollable reporting regions usable on touch devices. */
+.report-table-wrap,
+.report-chart-scroll {
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+/* Dense tables should scroll instead of crushing every column on mobile.
+   The full contents remain available; no columns are hidden. */
+@media (max-width: 639px) {
+  .report-table {
+    min-width: 38rem;
+  }
+
+  .report-chart-scroll svg {
+    max-width: none;
+  }
+}
+
+/* Make reporting filters a single-column stack on narrow screens. */
+@media (max-width: 639px) {
+  .report-filter-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+    gap: 0.875rem;
+  }
+
+  .report-filter-toolbar > div,
+  .report-filter-toolbar > label {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .report-filter-toolbar .report-export-control {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .report-filter-toolbar .report-export-control > div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.625rem;
+    width: 100%;
+  }
+
+  .report-filter-toolbar .report-export-control .report-control,
+  .report-filter-toolbar .report-export-button {
+    width: 100%;
+  }
+}
+
+/* Avoid the automatic zoom-in behavior some mobile browsers trigger
+   when focusing a small-text input. Keep checkboxes/radios compact. */
+@media (max-width: 639px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* A larger activation area for checkbox/radio choices on touch screens. */
+@media (pointer: coarse) {
+  label:has(> input[type="checkbox"]),
+  label:has(> input[type="radio"]) {
+    min-height: 2.75rem;
+    align-items: center;
+  }
+}
+
+/* Users who request stronger contrast get clearer table boundaries. */
+@media (prefers-contrast: more) {
+  .report-table thead th {
+    border-bottom-width: 2px;
+  }
+
+  .report-table tbody td {
+    border-bottom-width: 1px;
+  }
+
+  .report-filter-panel,
+  .report-breakdown-card {
+    border-width: 2px;
+  }
+
+  .skip-link {
+    border-width: 3px;
+  }
+}
+
+/* Windows High Contrast Mode / forced-colors support. */
+@media (forced-colors: active) {
+  .skip-link {
+    border: 2px solid LinkText;
+    background: Canvas;
+    color: CanvasText;
+  }
+
+  :focus-visible {
+    outline: 2px solid Highlight !important;
+    outline-offset: 3px !important;
+  }
+
+  [aria-current="page"] {
+    outline: 1px solid Highlight;
+    outline-offset: -2px;
+  }
+
+  .report-table thead th {
+    border-bottom: 2px solid CanvasText;
+  }
+}

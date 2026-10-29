@@ -135,7 +135,7 @@ Scope: `/reports` and specialized report pages.
 
 ### UI/UX-7 — Responsive and Accessibility Polish
 
-**NEXT**
+**COMPLETE**
 
 - Check mobile, tablet, laptop, and wide-desktop layouts.
 - Verify keyboard navigation, focus indicators, accessible names, and contrast.
@@ -145,7 +145,7 @@ Scope: `/reports` and specialized report pages.
 
 ### UI/UX-8 — Regression and Visual Verification
 
-**PLANNED**
+**NEXT**
 
 - Run frontend tests, TypeScript, lint, and production build checks.
 - Inspect representative routes in both light and dark themes at desktop and

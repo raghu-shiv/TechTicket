@@ -462,7 +462,12 @@ function VolumeChart({
 
   return (
     <div className="w-full">
-      <div className="w-full overflow-x-auto report-chart-scroll">
+      <div
+        className="w-full overflow-x-auto report-chart-scroll"
+        role="region"
+        aria-label="Ticket volume chart. Scroll horizontally to review dates."
+        tabIndex={0}
+      >
         <svg
           viewBox={`0 0 ${width} ${height}`}
           className="h-auto min-w-[600px] w-full"

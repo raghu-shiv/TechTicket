@@ -653,13 +653,24 @@ function TicketLibraryReportContent() {
               No date data for the selected filters.
             </p>
           ) : (
-            <div className="overflow-x-auto report-table-wrap">
+            <div
+              className="overflow-x-auto report-table-wrap"
+              role="region"
+              aria-label="Tickets by date table"
+              tabIndex={0}
+            >
               <table className="w-full text-sm report-table">
                 <thead>
                   <tr className="border-b text-left text-muted-foreground">
-                    <th className="py-2 pr-4 font-medium">Date</th>
-                    <th className="py-2 pr-4 font-medium">Tickets</th>
-                    <th className="py-2 font-medium">Drill-down</th>
+                    <th scope="col" className="py-2 pr-4 font-medium">
+                      Date
+                    </th>
+                    <th scope="col" className="py-2 pr-4 font-medium">
+                      Tickets
+                    </th>
+                    <th scope="col" className="py-2 font-medium">
+                      Drill-down
+                    </th>
                   </tr>
                 </thead>
                 <tbody>

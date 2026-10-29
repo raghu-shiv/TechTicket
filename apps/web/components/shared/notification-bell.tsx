@@ -233,7 +233,7 @@ export function NotificationBell() {
         ref={bellRef}
         type="button"
         onClick={toggleDropdown}
-        className="relative inline-flex size-10 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="relative inline-flex size-11 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`}
         aria-haspopup="dialog"
         aria-expanded={isOpen}
@@ -272,7 +272,7 @@ export function NotificationBell() {
               type="button"
               onClick={() => void notificationsQuery.refetch()}
               disabled={notificationsQuery.isFetching}
-              className="rounded-lg px-3 py-2 text-xs font-semibold text-primary transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex min-h-10 items-center justify-center rounded-lg px-3 py-2 text-xs font-semibold text-primary transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             >
               {notificationsQuery.isFetching ? "Refreshing..." : "Refresh"}
             </button>
@@ -408,13 +408,19 @@ export function NotificationBell() {
                       <div className="min-w-0 flex-1">
                         <p
                           className={[
-                            "text-sm",
+                            "break-words text-sm",
                             notification.readAt
                               ? "font-medium"
                               : "font-semibold",
                           ].join(" ")}
                         >
                           {notification.title}
+
+                          {!notification.readAt && (
+                            <span className="ml-2 inline-flex min-h-5 items-center rounded-full border border-primary/25 bg-brand-soft px-2 py-0.5 align-middle text-[10px] font-semibold leading-4 text-brand-soft-foreground">
+                              Unread
+                            </span>
+                          )}
                         </p>
 
                         <p className="mt-1 text-sm leading-5 text-muted-foreground">
@@ -453,7 +459,7 @@ export function NotificationBell() {
                                   Boolean(notification.readAt),
                                 );
                               }}
-                              className="text-xs font-medium text-primary underline underline-offset-4 hover:text-primary/80"
+                              className="inline-flex min-h-10 items-center rounded-md px-2 text-xs font-medium text-primary underline underline-offset-4 hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             >
                               Open ticket
                             </button>
@@ -466,7 +472,7 @@ export function NotificationBell() {
                               onClick={() =>
                                 markReadMutation.mutate(notification.id)
                               }
-                              className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-50"
+                              className="inline-flex min-h-10 items-center gap-1 rounded-md px-2 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
                             >
                               <Check className="size-3" aria-hidden="true" />
                               Mark as read
@@ -486,7 +492,7 @@ export function NotificationBell() {
                 type="button"
                 disabled={page <= 1}
                 onClick={() => setPage((current) => Math.max(1, current - 1))}
-                className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium hover:bg-accent disabled:pointer-events-none disabled:opacity-40"
+                className="min-h-10 rounded-lg inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium hover:bg-accent disabled:pointer-events-none disabled:opacity-40"
               >
                 <ChevronLeft className="size-3.5" aria-hidden="true" />
                 Newer
@@ -502,7 +508,7 @@ export function NotificationBell() {
                 onClick={() =>
                   setPage((current) => Math.min(totalPages, current + 1))
                 }
-                className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium hover:bg-accent disabled:pointer-events-none disabled:opacity-40"
+                className="min-h-10 rounded-lg inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium hover:bg-accent disabled:pointer-events-none disabled:opacity-40"
               >
                 Older
                 <ChevronRight className="size-3.5" aria-hidden="true" />

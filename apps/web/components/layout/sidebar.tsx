@@ -41,7 +41,7 @@ export function Sidebar() {
           aria-label="TechTicket home"
           className="group flex min-w-0 items-center gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar-background"
         >
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm ring-1 ring-primary/20 transition-transform duration-200 group-hover:scale-[1.03]">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm ring-1 ring-primary/20 motion-safe:transition-transform motion-safe:duration-200 motion-safe:group-hover:scale-[1.03]">
             <ClipboardList className="size-5" aria-hidden="true" />
           </span>
 
@@ -102,7 +102,7 @@ export function Sidebar() {
                       href={item.href}
                       aria-current={isActive ? "page" : undefined}
                       className={cn(
-                        "group relative flex h-10 items-center gap-3 rounded-xl border border-transparent px-3 text-[13px] font-medium",
+                        "group relative flex h-11 items-center gap-3 rounded-xl border border-transparent px-3 text-[13px] font-medium",
                         "transition-colors duration-150 ease-standard",
                         "before:absolute before:inset-y-2 before:left-0 before:w-[3px] before:rounded-full before:bg-transparent before:content-['']",
                         "hover:bg-surface-muted hover:text-foreground",

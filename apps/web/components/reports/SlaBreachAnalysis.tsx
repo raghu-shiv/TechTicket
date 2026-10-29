@@ -196,23 +196,36 @@ function DimensionTable({
       </CardHeader>
 
       <CardContent>
-        <div className="overflow-x-auto report-table-wrap">
+        <div
+          className="overflow-x-auto report-table-wrap"
+          role="region"
+          aria-label={`${title} table`}
+          tabIndex={0}
+        >
           <table className="w-full text-sm report-table">
             <thead>
               <tr className="border-b text-left">
-                <th className="px-3 py-3 font-medium">Dimension</th>
+                <th scope="col" className="px-3 py-3 font-medium">
+                  Dimension
+                </th>
 
-                <th className="px-3 py-3 text-right font-medium">Tracked</th>
+                <th scope="col" className="px-3 py-3 text-right font-medium">
+                  Tracked
+                </th>
 
-                <th className="px-3 py-3 text-right font-medium">Breached</th>
+                <th scope="col" className="px-3 py-3 text-right font-medium">
+                  Breached
+                </th>
 
-                <th className="px-3 py-3 text-right font-medium">
+                <th scope="col" className="px-3 py-3 text-right font-medium">
                   Breach Rate
                 </th>
 
-                <th className="px-3 py-3 text-right font-medium">At Risk</th>
+                <th scope="col" className="px-3 py-3 text-right font-medium">
+                  At Risk
+                </th>
 
-                <th className="px-3 py-3 text-right font-medium">
+                <th scope="col" className="px-3 py-3 text-right font-medium">
                   At-Risk Rate
                 </th>
               </tr>
@@ -370,7 +383,12 @@ function BreachTrend({ points }: { points: SlaBreachTrendPoint[] }) {
       </CardHeader>
 
       <CardContent>
-        <div className="w-full overflow-x-auto report-chart-scroll">
+        <div
+          className="w-full overflow-x-auto report-chart-scroll"
+          role="region"
+          aria-label="SLA breach and at-risk trend chart. Scroll horizontally to review dates."
+          tabIndex={0}
+        >
           <svg
             viewBox={`0 0 ${width} ${height}`}
             className="h-auto min-w-[650px] w-full"

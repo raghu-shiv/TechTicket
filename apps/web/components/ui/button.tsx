@@ -16,10 +16,10 @@ const variants = {
 };
 
 const sizes = {
-  sm: "h-9 rounded-lg px-3 text-xs",
-  default: "h-10 rounded-xl px-4 text-sm",
-  lg: "h-11 rounded-xl px-5 text-sm",
-  icon: "size-10 rounded-xl",
+  sm: "min-h-10 rounded-lg px-3 text-xs",
+  default: "min-h-10 rounded-xl px-4 text-sm",
+  lg: "min-h-11 rounded-xl px-5 text-sm",
+  icon: "size-11 rounded-xl",
 };
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -45,6 +45,7 @@ export function Button({
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
         "active:disabled:transform-none active:scale-[0.99]",
+        "motion-reduce:transition-none motion-reduce:active:scale-100",
         variants[variant],
         sizing,
         className,

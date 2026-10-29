@@ -341,7 +341,7 @@ function ActiveFilter({
     <button
       type="button"
       onClick={onRemove}
-      className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-primary/20 bg-brand-soft px-3 py-1.5 text-xs font-medium text-brand-soft-foreground transition-colors hover:border-primary/40 hover:bg-brand-soft/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      className="inline-flex min-h-10 max-w-full items-center gap-1.5 rounded-full border border-primary/20 bg-brand-soft px-3 py-1.5 text-xs font-medium text-brand-soft-foreground transition-colors hover:border-primary/40 hover:bg-brand-soft/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       aria-label={`Remove ${label} filter`}
     >
       <span className="min-w-0 break-words">{label}</span>
@@ -1079,7 +1079,7 @@ function TicketsContent() {
                   <button
                     type="button"
                     onClick={toggleSortOrder}
-                    className="flex h-9 items-center justify-center gap-2 rounded-md border border-input bg-background px-3 text-sm transition-colors hover:bg-muted"
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-input bg-background px-3 text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                     aria-label={
                       "Sort " +
                       (sortOrder === "asc" ? "descending" : "ascending")
@@ -1128,7 +1128,7 @@ function TicketsContent() {
                   <button
                     type="button"
                     onClick={clearFilters}
-                    className="inline-flex h-9 items-center gap-2 rounded-lg px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="inline-flex h-11 items-center gap-2 rounded-xl px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                   >
                     <RotateCcw className="size-4" />
                     Clear filters

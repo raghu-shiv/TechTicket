@@ -379,35 +379,61 @@ export function ProductDashboard() {
               />
             </div>
           ) : (
-            <div className="overflow-x-auto report-table-wrap">
+            <div
+              className="overflow-x-auto report-table-wrap"
+              role="region"
+              aria-label="Product performance table"
+              tabIndex={0}
+            >
               <table className="w-full min-w-[900px] text-sm report-table">
                 <thead>
                   <tr className="border-y bg-muted/30 text-left">
-                    <th className="px-5 py-3 font-medium text-muted-foreground">
+                    <th
+                      className="px-5 py-3 font-medium text-muted-foreground"
+                      scope="col"
+                    >
                       Product
                     </th>
 
-                    <th className="px-5 py-3 text-right font-medium text-muted-foreground">
+                    <th
+                      className="px-5 py-3 text-right font-medium text-muted-foreground"
+                      scope="col"
+                    >
                       Tickets
                     </th>
 
-                    <th className="px-5 py-3 text-right font-medium text-muted-foreground">
+                    <th
+                      className="px-5 py-3 text-right font-medium text-muted-foreground"
+                      scope="col"
+                    >
                       Active
                     </th>
 
-                    <th className="px-5 py-3 text-right font-medium text-muted-foreground">
+                    <th
+                      className="px-5 py-3 text-right font-medium text-muted-foreground"
+                      scope="col"
+                    >
                       Resolved
                     </th>
 
-                    <th className="px-5 py-3 text-right font-medium text-muted-foreground">
+                    <th
+                      className="px-5 py-3 text-right font-medium text-muted-foreground"
+                      scope="col"
+                    >
                       SLA
                     </th>
 
-                    <th className="px-5 py-3 text-right font-medium text-muted-foreground">
+                    <th
+                      className="px-5 py-3 text-right font-medium text-muted-foreground"
+                      scope="col"
+                    >
                       Avg TAT
                     </th>
 
-                    <th className="px-5 py-3 text-right font-medium text-muted-foreground">
+                    <th
+                      className="px-5 py-3 text-right font-medium text-muted-foreground"
+                      scope="col"
+                    >
                       Tickets
                     </th>
                   </tr>
@@ -817,7 +843,12 @@ function ProductTrendChart({
     .join(" ");
 
   return (
-    <div className="w-full overflow-x-auto report-chart-scroll">
+    <div
+      className="w-full overflow-x-auto report-chart-scroll"
+      role="region"
+      aria-label="Product ticket trend chart. Scroll horizontally to review dates."
+      tabIndex={0}
+    >
       <svg
         viewBox={`0 0 ${width} ${height}`}
         className="h-auto min-w-[600px] w-full"

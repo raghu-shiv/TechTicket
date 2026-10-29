@@ -47,6 +47,12 @@ export function MobileNav() {
         ? document.activeElement
         : null;
 
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousRootOverflow = document.documentElement.style.overflow;
+
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
     closeButtonRef.current?.focus();
 
     function handleKeyDown(event: KeyboardEvent) {
@@ -93,6 +99,9 @@ export function MobileNav() {
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
 
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousRootOverflow;
+
       if (previouslyFocused?.isConnected) {
         previouslyFocused.focus();
       }
@@ -130,7 +139,7 @@ export function MobileNav() {
             aria-label="TechTicket home"
             className="group flex min-w-0 items-center gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar-background"
           >
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm ring-1 ring-primary/20 transition-transform duration-200 group-hover:scale-[1.03]">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm ring-1 ring-primary/20 motion-safe:transition-transform motion-safe:duration-200 motion-safe:group-hover:scale-[1.03]">
               <ClipboardList className="size-5" aria-hidden="true" />
             </span>
 
@@ -148,7 +157,7 @@ export function MobileNav() {
             ref={closeButtonRef}
             type="button"
             onClick={close}
-            className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl text-sidebar-muted-foreground transition-colors duration-150 hover:bg-surface-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar-background"
+            className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl text-sidebar-muted-foreground transition-colors duration-150 hover:bg-surface-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar-background"
             aria-label="Close navigation"
           >
             <X className="size-5" aria-hidden="true" />
