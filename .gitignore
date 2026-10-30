@@ -24,3 +24,6 @@ signin.json
 signup-member.json
 cookies.txt
 requester-cookies.txt
+
+/test-results/
+/playwright-report/

@@ -104,6 +104,28 @@ services:
       - minio_data:/data
     command: server /data --console-address ":9001"
 
+  e2e:
+    image: mcr.microsoft.com/playwright:v1.64.1-noble
+    init: true
+    shm_size: "1gb"
+    working_dir: /app
+    profiles:
+      - e2e
+    volumes:
+      - ./:/app
+      - web_node_modules:/app/node_modules
+    environment:
+      NODE_ENV: test
+      PLAYWRIGHT_BASE_URL: http://web:3000
+      TECHTICKET_E2E_EMAIL: ${TECHTICKET_E2E_EMAIL:-}
+      TECHTICKET_E2E_PASSWORD: ${TECHTICKET_E2E_PASSWORD:-}
+    command:
+      - npm
+      - run
+      - test:e2e
+      - --workspace
+      - web
+
 volumes:
   postgres_data:
   redis_data:

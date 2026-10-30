@@ -7,7 +7,10 @@
     "build": "NODE_ENV=production next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test",
+    "test:e2e:report": "playwright show-report playwright-report/phase8"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.85.0",
@@ -25,6 +28,7 @@
     "zustand": "^5.0.8"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/pg": "^8.23.1",
